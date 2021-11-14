@@ -1,0 +1,8 @@
+sandbox
+mmsandbox.py
+*.pyd
+*.c
+build/
+tmp/
+__pycache__/
+.vscode/
