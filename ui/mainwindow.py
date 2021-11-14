@@ -1,27 +1,16 @@
 #!/usr/bin/env python
 
-from PyQt6.QtWidgets import QMainWindow, QAction
+from PySide6.QtWidgets import QMainWindow
+from PySide6.QtUiTools import QUiLoader
+from PySide6.QtCore import QFile
 
 class MainWindow (QMainWindow):
-    def __init__(self):
-        super().__init__()
-        #self.setWindowTitle('Hello World!')
-        #self.setGeometry(100,100,200,150)
-        self.create_actions()
-        self.create_menu()
-
-    def create_menu (self):
-        menubar = self.menuBar()
-        filemenu = menubar.addMenu("&File")
-        filemenu.addAction("&Open image")
-        filemenu.addAction("&Load spots")
-        filemenu.addAction("&Save spots")
-        filemenu.addAction("&Close spots")
-        filemenu.addSeparator()
-        filemenu.addAction("&Quit")
-        helpmenu = menubar.addMenu("&Help")
-        helpmenu.addAction("&About")
-
-    def create_actions (self):
-        self.action_about = QAction("&About", self)
+    def __init__(self, parent = None):
+        super().__init__(parent)
+        ui_file = QFile("ui/mainwindow.ui")
+        ui_file.open(QFile.ReadOnly)
+        loader = QUiLoader()
+        self.window = loader.load(ui_file)
+        ui_file.close()
+        self.window.show()
 

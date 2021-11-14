@@ -1,14 +1,10 @@
 #!/usr/bin/env python
 
 import sys
-from PyQt6.QtGui import QGuiApplication
-from PyQt6.QtQml import QQmlApplicationEngine
+from PySide6.QtWidgets import QApplication
+from ui import mainwindow
 
 
-app = QGuiApplication(sys.argv)
-
-engine = QQmlApplicationEngine()
-engine.quit.connect(app.quit)
-engine.load('ui/main.qml')
-
+app = QApplication(sys.argv)
+main = mainwindow.MainWindow()
 sys.exit(app.exec())
