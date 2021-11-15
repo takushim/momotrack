@@ -1,6 +1,6 @@
 sandbox
 mmsandbox.py
-sandbox.ui
+*/sandbox.ui
 *.pyd
 *.c
 build/

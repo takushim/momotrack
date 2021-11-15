@@ -1,16 +1,17 @@
 #!/usr/bin/env python
 
-from PySide6.QtWidgets import QMainWindow
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile
 
-class MainWindow (QMainWindow):
-    def __init__(self, parent = None):
-        super().__init__(parent)
+class MainWindow:
+    def __init__(self):
+        self.ui_window = self.load_ui()
+        self.ui_window.show()
+    
+    def load_ui (self):
         ui_file = QFile("ui/mainwindow.ui")
         ui_file.open(QFile.ReadOnly)
-        loader = QUiLoader()
-        self.window = loader.load(ui_file)
+        ui_window = QUiLoader().load(ui_file)
         ui_file.close()
-        self.window.show()
+        return ui_window
 
