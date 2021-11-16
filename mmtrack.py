@@ -7,16 +7,16 @@ from etc import imagestack
 
 # default parameters
 input_filename = None
-track_filename = None
-track_suffix = '_track.txt'
+tracks_filename = None
+tracks_suffix = '_track.txt'
 channel = 0
 z_index = 0
 
 # parse arguments
 parser = argparse.ArgumentParser(description='Object tracking system for 3D images.', \
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('-f', '--track-file', default = track_filename,
-                    help='file to record tracking data. [basename]{0} by default.'.format(track_suffix))
+parser.add_argument('-f', '--tracks-file', default = tracks_filename,
+                    help='file to record tracking data. [basename]{0} by default.'.format(tracks_suffix))
 
 parser.add_argument('-c', '--channel', type = int, default = channel, \
                     help='channel to process.')
@@ -33,9 +33,9 @@ args, unparsed_args = parser.parse_known_args()
 input_filename = args.input_file
 channel = args.channel
 z_index = args.z_index
-track_filename = args.track_file
-if input_filename is not None and track_filename is None:
-    track_filename = imagestack.with_suffix(input_filename, track_suffix)
+tracks_filename = args.tracks_file
+if input_filename is not None and tracks_filename is None:
+    tracks_filename = imagestack.with_suffix(input_filename, tracks_suffix)
 
 # start the Qt system
 app = QApplication(sys.argv[:1] + unparsed_args)
