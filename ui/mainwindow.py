@@ -30,6 +30,7 @@ class MainWindow (QMainWindow):
         self.ui.action_save_tracks.triggered.connect(self.slot_save_tracks)
         self.ui.action_save_tracks_as.triggered.connect(self.slot_save_tracks_as)
         self.ui.action_about_this.triggered.connect(self.slot_about_this)
+        self.ui.action_quick_help.triggered.connect(self.slot_quick_help)
     
     def open_image (self):
         pass
@@ -77,6 +78,13 @@ class MainWindow (QMainWindow):
         if result == QFileDialog.Save:
             print(dialog.selectedFiles())
             self.save_tracks()
+
+    def slot_quick_help (self):
+        mbox = QMessageBox()
+        mbox.setWindowTitle("Quick help")
+        mbox.setText("Currently nothing to show...")
+        mbox.setStandardButtons(QMessageBox.Ok)
+        mbox.exec()
 
     def slot_about_this (self):
         mbox = QMessageBox()
