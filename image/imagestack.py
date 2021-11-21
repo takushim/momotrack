@@ -1,22 +1,11 @@
 #!/usr/bin/env python
 
-import sys, re, tifffile
+import sys, tifffile
 import numpy as np
 from pathlib import Path
 
-pixels_um = (0.1625, 0.1625)
+pixels_um = [0.1625, 0.1625]
 z_step_um = 0.5
-
-def stem (filename):
-    name = Path(filename).stem
-    name = re.sub('\.ome$', '', name, flags = re.IGNORECASE)
-    return name
-
-def with_suffix (filename, suffix):
-    name = stem(filename)
-    if name == name + suffix:
-        raise Exception('Empty suffix. May overwrite the original file. Exiting.')
-    return name + suffix
 
 class ImageStack:
     def __init__ (self, filename = None, keep_color = False):
@@ -58,14 +47,16 @@ class ImageStack:
         self.height = self.image_array.shape[3]
         self.width = self.image_array.shape[4]
 
-        self.axes = 'TCZYXS'
-        self.colored = False
         if 'S' in axes:
             if keep_color:
                 self.axes = 'TZCYXS'
                 self.colored = True
             else:
                 self.image_array = np.average(self.image_array)
+                self.colored = False
+        else:
+            self.axes = 'TCZYX'
+            self.colored = False
 
     def read_metadata (self, tiff):
         self.pixels_um = pixels_um
@@ -76,7 +67,7 @@ class ImageStack:
             self.pixels_um[0] = float(values[1]) / float(values[0])
 
         if 'YResolution' in tiff.pages[0].tags:
-            values = tiff.pages[0].tags['TResolution'].value
+            values = tiff.pages[0].tags['YResolution'].value
             self.pixels_um[1] = float(values[1]) / float(values[0])
 
         if 'ImageDescription' in tiff.pages[0].tags:
