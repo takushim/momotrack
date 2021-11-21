@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QSlider
+import sys
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
+from ui import imagepanel, lutpanel
 from image import imagestack
 
 class MainWindow (QMainWindow):
@@ -40,21 +42,10 @@ class MainWindow (QMainWindow):
     def load_image (self):
         try:
             self.stack = imagestack.ImageStack(self.image_filename)
-            # Time slider
-            self.ui.slider_time.setMinimum(0)
-            self.ui.slider_time.setMaximum(self.stack.t_count - 1)
-            self.ui.slider_time.setValue(0)
-            self.ui.slider_time.setTickInterval(10)
-            self.ui.slider_time.setTickPosition(QSlider.TicksBelow)
-            # Z slider
-            self.ui.slider_zstack.setMinimum(0)
-            self.ui.slider_zstack.setMaximum(self.stack.t_count - 1)
-            self.ui.slider_zstack.setValue(0)
-            self.ui.slider_zstack.setTickInterval(10)
-            self.ui.slider_zstack.setTickPosition(QSlider.TicksBelow)
-            # Status
-            self.update_status()
-        except Exception as e:
+            imagepanel.set_sliders(self.ui, self.stack)
+            imagepanel.update_status(self.ui, self.stack)
+            imagepanel.update_image_view(self.ui, self.stack)
+        except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
     def load_tracks (self):
@@ -128,11 +119,6 @@ class MainWindow (QMainWindow):
                     self.slot_save_tracks()
                 if self.track_modified:
                     event.ignore()
-
-    def update_status (self):
-        status = "T: {0}/{1}, Z: {2}/{3}".format(self.ui.slider_time.value(), self.stack.t_count - 1,
-                                                 self.ui.slider_zstack.value(), self.stack.z_count - 1,)
-        self.ui.label_status.setText(status)
 
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
