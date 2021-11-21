@@ -1,5 +1,6 @@
 sandbox
 mmsandbox.py
+test/
 */sandbox.ui
 *.pyd
 *.c
