@@ -8,7 +8,7 @@ from ui import imagepanel, lutpanel
 from image import imagestack
 
 class MainWindow (QMainWindow):
-    def __init__(self, image_filename = None, track_filename = None):
+    def __init__ (self, image_filename = None, track_filename = None):
         super().__init__()
         self.image_stack = None
         self.image_filename = image_filename
@@ -16,7 +16,8 @@ class MainWindow (QMainWindow):
         self.track_modified = False
 
         self.load_ui()
-        self.connect_menu_items()
+        self.connect_menu_signals()
+
         if self.image_filename is not None:
             self.load_image()
         if self.track_filename is not None:
@@ -30,7 +31,7 @@ class MainWindow (QMainWindow):
         file.close()
         self.setCentralWidget(self.ui)
 
-    def connect_menu_items (self):
+    def connect_menu_signals (self):
         self.ui.action_exit.triggered.connect(self.close)
         self.ui.action_open_image.triggered.connect(self.slot_open_image)
         self.ui.action_load_tracks.triggered.connect(self.slot_load_tracks)
@@ -38,7 +39,7 @@ class MainWindow (QMainWindow):
         self.ui.action_save_tracks_as.triggered.connect(self.slot_save_tracks_as)
         self.ui.action_about_this.triggered.connect(self.slot_about_this)
         self.ui.action_quick_help.triggered.connect(self.slot_quick_help)
-    
+
     def load_image (self):
         try:
             self.stack = imagestack.ImageStack(self.image_filename)
@@ -99,6 +100,10 @@ class MainWindow (QMainWindow):
         self.show_message(title = "About This",
                           message = "Object tracking system for time-lapse 2D/3D images.\n" +
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
+
+    def mousePressEvent (self, event):
+        pos = self.ui.gview_image.mapFromParent(event.pos()) - self.ui.centralwidget.pos()
+        print(pos)
 
     def closeEvent (self, event):
         if self.track_modified:

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QGraphicsView" name="gview_image">
+        <property name="focusPolicy">
+         <enum>Qt::TabFocus</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>PushButton</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <widget class="QMenu" name="menu_file">
+    <property name="geometry">
+     <rect>
+      <x>366</x>
+      <y>164</y>
+      <width>300</width>
+      <height>170</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>300</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="action_open_image"/>
+    <addaction name="action_load_tracks"/>
+    <addaction name="action_save_tracks"/>
+    <addaction name="action_save_tracks_as"/>
+    <addaction name="separator"/>
+    <addaction name="action_exit"/>
+   </widget>
+   <widget class="QMenu" name="menu_view">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>300</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="action_zoom_in"/>
+    <addaction name="action_zoom_out"/>
+    <addaction name="action_reset_zoom"/>
+   </widget>
+   <widget class="QMenu" name="menu_help">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>300</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="action_quick_help"/>
+    <addaction name="action_about_this"/>
+   </widget>
+   <addaction name="menu_file"/>
+   <addaction name="menu_view"/>
+   <addaction name="menu_help"/>
+  </widget>
+  <action name="action_open_image">
+   <property name="text">
+    <string>&amp;Open Image</string>
+   </property>
+  </action>
+  <action name="action_load_tracks">
+   <property name="text">
+    <string>&amp;Load Tracks</string>
+   </property>
+  </action>
+  <action name="action_save_tracks">
+   <property name="text">
+    <string>&amp;Save Tracks</string>
+   </property>
+  </action>
+  <action name="action_save_tracks_as">
+   <property name="text">
+    <string>Save Tracks &amp;As</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>true</bool>
+   </property>
+  </action>
+  <action name="action_exit">
+   <property name="text">
+    <string>&amp;Exit</string>
+   </property>
+  </action>
+  <action name="action_zoom_in">
+   <property name="text">
+    <string>Zoom &amp;In</string>
+   </property>
+  </action>
+  <action name="action_zoom_out">
+   <property name="text">
+    <string>Zoom &amp;Out</string>
+   </property>
+  </action>
+  <action name="action_reset_zoom">
+   <property name="text">
+    <string>&amp;Reset Zoom</string>
+   </property>
+  </action>
+  <action name="action_quick_help">
+   <property name="text">
+    <string>&amp;Quick Help</string>
+   </property>
+  </action>
+  <action name="action_about_this">
+   <property name="text">
+    <string>&amp;About This Script</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -40,5 +40,6 @@ if input_filename is not None and track_filename is None:
 # start the Qt system
 app = QApplication(sys.argv[:1] + unparsed_args)
 window = mainwindow.MainWindow(image_filename = input_filename, track_filename = track_filename)
+#window = test.TestWindow()
 window.show()
 sys.exit(app.exec())
