@@ -2,7 +2,7 @@
 
 import sys
 import numpy as np
-from PySide6.QtWidgets import QSlider, QGraphicsView, QGraphicsScene
+from PySide6.QtWidgets import QSlider
 from PySide6.QtGui import QPixmap, QImage
 
 def set_sliders (ui, stack):
@@ -24,7 +24,7 @@ def update_status (ui, stack):
                                              ui.slider_zstack.value(), stack.z_count - 1,)
     ui.label_status.setText(status)
 
-def update_image_view (ui, stack):
+def update_image_view (ui, scene, stack):
     #image = stack.image_array[0, 0, 10].astype(float)
     #image = ((image - np.min(image)) / np.ptp(image) * 255).astype(np.uint8)
     #print(image.data)
@@ -32,9 +32,7 @@ def update_image_view (ui, stack):
     #qimage = QImage(image.data, stack.width, stack.height, format = QImage.Format_Grayscale8)
     qimage = QImage("test/lena_std.tif")
     pixmap = QPixmap(qimage)
-    scene = QGraphicsScene()
     scene.addPixmap(pixmap)
-
     ui.gview_image.setScene(scene)
 
 

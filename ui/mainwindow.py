@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 
 import sys
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QGraphicsScene
 from PySide6.QtCore import QFile
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, lutpanel
 from image import imagestack
+
+def test_func (event):
+    print(event.scenePos())
 
 class MainWindow (QMainWindow):
     def __init__ (self, image_filename = None, track_filename = None):
@@ -30,6 +33,8 @@ class MainWindow (QMainWindow):
         self.ui = loader.load(file)
         file.close()
         self.setCentralWidget(self.ui)
+        self.scene = QGraphicsScene()
+        self.scene.mousePressEvent = test_func
 
     def connect_menu_signals (self):
         self.ui.action_exit.triggered.connect(self.close)
@@ -45,7 +50,7 @@ class MainWindow (QMainWindow):
             self.stack = imagestack.ImageStack(self.image_filename)
             imagepanel.set_sliders(self.ui, self.stack)
             imagepanel.update_status(self.ui, self.stack)
-            imagepanel.update_image_view(self.ui, self.stack)
+            imagepanel.update_image_view(self.ui, self.scene, self.stack)
         except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
@@ -100,10 +105,6 @@ class MainWindow (QMainWindow):
         self.show_message(title = "About This",
                           message = "Object tracking system for time-lapse 2D/3D images.\n" +
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
-
-    def mousePressEvent (self, event):
-        pos = self.ui.gview_image.mapFromParent(event.pos()) - self.ui.centralwidget.pos()
-        print(pos)
 
     def closeEvent (self, event):
         if self.track_modified:
