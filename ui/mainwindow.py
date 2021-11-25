@@ -7,9 +7,6 @@ from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, lutpanel
 from image import imagestack
 
-def test_func (event):
-    print(event.scenePos())
-
 class MainWindow (QMainWindow):
     def __init__ (self, image_filename = None, track_filename = None):
         super().__init__()
@@ -34,7 +31,7 @@ class MainWindow (QMainWindow):
         file.close()
         self.setCentralWidget(self.ui)
         self.scene = QGraphicsScene()
-        self.scene.mousePressEvent = test_func
+        self.scene.mousePressEvent = self.slot_mouse_clicked
 
     def connect_menu_signals (self):
         self.ui.action_exit.triggered.connect(self.close)
@@ -105,6 +102,9 @@ class MainWindow (QMainWindow):
         self.show_message(title = "About This",
                           message = "Object tracking system for time-lapse 2D/3D images.\n" +
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
+
+    def slot_mouse_clicked (self, event):
+        print(event.scenePos())
 
     def closeEvent (self, event):
         if self.track_modified:
