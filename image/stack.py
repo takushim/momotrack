@@ -7,7 +7,7 @@ from pathlib import Path
 pixels_um = [0.1625, 0.1625]
 z_step_um = 0.5
 
-class ImageStack:
+class Stack:
     def __init__ (self, filename = None, keep_color = False):
         self.pixels_um = pixels_um
         self.z_step_um = z_step_um
@@ -42,8 +42,8 @@ class ImageStack:
         self.image_array = self.image_array.swapaxes(1, 2)
 
         self.t_count = self.image_array.shape[0]
-        self.z_count = self.image_array.shape[1]
-        self.c_count = self.image_array.shape[2]
+        self.c_count = self.image_array.shape[1]
+        self.z_count = self.image_array.shape[2]
         self.height = self.image_array.shape[3]
         self.width = self.image_array.shape[4]
 

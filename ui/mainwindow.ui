@@ -100,6 +100,12 @@
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
+            <property name="mouseTracking">
+             <bool>true</bool>
+            </property>
+            <property name="tabletTracking">
+             <bool>true</bool>
+            </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
             </property>
@@ -135,6 +141,12 @@
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
+            </property>
+            <property name="mouseTracking">
+             <bool>true</bool>
+            </property>
+            <property name="tabletTracking">
+             <bool>true</bool>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -211,7 +223,7 @@
        </layout>
       </item>
       <item>
-       <widget class="Line" name="line_panel">
+       <widget class="Line" name="vline_panel">
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
@@ -225,6 +237,49 @@
         <property name="sizeConstraint">
          <enum>QLayout::SetMinimumSize</enum>
         </property>
+        <item>
+         <layout class="QVBoxLayout" name="vlayout_zoom">
+          <item>
+           <widget class="QLabel" name="label_zoom_status">
+            <property name="text">
+             <string>Current zoom: 100%</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="hlayout_zoom_button">
+            <item>
+             <widget class="QPushButton" name="button_zoom_in">
+              <property name="text">
+               <string>Zoom in</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="button_zoom_out">
+              <property name="text">
+               <string>Zoom out</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="button_zoom_reset">
+              <property name="text">
+               <string>Reset</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="Line" name="hline_panel">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QLabel" name="label_channel">
           <property name="sizePolicy">
@@ -577,7 +632,7 @@
     </property>
     <addaction name="action_zoom_in"/>
     <addaction name="action_zoom_out"/>
-    <addaction name="action_reset_zoom"/>
+    <addaction name="action_zoom_reset"/>
    </widget>
    <widget class="QMenu" name="menu_help">
     <property name="sizePolicy">
@@ -643,7 +698,7 @@
     <string>Zoom &amp;Out</string>
    </property>
   </action>
-  <action name="action_reset_zoom">
+  <action name="action_zoom_reset">
    <property name="text">
     <string>&amp;Reset Zoom</string>
    </property>
