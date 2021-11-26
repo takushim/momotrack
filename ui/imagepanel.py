@@ -3,15 +3,13 @@
 import sys
 import numpy as np
 from PySide6.QtWidgets import QGraphicsScene, QSlider
-from PySide6.QtCore import QTimer
-from PySide6.QtGui import QPixmap, QImage
+from PySide6.QtGui import QImage, QPixmap
 
 class ImagePanel:
     def __init__ (self, ui):
         self.ui = ui
         self.scene = QGraphicsScene()
         self.ui.gview_image.setScene(self.scene)
-        self.play_timer = QTimer()
 
     def init_sliders (self, stack):
         # Time slider
