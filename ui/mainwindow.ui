@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>621</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -34,8 +34,8 @@
    </property>
    <property name="minimumSize">
     <size>
-     <width>400</width>
-     <height>300</height>
+     <width>800</width>
+     <height>600</height>
     </size>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -59,8 +59,8 @@
          <widget class="QGraphicsView" name="gview_image">
           <property name="minimumSize">
            <size>
-            <width>0</width>
-            <height>0</height>
+            <width>512</width>
+            <height>512</height>
            </size>
           </property>
           <property name="autoFillBackground">
@@ -195,10 +195,13 @@
              </sizepolicy>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>5</number>
             </property>
             <property name="maximum">
              <number>100</number>
+            </property>
+            <property name="singleStep">
+             <number>5</number>
             </property>
             <property name="value">
              <number>10</number>
@@ -224,6 +227,9 @@
       </item>
       <item>
        <widget class="Line" name="vline_panel">
+        <property name="lineWidth">
+         <number>2</number>
+        </property>
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
@@ -275,6 +281,9 @@
         </item>
         <item>
          <widget class="Line" name="hline_panel">
+          <property name="lineWidth">
+           <number>2</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>

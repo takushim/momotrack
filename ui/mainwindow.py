@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
-from PySide6.QtCore import QFile
+from PySide6.QtCore import QFile, QTimer
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel
 from image import stack
@@ -35,6 +35,8 @@ class MainWindow (QMainWindow):
         self.setCentralWidget(self.ui)
         self.image_panel = imagepanel.ImagePanel(self.ui)
         self.zoom_panel = zoompanel.ZoomPanel(self.ui)
+        self.play_timer = QTimer(self)
+        self.play_timer.setInterval(100)
 
     def connect_menubar_to_slots (self):
         self.ui.action_exit.triggered.connect(self.close)
@@ -42,8 +44,8 @@ class MainWindow (QMainWindow):
         self.ui.action_load_tracks.triggered.connect(self.slot_load_tracks)
         self.ui.action_save_tracks.triggered.connect(self.slot_save_tracks)
         self.ui.action_save_tracks_as.triggered.connect(self.slot_save_tracks_as)
-        self.ui.action_zoom_in.triggered.connect(self.slot_zoom_in)
-        self.ui.action_zoom_out.triggered.connect(self.slot_zoom_out)
+        self.ui.action_zoom_in.triggered.connect(self.slot_zoomed_in)
+        self.ui.action_zoom_out.triggered.connect(self.slot_zoomed_out)
         self.ui.action_zoom_reset.triggered.connect(self.slot_zoom_reset)
         self.ui.action_about_this.triggered.connect(self.slot_about_this)
         self.ui.action_quick_help.triggered.connect(self.slot_quick_help)
@@ -52,9 +54,12 @@ class MainWindow (QMainWindow):
         self.image_panel.scene.mousePressEvent = self.slot_mouse_clicked
         self.ui.slider_time.valueChanged.connect(self.slot_slider_moved)
         self.ui.slider_zstack.valueChanged.connect(self.slot_slider_moved)
-        self.ui.button_zoom_in.clicked.connect(self.slot_zoom_in)
-        self.ui.button_zoom_out.clicked.connect(self.slot_zoom_out)
+        self.ui.button_zoom_in.clicked.connect(self.slot_zoomed_in)
+        self.ui.button_zoom_out.clicked.connect(self.slot_zoomed_out)
         self.ui.button_zoom_reset.clicked.connect(self.slot_zoom_reset)
+        self.ui.button_play.clicked.connect(self.slot_slideshow_switched)
+        self.ui.spin_fps.valueChanged.connect(self.slot_slideshow_changed)
+        self.play_timer.timeout.connect(self.slot_slideshow_timeout)
 
     def load_image (self):
         try:
@@ -136,17 +141,31 @@ class MainWindow (QMainWindow):
     def slot_slider_moved (self):
         self.update_image_view()
 
-    def slot_zoom_in (self):
+    def slot_zoomed_in (self):
         self.zoom_panel.zoom_in()
         self.update_image_view()
 
-    def slot_zoom_out (self):
+    def slot_zoomed_out (self):
         self.zoom_panel.zoom_out()
         self.update_image_view()
 
     def slot_zoom_reset (self):
         self.zoom_panel.zoom_reset()
         self.update_image_view()
+
+    def slot_slideshow_switched (self):
+        if self.play_timer.isActive():
+            self.play_timer.stop()
+            self.ui.button_play.setText("Play")
+        else:
+            self.play_timer.start()
+            self.ui.button_play.setText("Stop")
+
+    def slot_slideshow_changed (self):
+        self.play_timer.setInterval(1000 / self.ui.spin_fps.value())
+
+    def slot_slideshow_timeout (self):
+        self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
 
     def closeEvent (self, event):
         if self.track_modified:
