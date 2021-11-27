@@ -4,34 +4,77 @@ import sys
 import numpy as np
 
 lut_dict = {}
-lut_dict["Gray"]    = [255, 255, 255]
 lut_dict["Red"]     = [255,   0,   0]
 lut_dict["Green"]   = [  0, 255,   0]
 lut_dict["Blue"]    = [  0,   0, 255]
 lut_dict["Magenta"] = [255,   0, 255]
 lut_dict["Yellow"]  = [255, 255,   0]
 lut_dict["Cyan"]    = [  0, 255, 255]
+lut_dict["Gray"]    = [255, 255, 255]
 
-lut_names = lut_dict.keys()
+bit_dict = {}
+bit_dict["Float"]    = [-np.Inf, np.Inf]
+bit_dict["UINT-32"]  = [np.iinfo(np.uint32).min, np.iinfo(np.uint32).max]
+bit_dict["UINT-16"]  = [np.iinfo(np.uint16).min, np.iinfo(np.uint16).max]
+bit_dict["UINT-8"]  = [np.iinfo(np.uint8).min, np.iinfo(np.uint8).max]
+bit_dict["INT-32"]  = [np.iinfo(np.int32).min, np.iinfo(np.int32).max]
+bit_dict["INT-16"]  = [np.iinfo(np.int16).min, np.iinfo(np.int16).max]
+bit_dict["INT-8"]  = [np.iinfo(np.int8).min, np.iinfo(np.int8).max]
 
-def find_lut (name):
-    try:
-        lower_list = [lut_name.lower() for lut_name in lut_names]
-        name = lut_names[lower_list.index(name.lower())]
-    except ValueError:
-        name = None
+lut_names = list(lut_dict.keys())
+bit_names = list(bit_dict.keys())
 
-    return name
+class LUT:
+    def __init__ (self, lut_name = None, pixel_values = None):
+        if lut_name is None:
+            self.lut_name = "Gray"
+        else:
+            self.lut_name = lut_name
+        
+        if pixel_values is None:
+            self.bit_mode = "UINT-16"
+            self.lower_limit = bit_dict["UINT-16"][0]
+            self.upper_limit = bit_dict["UINT-16"][1]
+        else:
+            self.set_bit_mode(pixel_values)
+            self.lower_limit = max(pixel_values.min(), bit_dict[self.bit_mode][0])
+            self.upper_limit = min(pixel_values.max(), bit_dict[self.bit_mode][1])
 
-def lut_func (name):
-    max_values = lut_dict[find_lut(name)]
+    def set_bit_mode (self, pixel_values):
+        max_value = pixel_values.max()
+        min_value = pixel_values.min()
 
-    def matrix_to_rgb (matrix, lower, upper):
-        ratio = (matrix - lower) / (upper - lower)
-        matrix_r = (ratio * max_values[0]).astype(np.uint8)
-        matrix_g = (ratio * max_values[1]).astype(np.uint8)
-        matrix_b = (ratio * max_values[2]).astype(np.uint8)
-        return np.stack((matrix_r, matrix_g, matrix_b), axis = -1)
+        if pixel_values.dtype.kind == 'i' or pixel_values.dtype.kind == 'u':
+            if min_value >= 0:
+                if max_value > np.iinfo(np.uint32).max:
+                    self.bit_mode = "Float"
+                elif max_value > np.iinfo(np.uint16).max:
+                    self.bit_mode = "UINT-32"
+                elif max_value > np.iinfo(np.uint8).max:
+                    self.bit_mode = "UINT-16"
+                else:
+                    self.bit_mode = "UINT-8"
+            else:
+                if max_value > np.iinfo(np.int32).max or min_value < np.iinfo(np.int32).min:
+                    self.bit_mode = "Float"
+                elif max_value > np.iinfo(np.int16).max or min_value < np.iinfo(np.int16).min:
+                    self.bit_mode = "INT-32"
+                elif max_value > np.iinfo(np.int8).max or min_value < np.iinfo(np.int8).min:
+                    self.bit_mode = "INT-16"
+                else:
+                    self.bit_mode = "INT-8"
+        else:
+            self.bit_mode = "Float"
 
-    return matrix_to_rgb
+    def lut_func (self, name):
+        max_values = lut_dict[name]
+
+        def matrix_to_rgb (matrix, lower, upper):
+            ratio = (matrix - lower) / (upper - lower)
+            matrix_r = (ratio * max_values[0]).astype(np.uint8)
+            matrix_g = (ratio * max_values[1]).astype(np.uint8)
+            matrix_b = (ratio * max_values[2]).astype(np.uint8)
+            return np.stack((matrix_r, matrix_g, matrix_b), axis = -1)
+
+        return matrix_to_rgb
 

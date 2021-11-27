@@ -11,19 +11,25 @@ class ImagePanel:
         self.scene = QGraphicsScene()
         self.ui.gview_image.setScene(self.scene)
 
-    def init_sliders (self, stack):
-        # Time slider
-        self.ui.slider_time.setMinimum(0)
-        self.ui.slider_time.setMaximum(stack.t_count - 1)
+    def init_widgets (self, stack = None):
+        self.ui.slider_time.setMaximum(0)
         self.ui.slider_time.setValue(0)
-        self.ui.slider_time.setTickInterval(10)
-        self.ui.slider_time.setTickPosition(QSlider.TicksBelow)
-        # Z slider
-        self.ui.slider_zstack.setMinimum(0)
-        self.ui.slider_zstack.setMaximum(stack.z_count - 1)
+        self.ui.slider_zstack.setMaximum(0)
         self.ui.slider_zstack.setValue(0)
-        self.ui.slider_zstack.setTickInterval(1)
-        self.ui.slider_zstack.setTickPosition(QSlider.TicksBelow)
+
+        if stack is not None:
+            # Time slider
+            self.ui.slider_time.setMinimum(0)
+            self.ui.slider_time.setMaximum(stack.t_count - 1)
+            self.ui.slider_time.setValue(0)
+            self.ui.slider_time.setTickInterval(10)
+            self.ui.slider_time.setTickPosition(QSlider.TicksBelow)
+            # Z slider
+            self.ui.slider_zstack.setMinimum(0)
+            self.ui.slider_zstack.setMaximum(stack.z_count - 1)
+            self.ui.slider_zstack.setValue(0)
+            self.ui.slider_zstack.setTickInterval(1)
+            self.ui.slider_zstack.setTickPosition(QSlider.TicksBelow)
 
     def update_status (self, stack):
         status = "T: {0}/{1}, Z: {2}/{3}".format(self.ui.slider_time.value(), stack.t_count - 1,

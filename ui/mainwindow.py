@@ -35,6 +35,7 @@ class MainWindow (QMainWindow):
         self.setCentralWidget(self.ui)
         self.image_panel = imagepanel.ImagePanel(self.ui)
         self.zoom_panel = zoompanel.ZoomPanel(self.ui)
+        self.lut_panel = lutpanel.LutPanel(self.ui)
         self.play_timer = QTimer(self)
         self.play_timer.setInterval(100)
 
@@ -64,8 +65,10 @@ class MainWindow (QMainWindow):
     def load_image (self):
         try:
             self.image_stack = stack.Stack(self.image_filename)
-            self.image_panel.init_sliders(self.image_stack)
-            self.image_panel.update_image_scene(self.image_stack)
+            self.image_panel.init_widgets(self.image_stack)
+            self.zoom_panel.zoom_reset()
+            self.lut_panel.init_widgets(self.image_stack)
+            self.update_image_view()
             self.update_window_title()
         except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))

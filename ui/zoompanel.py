@@ -17,7 +17,6 @@ class ZoomPanel:
     def zoom_in (self):
         self.zoom_ratio = zoom_ratios[min(zoom_ratios.index(self.zoom_ratio) + 1, len(zoom_ratios) - 1)]
         self.update_zoom_label()
-        print(self.zoom_ratio)
 
     def zoom_out (self):
         self.zoom_ratio = zoom_ratios[max(zoom_ratios.index(self.zoom_ratio) - 1, 0)]
