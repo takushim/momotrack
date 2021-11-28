@@ -36,21 +36,31 @@ class ImagePanel:
                                                  self.ui.slider_zstack.value(), stack.z_count - 1,)
         self.ui.label_status.setText(status)
 
-    def update_image_scene (self, stack, lut_list, channel = 0, composite = False, zoom_ratio = 100):
+    def update_image_scene (self, stack, lut_list, channel = 0, composite = False, color_always = False, zoom_ratio = 100):
         self.ui.gview_image.resetTransform()
         self.ui.gview_image.scale(zoom_ratio / 100, zoom_ratio / 100)
 
         t_index = self.ui.slider_time.value()
         z_index = self.ui.slider_zstack.value()
 
-        image = stack.image_array[t_index, channel, z_index].astype(float)
-        image = ((image - np.min(image)) / np.ptp(image) * 255).astype(np.uint8)
-
-        qimage = QImage(image.data, stack.width, stack.height, QImage.Format_Grayscale8)
-        pixmap = QPixmap(qimage)
+        if composite:
+            final_image = np.zeros((stack.height, stack.width, 3), dtype = np.uint8)
+            for channel in range(stack.c_count):
+                image = stack.image_array[t_index, channel, z_index]
+                image = np.stack(lut_list[channel].apply_lut_rgb(image), axis = -1)
+                final_image = np.maximum(final_image, image)
+            qimage = QImage(final_image.data, stack.width, stack.height, QImage.Format_RGB888)
+        else:
+            if color_always:
+                image = stack.image_array[t_index, channel, z_index]
+                image = np.stack(lut_list[channel].apply_lut_rgb(image), axis = -1)
+                qimage = QImage(image.data, stack.width, stack.height, QImage.Format_RGB888)
+            else:
+                image = stack.image_array[t_index, channel, z_index]
+                image = lut_list[channel].apply_lut_gray(image)
+                qimage = QImage(image.data, stack.width, stack.height, QImage.Format_Grayscale8)
 
         self.scene.clear()
-        self.scene.addPixmap(pixmap)
-
+        self.scene.addPixmap(QPixmap(qimage))
         self.update_status(stack)
 

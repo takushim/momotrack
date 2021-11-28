@@ -25,7 +25,7 @@ bit_dict["INT-8"]  = [np.iinfo(np.int8).min, np.iinfo(np.int8).max]
 bit_names = list(bit_dict.keys())
 
 class LUT:
-    def __init__ (self, lut_name = None, pixel_values = None, bit_auto = False):
+    def __init__ (self, lut_name = None, pixel_values = None, lut_invert = False, bit_auto = False):
         if lut_name is None:
             self.lut_name = "Gray"
         else:
@@ -43,6 +43,7 @@ class LUT:
         self.cutoff_lower = self.pixel_lower
         self.cutoff_upper = self.pixel_upper
         self.bit_auto = bit_auto
+        self.lut_invert = lut_invert
 
     def set_bit_mode (self, pixel_values):
         max_value = pixel_values.max()
@@ -79,15 +80,22 @@ class LUT:
 
         return [lower_limit, upper_limit]
 
-    def lut_func (self, name):
-        max_values = lut_dict[name]
+    def apply_lut_float (self, image):
+        image = image.astype(float)
 
-        def matrix_to_rgb (matrix, lower, upper):
-            ratio = (matrix - lower) / (upper - lower)
-            matrix_r = (ratio * max_values[0]).astype(np.uint8)
-            matrix_g = (ratio * max_values[1]).astype(np.uint8)
-            matrix_b = (ratio * max_values[2]).astype(np.uint8)
-            return np.stack((matrix_r, matrix_g, matrix_b), axis = -1)
+        if np.isclose(self.cutoff_lower, self.cutoff_upper):
+            image = 0.0
+        else:
+            image = (image - self.cutoff_lower) / (self.cutoff_upper - self.cutoff_lower)
 
-        return matrix_to_rgb
+        if self.lut_invert:
+            image = 1.0 - image
 
+        return image
+
+    def apply_lut_gray (self, image):
+        return (self.apply_lut_float(image) * 255.0).astype(np.uint8)
+
+    def apply_lut_rgb (self, image):
+        max_values = lut_dict[lut_names.index(self.lut_name)]
+        return [(max_value * self.apply_lut_float(image)).astype(np.uint8) for max_value in max_values]

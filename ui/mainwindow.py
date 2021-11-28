@@ -18,13 +18,14 @@ class MainWindow (QMainWindow):
         self.track_modified = False
 
         self.load_ui()
-        self.connect_menubar_to_slots()
-        self.connect_signals_to_slots()
 
         if self.image_filename is not None:
             self.load_image()
         if self.track_filename is not None:
             self.load_tracks()
+
+        self.connect_menubar_to_slots()
+        self.connect_signals_to_slots()
 
     def load_ui (self):
         file = QFile("ui/mainwindow.ui")
@@ -32,12 +33,12 @@ class MainWindow (QMainWindow):
         loader = QUiLoader()
         self.ui = loader.load(file)
         file.close()
-        self.setCentralWidget(self.ui)
-        self.image_panel = imagepanel.ImagePanel(self.ui)
-        self.zoom_panel = zoompanel.ZoomPanel(self.ui)
         self.lut_panel = lutpanel.LutPanel(self.ui)
+        self.zoom_panel = zoompanel.ZoomPanel(self.ui)
+        self.image_panel = imagepanel.ImagePanel(self.ui)
         self.play_timer = QTimer(self)
         self.play_timer.setInterval(100)
+        self.setCentralWidget(self.ui)
 
     def connect_menubar_to_slots (self):
         self.ui.action_exit.triggered.connect(self.close)
@@ -104,7 +105,7 @@ class MainWindow (QMainWindow):
     def update_image_view (self):
         self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
                                             channel = self.lut_panel.current_channel(), composite = self.lut_panel.is_composite(), \
-                                            zoom_ratio = self.zoom_panel.zoom_ratio)
+                                            color_always = self.lut_panel.color_always(), zoom_ratio = self.zoom_panel.zoom_ratio)
 
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()

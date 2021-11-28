@@ -9,6 +9,7 @@ class LutPanel:
         self.ui = ui
         self.ui.combo_lut.addItems([item for item in lut.lut_dict])
         self.ui.combo_bits.addItems(["Auto"] + [item for item in lut.bit_dict])
+        self.init_widgets()
 
     def init_widgets (self, stack = None):
         self.lut_list = []
@@ -16,16 +17,16 @@ class LutPanel:
         self.ui.combo_channel.clear()
 
         if stack is not None:
-            self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(stack.c_count)])
             for channel in range(stack.c_count):
                 lut_name = lut.lut_names[channel % len(lut.lut_names)]
-                image_lut = lut.LUT(lut_name = lut_name, pixel_values = stack.image_array[:, channel], bit_auto = True)
+                image_lut = lut.LUT(lut_name = lut_name, pixel_values = stack.image_array[:, channel], lut_invert = False, bit_auto = True)
                 self.lut_list.append(image_lut)
-
+            self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(stack.c_count)])
         else:
             self.lut_list.append(lut.LUT())
+            self.ui.combo_channel.addItem("Channel 0")
 
-        self.ui.combo_lut.setCurrentText(self.lut_list[0].lut_name)
+        self.ui.combo_lut.setCurrentIndex(0)
         self.ui.combo_lut.setEnabled(self.ui.check_color_always.isChecked())
 
         if self.lut_list[0].bit_auto:
@@ -36,7 +37,7 @@ class LutPanel:
         self.update_sliders()
 
     def update_sliders (self):
-        current_lut = self.lut_list[self.ui.combo_lut.currentIndex()]
+        current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
 
         bit_range = current_lut.bit_range()
         self.ui.slider_cutoff_lower.setMinimum(bit_range[0])
@@ -64,8 +65,11 @@ class LutPanel:
         image_lut = self.lut_list[self.ui.combo_lut.currentIndex()]
 
     def current_channel (self):
-        return self.ui.combo_lut.currentIndex()
-    
+        return self.ui.combo_channel.currentIndex()
+
+    def color_always (self):
+        return self.ui.check_color_always.isChecked()
+
     def is_composite (self):
         return self.ui.check_composite.isChecked()
     
