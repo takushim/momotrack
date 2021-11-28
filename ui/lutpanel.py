@@ -92,6 +92,13 @@ class LutPanel:
         else:
             self.ui.combo_lut.setEnabled(False)
         
+        current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
+        self.ui.combo_lut.setCurrentText(current_lut.lut_name)
+        if current_lut.bit_auto:
+            self.ui.combo_bits.setCurrentText("Auto")
+        else:
+            self.ui.combo_bits.setCurrentText(current_lut.bit_mode)
+
         self.update_sliders()
         self.update_labels()
 
