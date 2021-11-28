@@ -36,14 +36,14 @@ class ImagePanel:
                                                  self.ui.slider_zstack.value(), stack.z_count - 1,)
         self.ui.label_status.setText(status)
 
-    def update_image_scene (self, stack, zoom_ratio = 100):
+    def update_image_scene (self, stack, lut_list, channel = 0, composite = False, zoom_ratio = 100):
         self.ui.gview_image.resetTransform()
         self.ui.gview_image.scale(zoom_ratio / 100, zoom_ratio / 100)
 
         t_index = self.ui.slider_time.value()
         z_index = self.ui.slider_zstack.value()
 
-        image = stack.image_array[t_index, 0, z_index].astype(float)
+        image = stack.image_array[t_index, channel, z_index].astype(float)
         image = ((image - np.min(image)) / np.ptp(image) * 255).astype(np.uint8)
 
         qimage = QImage(image.data, stack.width, stack.height, QImage.Format_Grayscale8)

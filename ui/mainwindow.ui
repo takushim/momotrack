@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>621</height>
+    <height>640</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -65,6 +65,9 @@
           </property>
           <property name="autoFillBackground">
            <bool>false</bool>
+          </property>
+          <property name="sizeAdjustPolicy">
+           <enum>QAbstractScrollArea::AdjustToContents</enum>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -303,6 +306,37 @@
          </widget>
         </item>
         <item>
+         <layout class="QHBoxLayout" name="hlayout_composite">
+          <item>
+           <widget class="QCheckBox" name="check_composite">
+            <property name="text">
+             <string>Composite</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="check_color_always">
+            <property name="text">
+             <string>Color always</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="check_invert_lut">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>Invert</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
          <widget class="QComboBox" name="combo_channel">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -333,42 +367,6 @@
          </widget>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="hlayout_lut_settings">
-          <property name="spacing">
-           <number>2</number>
-          </property>
-          <property name="sizeConstraint">
-           <enum>QLayout::SetMinimumSize</enum>
-          </property>
-          <item>
-           <widget class="QCheckBox" name="check_invert_lut">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Invert LUT</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="check_composite">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="text">
-             <string>Composite</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="hlayout_auto_lut">
           <property name="spacing">
            <number>2</number>
@@ -379,18 +377,18 @@
           <item>
            <widget class="QCheckBox" name="check_auto_lut">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
             <property name="text">
-             <string>Automatic LUT</string>
+             <string>Adjust automatically</string>
             </property>
            </widget>
           </item>
           <item>
-           <widget class="QDoubleSpinBox" name="dspin_cutoff">
+           <widget class="QDoubleSpinBox" name="dspin_auto_cutoff">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
               <horstretch>0</horstretch>
@@ -424,8 +422,8 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>0</width>
-            <height>90</height>
+            <width>120</width>
+            <height>160</height>
            </size>
           </property>
           <property name="baseSize">
@@ -446,6 +444,9 @@
           <property name="horizontalScrollBarPolicy">
            <enum>Qt::ScrollBarAlwaysOff</enum>
           </property>
+          <property name="sizeAdjustPolicy">
+           <enum>QAbstractScrollArea::AdjustToContents</enum>
+          </property>
          </widget>
         </item>
         <item>
@@ -457,7 +458,7 @@
            <enum>QLayout::SetMinimumSize</enum>
           </property>
           <item>
-           <widget class="QLabel" name="label_lut_lower">
+           <widget class="QLabel" name="label_cutoff_lower">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
               <horstretch>0</horstretch>
@@ -470,7 +471,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_lut_upper">
+           <widget class="QLabel" name="label_cutoff_upper">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
               <horstretch>0</horstretch>
@@ -488,7 +489,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QLabel" name="label_upper">
+         <widget class="QLabel" name="label_slider_lower">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -496,12 +497,12 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Upper Limit:</string>
+           <string>Lower cut-off:</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="slider_upper">
+         <widget class="QSlider" name="slider_cutoff_lower">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -514,7 +515,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_lower">
+         <widget class="QLabel" name="label_slider_upper">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -522,12 +523,12 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Lower Limit:</string>
+           <string>Upper cut-off:</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="slider_lower">
+         <widget class="QSlider" name="slider_cutoff_upper">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -549,6 +550,42 @@
           </property>
           <property name="text">
            <string>Reset LUT</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="Line" name="hline_plugin">
+          <property name="lineWidth">
+           <number>2</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_plugin">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Plugin status:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPlainTextEdit" name="textedit_plugin">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="sizeAdjustPolicy">
+           <enum>QAbstractScrollArea::AdjustToContents</enum>
           </property>
          </widget>
         </item>

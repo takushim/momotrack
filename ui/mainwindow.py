@@ -52,15 +52,33 @@ class MainWindow (QMainWindow):
         self.ui.action_quick_help.triggered.connect(self.slot_quick_help)
 
     def connect_signals_to_slots (self):
+        # scene
         self.image_panel.scene.mousePressEvent = self.slot_mouse_clicked
-        self.ui.slider_time.valueChanged.connect(self.slot_slider_moved)
-        self.ui.slider_zstack.valueChanged.connect(self.slot_slider_moved)
-        self.ui.button_zoom_in.clicked.connect(self.slot_zoomed_in)
-        self.ui.button_zoom_out.clicked.connect(self.slot_zoomed_out)
-        self.ui.button_zoom_reset.clicked.connect(self.slot_zoom_reset)
+
+        # time and zstack
+        self.ui.slider_time.valueChanged.connect(self.slot_indexslider_moved)
+        self.ui.slider_zstack.valueChanged.connect(self.slot_indexslider_moved)
         self.ui.button_play.clicked.connect(self.slot_slideshow_switched)
         self.ui.spin_fps.valueChanged.connect(self.slot_slideshow_changed)
         self.play_timer.timeout.connect(self.slot_slideshow_timeout)
+
+        # zooming
+        self.ui.button_zoom_in.clicked.connect(self.slot_zoomed_in)
+        self.ui.button_zoom_out.clicked.connect(self.slot_zoomed_out)
+        self.ui.button_zoom_reset.clicked.connect(self.slot_zoom_reset)
+
+        # lut
+        self.ui.check_composite.stateChanged.connect(self.slot_lut_changed)
+        self.ui.check_color_always.stateChanged.connect(self.slot_lut_changed)
+        self.ui.check_invert_lut.stateChanged.connect(self.slot_lut_changed)
+        self.ui.combo_channel.currentIndexChanged.connect(self.slot_lut_changed)
+        self.ui.combo_lut.currentIndexChanged.connect(self.slot_lut_changed)
+        self.ui.combo_bits.currentIndexChanged.connect(self.slot_lut_changed)
+        self.ui.check_auto_lut.stateChanged.connect(self.slot_lut_changed)
+        self.ui.dspin_auto_cutoff.valueChanged.connect(self.slot_lut_changed)
+        self.ui.slider_cutoff_lower.valueChanged.connect(self.slot_lut_lower_changed)
+        self.ui.slider_cutoff_upper.valueChanged.connect(self.slot_lut_upper_changed)
+        self.ui.button_reset_lut.clicked.connect(self.slot_reset_lut)
 
     def load_image (self):
         try:
@@ -84,7 +102,9 @@ class MainWindow (QMainWindow):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
 
     def update_image_view (self):
-        self.image_panel.update_image_scene(self.image_stack, self.zoom_panel.zoom_ratio)
+        self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
+                                            channel = self.lut_panel.current_channel(), composite = self.lut_panel.is_composite(), \
+                                            zoom_ratio = self.zoom_panel.zoom_ratio)
 
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
@@ -141,7 +161,21 @@ class MainWindow (QMainWindow):
     def slot_mouse_clicked (self, event):
         print(event.scenePos())
 
-    def slot_slider_moved (self):
+    def slot_indexslider_moved (self):
+        self.update_image_view()
+
+    def slot_lut_changed (self):
+        self.update_image_view()
+
+    def slot_lut_lower_changed (self):
+        self.lut_panel.update_slider_upper()
+        self.update_image_view()
+
+    def slot_lut_upper_changed (self):
+        self.lut_panel.update_slider_lower()
+        self.update_image_view()
+
+    def slot_reset_lut (self):
         self.update_image_view()
 
     def slot_zoomed_in (self):

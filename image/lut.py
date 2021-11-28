@@ -12,20 +12,20 @@ lut_dict["Yellow"]  = [255, 255,   0]
 lut_dict["Cyan"]    = [  0, 255, 255]
 lut_dict["Gray"]    = [255, 255, 255]
 
+lut_names = list(lut_dict.keys())
+
 bit_dict = {}
-bit_dict["Float"]    = [-np.Inf, np.Inf]
+bit_dict["Float"]    = [sys.float_info.min, sys.float_info.max]
 bit_dict["UINT-32"]  = [np.iinfo(np.uint32).min, np.iinfo(np.uint32).max]
 bit_dict["UINT-16"]  = [np.iinfo(np.uint16).min, np.iinfo(np.uint16).max]
 bit_dict["UINT-8"]  = [np.iinfo(np.uint8).min, np.iinfo(np.uint8).max]
 bit_dict["INT-32"]  = [np.iinfo(np.int32).min, np.iinfo(np.int32).max]
 bit_dict["INT-16"]  = [np.iinfo(np.int16).min, np.iinfo(np.int16).max]
 bit_dict["INT-8"]  = [np.iinfo(np.int8).min, np.iinfo(np.int8).max]
-
-lut_names = list(lut_dict.keys())
 bit_names = list(bit_dict.keys())
 
 class LUT:
-    def __init__ (self, lut_name = None, pixel_values = None):
+    def __init__ (self, lut_name = None, pixel_values = None, bit_auto = False):
         if lut_name is None:
             self.lut_name = "Gray"
         else:
@@ -33,12 +33,16 @@ class LUT:
         
         if pixel_values is None:
             self.bit_mode = "UINT-16"
-            self.lower_limit = bit_dict["UINT-16"][0]
-            self.upper_limit = bit_dict["UINT-16"][1]
+            self.pixel_lower = bit_dict[self.bit_mode][0]
+            self.pixel_upper = bit_dict[self.bit_mode][1]
         else:
             self.set_bit_mode(pixel_values)
-            self.lower_limit = max(pixel_values.min(), bit_dict[self.bit_mode][0])
-            self.upper_limit = min(pixel_values.max(), bit_dict[self.bit_mode][1])
+            self.pixel_lower = np.min(pixel_values)
+            self.pixel_upper = np.max(pixel_values)
+
+        self.cutoff_lower = self.pixel_lower
+        self.cutoff_upper = self.pixel_upper
+        self.bit_auto = bit_auto
 
     def set_bit_mode (self, pixel_values):
         max_value = pixel_values.max()
@@ -65,6 +69,15 @@ class LUT:
                     self.bit_mode = "INT-8"
         else:
             self.bit_mode = "Float"
+
+    def bit_range (self):
+        if self.bit_auto == False and self.bit_mode != "Float":
+            return bit_dict[self.bit_mode]
+
+        lower_limit = max(self.pixel_lower, bit_dict[self.bit_mode][0])
+        upper_limit = min(self.pixel_upper, bit_dict[self.bit_mode][1])
+
+        return [lower_limit, upper_limit]
 
     def lut_func (self, name):
         max_values = lut_dict[name]
