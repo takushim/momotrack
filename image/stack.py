@@ -52,7 +52,7 @@ class Stack:
                 self.axes = 'TZCYXS'
                 self.colored = True
             else:
-                self.image_array = np.average(self.image_array)
+                self.image_array = np.average(self.image_array, axis = -1)
                 self.colored = False
         else:
             self.axes = 'TCZYX'
