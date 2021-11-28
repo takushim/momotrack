@@ -168,14 +168,21 @@ class MainWindow (QMainWindow):
         print(event.scenePos())
 
     def slot_image_index_changed (self):
+        if self.lut_panel.is_auto_lut():
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
         self.update_image_view()
 
     def slot_channel_changed (self):
         self.lut_panel.update_channel_widgets()
+        if self.lut_panel.is_auto_lut():
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
         self.update_image_view()
 
     def slot_lut_changed (self):
-        self.lut_panel.update_current_lut()
+        if self.lut_panel.is_auto_lut():
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+        else:
+            self.lut_panel.update_current_lut()
         self.update_image_view()
 
     def slot_bits_changed (self):

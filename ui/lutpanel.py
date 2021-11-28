@@ -99,8 +99,12 @@ class LutPanel:
         current_lut.bit_auto = True
         current_lut.cutoff_lower = np.percentile(image, percent)
         current_lut.cutoff_upper = np.percentile(image, 100 - percent)
+        current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
+        current_lut.lut_name = self.ui.combo_lut.currentText()
+
         self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
         self.ui.slider_cutoff_upper.setValue(current_lut.cutoff_upper)
+
         self.ui.check_auto_lut.setChecked(True)
         self.update_labels()
 
