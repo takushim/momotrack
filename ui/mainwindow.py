@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys
+import numpy as np
 from pathlib import Path
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtCore import QFile, QTimer
@@ -33,12 +34,13 @@ class MainWindow (QMainWindow):
         loader = QUiLoader()
         self.ui = loader.load(file)
         file.close()
+        self.setCentralWidget(self.ui)
+
         self.lut_panel = lutpanel.LutPanel(self.ui)
         self.zoom_panel = zoompanel.ZoomPanel(self.ui)
         self.image_panel = imagepanel.ImagePanel(self.ui)
         self.play_timer = QTimer(self)
         self.play_timer.setInterval(100)
-        self.setCentralWidget(self.ui)
 
     def connect_menubar_to_slots (self):
         self.ui.action_exit.triggered.connect(self.close)
@@ -57,8 +59,8 @@ class MainWindow (QMainWindow):
         self.image_panel.scene.mousePressEvent = self.slot_mouse_clicked
 
         # time and zstack
-        self.ui.slider_time.valueChanged.connect(self.slot_indexslider_moved)
-        self.ui.slider_zstack.valueChanged.connect(self.slot_indexslider_moved)
+        self.ui.slider_time.valueChanged.connect(self.slot_image_index_changed)
+        self.ui.slider_zstack.valueChanged.connect(self.slot_image_index_changed)
         self.ui.button_play.clicked.connect(self.slot_slideshow_switched)
         self.ui.spin_fps.valueChanged.connect(self.slot_slideshow_changed)
         self.play_timer.timeout.connect(self.slot_slideshow_timeout)
@@ -69,10 +71,10 @@ class MainWindow (QMainWindow):
         self.ui.button_zoom_reset.clicked.connect(self.slot_zoom_reset)
 
         # lut
-        self.ui.check_composite.stateChanged.connect(self.slot_lut_changed)
-        self.ui.check_color_always.stateChanged.connect(self.slot_lut_changed)
+        self.ui.combo_channel.currentIndexChanged.connect(self.slot_channel_changed)
+        self.ui.check_composite.stateChanged.connect(self.slot_channel_changed)
+        self.ui.check_color_always.stateChanged.connect(self.slot_channel_changed)
         self.ui.check_invert_lut.stateChanged.connect(self.slot_lut_changed)
-        self.ui.combo_channel.currentIndexChanged.connect(self.slot_lut_changed)
         self.ui.combo_lut.currentIndexChanged.connect(self.slot_lut_changed)
         self.ui.combo_bits.currentIndexChanged.connect(self.slot_lut_changed)
         self.ui.check_auto_lut.stateChanged.connect(self.slot_lut_changed)
@@ -87,6 +89,7 @@ class MainWindow (QMainWindow):
             self.image_panel.init_widgets(self.image_stack)
             self.zoom_panel.zoom_reset()
             self.lut_panel.init_widgets(self.image_stack)
+            self.lut_panel.adjust_slider_values(self.image_stack.image_array[0, 0])
             self.update_image_view()
             self.update_window_title()
         except FileNotFoundError:
@@ -162,18 +165,25 @@ class MainWindow (QMainWindow):
     def slot_mouse_clicked (self, event):
         print(event.scenePos())
 
-    def slot_indexslider_moved (self):
+    def slot_image_index_changed (self):
+        self.update_image_view()
+
+    def slot_channel_changed (self):
+        self.lut_panel.update_channel_widgets()
         self.update_image_view()
 
     def slot_lut_changed (self):
+        self.lut_panel.update_current_lut()
         self.update_image_view()
 
     def slot_lut_lower_changed (self):
-        self.lut_panel.update_slider_upper()
+        self.lut_panel.adjust_slider_upper()
+        self.lut_panel.update_current_lut()
         self.update_image_view()
 
     def slot_lut_upper_changed (self):
-        self.lut_panel.update_slider_lower()
+        self.lut_panel.adjust_slider_lower()
+        self.lut_panel.update_current_lut()
         self.update_image_view()
 
     def slot_reset_lut (self):

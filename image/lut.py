@@ -39,6 +39,8 @@ class LUT:
             self.set_bit_mode(pixel_values)
             self.pixel_lower = np.min(pixel_values)
             self.pixel_upper = np.max(pixel_values)
+            self.cutoff_lower = self.pixel_lower
+            self.cutoff_upper = self.pixel_upper
 
         self.cutoff_lower = self.pixel_lower
         self.cutoff_upper = self.pixel_upper
@@ -87,6 +89,7 @@ class LUT:
             image = 0.0
         else:
             image = (image - self.cutoff_lower) / (self.cutoff_upper - self.cutoff_lower)
+            image = np.clip(image, 0.0, 1.0)
 
         if self.lut_invert:
             image = 1.0 - image
@@ -97,5 +100,5 @@ class LUT:
         return (self.apply_lut_float(image) * 255.0).astype(np.uint8)
 
     def apply_lut_rgb (self, image):
-        max_values = lut_dict[lut_names.index(self.lut_name)]
+        max_values = lut_dict[self.lut_name]
         return [(max_value * self.apply_lut_float(image)).astype(np.uint8) for max_value in max_values]
