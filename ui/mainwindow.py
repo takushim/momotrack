@@ -76,7 +76,7 @@ class MainWindow (QMainWindow):
         self.ui.check_color_always.stateChanged.connect(self.slot_channel_changed)
         self.ui.check_invert_lut.stateChanged.connect(self.slot_lut_changed)
         self.ui.combo_lut.currentIndexChanged.connect(self.slot_lut_changed)
-        self.ui.combo_bits.currentIndexChanged.connect(self.slot_lut_changed)
+        self.ui.combo_bits.currentIndexChanged.connect(self.slot_bits_changed)
         self.ui.check_auto_lut.stateChanged.connect(self.slot_lut_changed)
         self.ui.dspin_auto_cutoff.valueChanged.connect(self.slot_lut_changed)
         self.ui.slider_cutoff_lower.valueChanged.connect(self.slot_lut_lower_changed)
@@ -177,6 +177,10 @@ class MainWindow (QMainWindow):
 
     def slot_lut_changed (self):
         self.lut_panel.update_current_lut()
+        self.update_image_view()
+
+    def slot_bits_changed (self):
+        self.lut_panel.update_current_bits()
         self.update_image_view()
 
     def slot_lut_lower_changed (self):

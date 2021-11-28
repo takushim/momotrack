@@ -86,6 +86,20 @@ class LutPanel:
         current_lut.auto_bit = (self.ui.combo_bits == "Auto")
         self.update_labels()
 
+    def update_current_bits (self):
+        current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
+
+        bit_mode = self.ui.combo_bits.currentText()
+        if bit_mode == "Auto":
+            current_lut.reset_bits()
+            current_lut.bit_auto = True
+        else:
+            current_lut.bit_mode = self.ui.combo_bits.currentText()
+            current_lut.bit_auto = False
+        
+        self.update_sliders()
+        self.update_labels()
+
     def update_channel_widgets (self):
         if self.ui.check_composite.isChecked() or self.ui.check_color_always.isChecked():
             self.ui.combo_lut.setEnabled(True)

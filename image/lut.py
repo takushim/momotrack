@@ -16,9 +16,9 @@ lut_names = list(lut_dict.keys())
 
 bit_dict = {}
 bit_dict["Float"]    = [sys.float_info.min, sys.float_info.max]
-bit_dict["UINT-32"]  = [np.iinfo(np.uint32).min, np.iinfo(np.uint32).max]
-bit_dict["UINT-16"]  = [np.iinfo(np.uint16).min, np.iinfo(np.uint16).max]
-bit_dict["UINT-8"]  = [np.iinfo(np.uint8).min, np.iinfo(np.uint8).max]
+bit_dict["INT-32+"]  = [0, np.iinfo(np.int32).max]
+bit_dict["INT-16+"]  = [0, np.iinfo(np.uint16).max]
+bit_dict["INT-8+"]  = [0, np.iinfo(np.uint8).max]
 bit_dict["INT-32"]  = [np.iinfo(np.int32).min, np.iinfo(np.int32).max]
 bit_dict["INT-16"]  = [np.iinfo(np.int16).min, np.iinfo(np.int16).max]
 bit_dict["INT-8"]  = [np.iinfo(np.int8).min, np.iinfo(np.int8).max]
@@ -32,7 +32,7 @@ class LUT:
             self.lut_name = lut_name
         
         if pixel_values is None:
-            self.bit_mode = "UINT-16"
+            self.bit_mode = "INT-16+"
             self.pixel_lower = bit_dict[self.bit_mode][0]
             self.pixel_upper = bit_dict[self.bit_mode][1]
         else:
@@ -42,6 +42,7 @@ class LUT:
             self.cutoff_lower = self.pixel_lower
             self.cutoff_upper = self.pixel_upper
 
+        self.init_bit_mode = self.bit_mode[:]
         self.cutoff_lower = self.pixel_lower
         self.cutoff_upper = self.pixel_upper
         self.bit_auto = bit_auto
@@ -53,14 +54,14 @@ class LUT:
 
         if pixel_values.dtype.kind == 'i' or pixel_values.dtype.kind == 'u':
             if min_value >= 0:
-                if max_value > np.iinfo(np.uint32).max:
+                if max_value > np.iinfo(np.int32).max:
                     self.bit_mode = "Float"
                 elif max_value > np.iinfo(np.uint16).max:
-                    self.bit_mode = "UINT-32"
+                    self.bit_mode = "INT-32+"
                 elif max_value > np.iinfo(np.uint8).max:
-                    self.bit_mode = "UINT-16"
+                    self.bit_mode = "INT-16+"
                 else:
-                    self.bit_mode = "UINT-8"
+                    self.bit_mode = "INT-8+"
             else:
                 if max_value > np.iinfo(np.int32).max or min_value < np.iinfo(np.int32).min:
                     self.bit_mode = "Float"
@@ -81,6 +82,9 @@ class LUT:
         upper_limit = min(self.pixel_upper, bit_dict[self.bit_mode][1])
 
         return [lower_limit, upper_limit]
+
+    def reset_bits (self):
+        self.bit_mode = self.init_bit_mode[:]
 
     def apply_lut_float (self, image):
         image = image.astype(float)
