@@ -51,8 +51,11 @@ class Stack:
             if keep_color:
                 self.axes = 'TZCYXS'
                 self.colored = True
+                self.s_count = self.image_array.shape[5]
             else:
-                self.image_array = np.average(self.image_array, axis = -1)
+                image_list = [self.image_array[..., index] for index in range(self.image_array.shape[-1])]
+                self.image_array = np.stack(image_list, axis = 1)
+                self.c_count = self.image_array.shape[1]
                 self.colored = False
         else:
             self.axes = 'TCZYX'
