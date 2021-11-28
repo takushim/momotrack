@@ -83,8 +83,12 @@ class LUT:
 
         return [lower_limit, upper_limit]
 
-    def reset_bits (self):
+    def reset_bit_mode (self):
         self.bit_mode = self.init_bit_mode[:]
+
+    def reset_cutoff (self):
+        self.cutoff_lower = self.pixel_lower
+        self.cutoff_upper= self.pixel_upper
 
     def apply_lut_float (self, image):
         image = image.astype(float)

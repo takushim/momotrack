@@ -89,7 +89,6 @@ class MainWindow (QMainWindow):
             self.image_panel.init_widgets(self.image_stack)
             self.zoom_panel.zoom_reset()
             self.lut_panel.init_widgets(self.image_stack)
-            self.lut_panel.adjust_slider_values(self.image_stack.image_array[0, 0])
             self.update_image_view()
             self.update_window_title()
         except FileNotFoundError:
@@ -194,6 +193,7 @@ class MainWindow (QMainWindow):
         self.update_image_view()
 
     def slot_reset_lut (self):
+        self.lut_panel.reset_current_lut()
         self.update_image_view()
 
     def slot_zoomed_in (self):
