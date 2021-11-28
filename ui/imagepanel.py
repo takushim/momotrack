@@ -64,3 +64,7 @@ class ImagePanel:
         self.scene.addPixmap(QPixmap(qimage))
         self.update_status(stack)
 
+    def current_image (self, stack, channel = 0):
+        t_index = self.ui.slider_time.value()
+        z_index = self.ui.slider_zstack.value()
+        return stack.image_array[t_index, channel, z_index]

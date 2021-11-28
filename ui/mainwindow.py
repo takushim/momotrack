@@ -77,8 +77,8 @@ class MainWindow (QMainWindow):
         self.ui.check_invert_lut.stateChanged.connect(self.slot_lut_changed)
         self.ui.combo_lut.currentIndexChanged.connect(self.slot_lut_changed)
         self.ui.combo_bits.currentIndexChanged.connect(self.slot_bits_changed)
-        self.ui.check_auto_lut.stateChanged.connect(self.slot_lut_changed)
-        self.ui.dspin_auto_cutoff.valueChanged.connect(self.slot_lut_changed)
+        self.ui.check_auto_lut.stateChanged.connect(self.slot_auto_lut_changed)
+        self.ui.dspin_auto_cutoff.valueChanged.connect(self.slot_auto_lut_changed)
         self.ui.slider_cutoff_lower.valueChanged.connect(self.slot_lut_lower_changed)
         self.ui.slider_cutoff_upper.valueChanged.connect(self.slot_lut_upper_changed)
         self.ui.button_reset_lut.clicked.connect(self.slot_reset_lut)
@@ -191,6 +191,11 @@ class MainWindow (QMainWindow):
         self.lut_panel.adjust_slider_lower()
         self.lut_panel.update_current_lut()
         self.update_image_view()
+    
+    def slot_auto_lut_changed (self):
+        if self.lut_panel.is_auto_lut():
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+            self.update_image_view()
 
     def slot_reset_lut (self):
         self.lut_panel.reset_current_lut()

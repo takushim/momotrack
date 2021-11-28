@@ -2,6 +2,7 @@
 
 import sys
 import numpy as np
+from numpy.lib.function_base import percentile
 from image import lut
 
 class LutPanel:
@@ -73,6 +74,7 @@ class LutPanel:
         self.update_current_lut()
 
     def update_current_lut (self):
+        self.ui.check_auto_lut.setChecked(False)
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         current_lut.cutoff_lower = self.ui.slider_cutoff_lower.value()
         current_lut.cutoff_upper = self.ui.slider_cutoff_upper.value()
@@ -86,8 +88,20 @@ class LutPanel:
         current_lut.bit_auto = True
         current_lut.reset_bit_mode()
         current_lut.reset_cutoff()
+        self.ui.check_auto_lut.setChecked(False)
         self.update_channel_widgets()
         self.update_sliders()
+        self.update_labels()
+
+    def set_auto_cutoff (self, image):
+        current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
+        percent = self.ui.dspin_auto_cutoff.value()
+        current_lut.bit_auto = True
+        current_lut.cutoff_lower = np.percentile(image, percent)
+        current_lut.cutoff_upper = np.percentile(image, 100 - percent)
+        self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
+        self.ui.slider_cutoff_upper.setValue(current_lut.cutoff_upper)
+        self.ui.check_auto_lut.setChecked(True)
         self.update_labels()
 
     def update_current_bits (self):
@@ -132,3 +146,5 @@ class LutPanel:
     def is_composite (self):
         return self.ui.check_composite.isChecked()
     
+    def is_auto_lut (self):
+        return self.ui.check_auto_lut.isChecked()
