@@ -124,8 +124,11 @@ class MainWindow (QMainWindow):
         dialog.setNameFilters(["Images (*.tiff *.tif *.stk)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
         dialog.exec()
+
         # open image here
-        print(dialog.selectedFiles())
+        image_filename = dialog.selectedFiles()[0]
+        new_window = MainWindow(image_filename = image_filename)
+        new_window.show()
 
     def slot_load_tracks (self):
         dialog = QFileDialog(self)
