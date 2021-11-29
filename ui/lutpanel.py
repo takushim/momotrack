@@ -2,7 +2,8 @@
 
 import sys
 import numpy as np
-from numpy.lib.function_base import percentile
+from PySide6.QtWidgets import QGraphicsScene
+from PySide6.QtGui import QColor
 from image import lut
 
 class LutPanel:
@@ -38,6 +39,10 @@ class LutPanel:
         self.update_sliders()
         self.update_labels()
 
+        self.scene_lut = QGraphicsScene()
+        self.scene_lut.setBackgroundBrush(QColor('white'))
+        self.ui.gview_lut.setScene(self.scene_lut)
+
     def update_sliders (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         bit_range = current_lut.bit_range()
@@ -55,15 +60,15 @@ class LutPanel:
         bit_range = current_lut.bit_range()
 
         if current_lut.bit_mode == "Float":
-            self.ui.label_cutoff_lower.setText("{0:e}".format(bit_range[0]))
-            self.ui.label_cutoff_upper.setText("{0:e}".format(bit_range[1]))
-            self.ui.label_slider_lower.setText("Lower limit: {0:e}".format(current_lut.cutoff_lower))
-            self.ui.label_slider_upper.setText("Upper limit: {0:e}".format(current_lut.cutoff_upper))
+            self.ui.label_cutoff_lower.setText("{0:.2e}".format(bit_range[0]))
+            self.ui.label_cutoff_upper.setText("{0:.2e}".format(bit_range[1]))
+            self.ui.label_slider_lower.setText("Lower limit: {0:.2e}".format(current_lut.cutoff_lower))
+            self.ui.label_slider_upper.setText("Upper limit: {0:.2e}".format(current_lut.cutoff_upper))
         else:
-            self.ui.label_cutoff_lower.setText(str(bit_range[0]))
-            self.ui.label_cutoff_upper.setText(str(bit_range[1]))
-            self.ui.label_slider_lower.setText("Lower limit: {0}".format(current_lut.cutoff_lower))
-            self.ui.label_slider_upper.setText("Upper limit: {0}".format(current_lut.cutoff_upper))
+            self.ui.label_cutoff_lower.setText("{0:d}".format(bit_range[0]))
+            self.ui.label_cutoff_upper.setText("{0:d}".format(bit_range[1]))
+            self.ui.label_slider_lower.setText("Lower limit: {0:d}".format(current_lut.cutoff_lower))
+            self.ui.label_slider_upper.setText("Upper limit: {0:d}".format(current_lut.cutoff_upper))
 
     def adjust_slider_lower (self):
         self.ui.slider_cutoff_lower.setValue(min(self.ui.slider_cutoff_upper.value(), self.ui.slider_cutoff_lower.value()))
@@ -80,7 +85,7 @@ class LutPanel:
         current_lut.cutoff_upper = self.ui.slider_cutoff_upper.value()
         current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
         current_lut.lut_name = self.ui.combo_lut.currentText()
-        current_lut.bit_auto = (self.ui.combo_bits == "Auto")
+        current_lut.bit_auto = (self.ui.combo_bits.currentText() == "Auto")
         self.update_labels()
 
     def reset_current_lut (self):
@@ -138,8 +143,27 @@ class LutPanel:
         self.update_sliders()
         self.update_labels()
 
-    def update_lut_view (self, image_lut, pixel_values = None):
-        image_lut = self.lut_list[self.ui.combo_lut.currentIndex()]
+    def update_lut_view (self, image):
+        current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
+        bit_range = current_lut.bit_range()
+
+        width = self.ui.gview_lut.width()
+        height = self.ui.gview_lut.height()
+        self.scene_lut.clear()
+        self.scene_lut.setSceneRect(0, 0, width, height)
+
+        hists, bins = np.histogram(image, bins = int(width), range = current_lut.bit_range())
+        max_hist = np.max(hists)
+        for index, hist in enumerate(hists):
+            x = width * (bins[index] - np.min(bins)) / np.ptp(bins)
+            y_bottom = height
+            y_top = height * (1 - float(hist) / max_hist)
+            self.scene_lut.addLine(x, y_bottom, x, y_top, QColor('gray'))
+        
+        x_lower = width * (current_lut.cutoff_lower - bit_range[0]) / (bit_range[1] - bit_range[0])
+        x_upper = width * (current_lut.cutoff_upper - bit_range[0]) / (bit_range[1] - bit_range[0])
+        self.scene_lut.addLine(x_upper, 0, x_upper, height, QColor('black'))
+        self.scene_lut.addLine(x_lower, height, x_upper, 0)
 
     def current_channel (self):
         return self.ui.combo_channel.currentIndex()

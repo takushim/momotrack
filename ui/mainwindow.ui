@@ -66,6 +66,9 @@
           <property name="autoFillBackground">
            <bool>false</bool>
           </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
           <property name="sizeAdjustPolicy">
            <enum>QAbstractScrollArea::AdjustToContents</enum>
           </property>
@@ -418,15 +421,15 @@
         <item>
          <widget class="QGraphicsView" name="gview_lut">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="minimumSize">
            <size>
-            <width>120</width>
-            <height>160</height>
+            <width>160</width>
+            <height>120</height>
            </size>
           </property>
           <property name="baseSize">

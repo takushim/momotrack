@@ -108,6 +108,7 @@ class MainWindow (QMainWindow):
         self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
                                             channel = self.lut_panel.current_channel(), composite = self.lut_panel.is_composite(), \
                                             color_always = self.lut_panel.color_always(), zoom_ratio = self.zoom_panel.zoom_ratio)
+        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
 
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
@@ -233,6 +234,9 @@ class MainWindow (QMainWindow):
 
     def slot_slideshow_timeout (self):
         self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
+
+    def showEvent (self, event):
+        self.update_image_view()
 
     def closeEvent (self, event):
         if self.track_modified:

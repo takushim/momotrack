@@ -9,6 +9,7 @@ class ImagePanel:
     def __init__ (self, ui):
         self.ui = ui
         self.scene = QGraphicsScene()
+        self.scene.setBackgroundBrush(self.ui.palette().window())
         self.ui.gview_image.setScene(self.scene)
 
     def init_widgets (self, stack = None):
