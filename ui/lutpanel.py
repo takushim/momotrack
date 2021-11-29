@@ -47,13 +47,13 @@ class LutPanel:
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         bit_range = current_lut.bit_range()
 
-        self.ui.slider_cutoff_lower.setMinimum(bit_range[0])
-        self.ui.slider_cutoff_lower.setMaximum(bit_range[1])
         self.ui.slider_cutoff_upper.setMinimum(bit_range[0])
         self.ui.slider_cutoff_upper.setMaximum(bit_range[1])
+        self.ui.slider_cutoff_lower.setMinimum(bit_range[0])
+        self.ui.slider_cutoff_lower.setMaximum(bit_range[1])
 
-        self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
         self.ui.slider_cutoff_upper.setValue(current_lut.cutoff_upper)
+        self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
 
     def update_labels (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
@@ -104,8 +104,8 @@ class LutPanel:
         current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
         current_lut.lut_name = self.ui.combo_lut.currentText()
 
-        self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
         self.ui.slider_cutoff_upper.setValue(current_lut.cutoff_upper)
+        self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
 
         self.ui.check_auto_lut.setChecked(True)
         self.update_labels()
