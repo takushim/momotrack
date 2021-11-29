@@ -10,20 +10,20 @@ from ui import imagepanel, zoompanel, lutpanel
 from image import stack
 
 class MainWindow (QMainWindow):
-    def __init__ (self, image_filename = None, track_filename = None):
+    def __init__ (self, image_filename = None, record_filename = None):
         super().__init__()
         self.app_name = "PyTrace"
 
         self.image_filename = image_filename
-        self.track_filename = track_filename
-        self.track_modified = False
+        self.record_filename = record_filename
+        self.record_modified = False
 
         self.load_ui()
 
         if self.image_filename is not None:
             self.load_image()
-        if self.track_filename is not None:
-            self.load_tracks()
+        if self.record_modified is not None:
+            self.load_records()
 
         self.connect_menubar_to_slots()
         self.connect_signals_to_slots()
@@ -43,11 +43,11 @@ class MainWindow (QMainWindow):
         self.play_timer.setInterval(100)
 
     def connect_menubar_to_slots (self):
-        self.ui.action_exit.triggered.connect(self.close)
+        self.ui.action_quit.triggered.connect(self.close)
         self.ui.action_open_image.triggered.connect(self.slot_open_image)
-        self.ui.action_load_tracks.triggered.connect(self.slot_load_tracks)
-        self.ui.action_save_tracks.triggered.connect(self.slot_save_tracks)
-        self.ui.action_save_tracks_as.triggered.connect(self.slot_save_tracks_as)
+        self.ui.action_load_records.triggered.connect(self.slot_load_records)
+        self.ui.action_save_records.triggered.connect(self.slot_save_records)
+        self.ui.action_save_records_as.triggered.connect(self.slot_save_records_as)
         self.ui.action_zoom_in.triggered.connect(self.slot_zoomed_in)
         self.ui.action_zoom_out.triggered.connect(self.slot_zoomed_out)
         self.ui.action_zoom_reset.triggered.connect(self.slot_zoom_reset)
@@ -56,7 +56,7 @@ class MainWindow (QMainWindow):
 
     def connect_signals_to_slots (self):
         # scene
-        self.image_panel.scene.mousePressEvent = self.slot_mouse_clicked
+        self.image_panel.scene.mousePressEvent = self.slot_scene_mouse_clicked
 
         # time and zstack
         self.ui.slider_time.valueChanged.connect(self.slot_image_index_changed)
@@ -94,12 +94,12 @@ class MainWindow (QMainWindow):
         except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
-    def load_tracks (self):
+    def load_records (self):
         pass
 
-    def save_tracks (self):
+    def save_records (self):
         ## save here
-        self.track_modified = False
+        self.records_modified = False
 
     def update_window_title (self):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
@@ -130,9 +130,9 @@ class MainWindow (QMainWindow):
         new_window = MainWindow(image_filename = image_filename)
         new_window.show()
 
-    def slot_load_tracks (self):
+    def slot_load_records (self):
         dialog = QFileDialog(self)
-        dialog.setWindowTitle("Select a tracking record to load.")
+        dialog.setWindowTitle("Select a record to load.")
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
@@ -140,22 +140,22 @@ class MainWindow (QMainWindow):
         # load image here
         print(dialog.selectedFiles())
 
-    def slot_save_tracks (self):
-        if self.track_filename is None:
-            self.slot_save_tracks_as()
+    def slot_save_records (self):
+        if self.records_filename is None:
+            self.slot_save_records_as()
         else:
-            self.save_tracks()
+            self.save_records()
 
-    def slot_save_tracks_as (self):
+    def slot_save_records_as (self):
         dialog = QFileDialog(self)
-        dialog.setWindowTitle("Select a filename to save the tracking record.")
+        dialog.setWindowTitle("Select a filename to save records.")
         dialog.setFileMode(QFileDialog.AnyFile)
         dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
         result = dialog.exec()
         if result == QFileDialog.Save:
             print(dialog.selectedFiles())
-            self.save_tracks()
+            self.save_records()
 
     def slot_quick_help (self):
         self.show_message(title = "Quick help", message = "Currently nothing to show...")
@@ -165,7 +165,7 @@ class MainWindow (QMainWindow):
                           message = "Object tracking system for time-lapse 2D/3D images.\n" +
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
 
-    def slot_mouse_clicked (self, event):
+    def slot_scene_mouse_clicked (self, event):
         print(event.scenePos())
 
     def slot_image_index_changed (self):
@@ -239,10 +239,10 @@ class MainWindow (QMainWindow):
         self.update_image_view()
 
     def closeEvent (self, event):
-        if self.track_modified:
+        if self.record_modified:
             mbox = QMessageBox()
-            mbox.setWindowTitle("Save Track?")
-            mbox.setText("Tracking record modified. Save?")
+            mbox.setWindowTitle("Save Records?")
+            mbox.setText("Record modified. Save?")
             mbox.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
             mbox.setDefaultButton(QMessageBox.Cancel)
             result = mbox.exec()
@@ -251,10 +251,10 @@ class MainWindow (QMainWindow):
             elif result == QMessageBox.Discard:
                 event.accept()
             else:
-                if self.track_filename is None:
-                    self.slot_save_tracks_as()
+                if self.record_filename is None:
+                    self.slot_save_records_as()
                 else:
-                    self.slot_save_tracks()
-                if self.track_modified:
+                    self.slot_save_records()
+                if self.record_modified:
                     event.ignore()
 
