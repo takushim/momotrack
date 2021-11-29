@@ -129,7 +129,12 @@ class LutPanel:
             self.ui.combo_lut.setEnabled(True)
         else:
             self.ui.combo_lut.setEnabled(False)
-        
+
+        if self.ui.check_composite.isChecked():
+            self.ui.check_color_always.setEnabled(False)
+        else:
+            self.ui.check_color_always.setEnabled(True)
+
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         self.ui.combo_lut.setCurrentText(current_lut.lut_name)
         if current_lut.bit_auto:
