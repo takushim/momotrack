@@ -17,11 +17,17 @@ lut_names = list(lut_dict.keys())
 bit_dict = {}
 bit_dict["Float"]    = [sys.float_info.min, sys.float_info.max]
 bit_dict["INT-32+"]  = [0, np.iinfo(np.int32).max]
-bit_dict["INT-16+"]  = [0, np.iinfo(np.uint16).max]
-bit_dict["INT-8+"]  = [0, np.iinfo(np.uint8).max]
-bit_dict["INT-32"]  = [np.iinfo(np.int32).min, np.iinfo(np.int32).max]
-bit_dict["INT-16"]  = [np.iinfo(np.int16).min, np.iinfo(np.int16).max]
-bit_dict["INT-8"]  = [np.iinfo(np.int8).min, np.iinfo(np.int8).max]
+bit_dict["UINT-16"]  = [0, np.iinfo(np.uint16).max]
+bit_dict["UINT-14"]  = [0, 0x3FFF]
+bit_dict["UINT-12"]  = [0, 0xFFF]
+bit_dict["UINT-10"]  = [0, 0x3FF]
+bit_dict["UINT-8"]   = [0, np.iinfo(np.uint8).max]
+bit_dict["INT-32"]   = [np.iinfo(np.int32).min, np.iinfo(np.int32).max]
+bit_dict["INT-16"]   = [np.iinfo(np.int16).min, np.iinfo(np.int16).max]
+bit_dict["INT-14"]   = [-0x4000, 0x3FFF]
+bit_dict["INT-12"]   = [-0x1000, 0xFFF]
+bit_dict["INT-10"]   = [-0x400, 0x3FF]
+bit_dict["INT-8"]    = [np.iinfo(np.int8).min, np.iinfo(np.int8).max]
 bit_names = list(bit_dict.keys())
 
 class LUT:
@@ -32,7 +38,7 @@ class LUT:
             self.lut_name = lut_name
         
         if pixel_values is None:
-            self.bit_mode = "INT-16+"
+            self.bit_mode = "UINT-16"
             self.pixel_lower = bit_dict[self.bit_mode][0]
             self.pixel_upper = bit_dict[self.bit_mode][1]
         else:
@@ -53,24 +59,17 @@ class LUT:
         min_value = pixel_values.min()
 
         if pixel_values.dtype.kind == 'i' or pixel_values.dtype.kind == 'u':
-            if min_value >= 0:
-                if max_value > np.iinfo(np.int32).max:
-                    self.bit_mode = "Float"
-                elif max_value > np.iinfo(np.uint16).max:
-                    self.bit_mode = "INT-32+"
-                elif max_value > np.iinfo(np.uint8).max:
-                    self.bit_mode = "INT-16+"
-                else:
-                    self.bit_mode = "INT-8+"
+            if min_value < 0:
+                cand_dict = {name: bit_range for name, bit_range in bit_dict.items() if bit_range[0] < 0}
             else:
-                if max_value > np.iinfo(np.int32).max or min_value < np.iinfo(np.int32).min:
-                    self.bit_mode = "Float"
-                elif max_value > np.iinfo(np.int16).max or min_value < np.iinfo(np.int16).min:
-                    self.bit_mode = "INT-32"
-                elif max_value > np.iinfo(np.int8).max or min_value < np.iinfo(np.int8).min:
-                    self.bit_mode = "INT-16"
+                cand_dict = {name: bit_range for name, bit_range in bit_dict.items() if bit_range[0] >= 0}
+
+            self.bit_mode = "Float"
+            for name, bit_range in cand_dict.items():
+                if max_value > bit_range[1]:
+                    break
                 else:
-                    self.bit_mode = "INT-8"
+                    self.bit_mode = name
         else:
             self.bit_mode = "Float"
 
