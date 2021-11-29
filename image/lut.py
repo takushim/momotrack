@@ -89,6 +89,15 @@ class LUT:
         self.cutoff_lower = self.pixel_lower
         self.cutoff_upper= self.pixel_upper
 
+    def set_auto_cutoff(self, pixel_value, percentile):
+        self.bit_auto = True
+        if self.bit_mode == "Float":
+            self.cutoff_lower = np.percentile(pixel_value, percentile)
+            self.cutoff_upper = np.percentile(pixel_value, 100 - percentile)
+        else:
+            self.cutoff_lower = int(np.percentile(pixel_value, percentile))
+            self.cutoff_upper = int(np.percentile(pixel_value, 100 - percentile))
+
     def apply_lut_float (self, image):
         image = image.astype(float)
 

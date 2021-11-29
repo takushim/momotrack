@@ -100,10 +100,7 @@ class LutPanel:
 
     def set_auto_cutoff (self, image):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
-        percent = self.ui.dspin_auto_cutoff.value()
-        current_lut.bit_auto = True
-        current_lut.cutoff_lower = np.percentile(image, percent)
-        current_lut.cutoff_upper = np.percentile(image, 100 - percent)
+        current_lut.set_auto_cutoff(image, self.ui.dspin_auto_cutoff.value())
         current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
         current_lut.lut_name = self.ui.combo_lut.currentText()
 
