@@ -4,7 +4,7 @@ import sys
 import numpy as np
 from pathlib import Path
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
-from PySide6.QtCore import QFile, QTimer
+from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel
 from image import stack
@@ -57,6 +57,8 @@ class MainWindow (QMainWindow):
     def connect_signals_to_slots (self):
         # scene
         self.image_panel.scene.mousePressEvent = self.slot_scene_mouse_clicked
+        self.image_panel.scene.keyPressEvent = self.slot_scene_key_pressed
+        self.image_panel.scene.keyReleaseEvent = self.slot_scene_key_released
 
         # time and zstack
         self.ui.slider_time.valueChanged.connect(self.slot_image_index_changed)
@@ -167,6 +169,12 @@ class MainWindow (QMainWindow):
 
     def slot_scene_mouse_clicked (self, event):
         print(event.scenePos())
+
+    def slot_scene_key_pressed (self, event):
+        self.ui.gview_image.setCursor(Qt.CrossCursor)
+
+    def slot_scene_key_released (self, event):
+        self.ui.gview_image.setCursor(Qt.ArrowCursor)
 
     def slot_image_index_changed (self):
         if self.lut_panel.is_auto_lut():
