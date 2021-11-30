@@ -14,6 +14,7 @@ class MainWindow (QMainWindow):
         super().__init__()
         self.app_name = "PyTrace"
 
+        self.image_stack = None
         self.image_filename = image_filename
         self.record_filename = record_filename
         self.record_modified = False
@@ -107,10 +108,11 @@ class MainWindow (QMainWindow):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
 
     def update_image_view (self):
-        self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
-                                            channel = self.lut_panel.current_channel(), composite = self.lut_panel.is_composite(), \
-                                            color_always = self.lut_panel.color_always(), zoom_ratio = self.zoom_panel.zoom_ratio)
-        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+        if self.image_stack is not None:
+            self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
+                                                channel = self.lut_panel.current_channel(), composite = self.lut_panel.is_composite(), \
+                                                color_always = self.lut_panel.color_always(), zoom_ratio = self.zoom_panel.zoom_ratio)
+            self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
 
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
@@ -128,9 +130,13 @@ class MainWindow (QMainWindow):
         dialog.exec()
 
         # open image here
-        image_filename = dialog.selectedFiles()[0]
-        new_window = MainWindow(image_filename = image_filename)
-        new_window.show()
+        if self.image_stack is None:
+            self.image_filename = dialog.selectedFiles()[0]
+            self.load_image()
+        else:
+            image_filename = dialog.selectedFiles()[0]
+            new_window = MainWindow(image_filename = image_filename)
+            new_window.show()
 
     def slot_load_records (self):
         dialog = QFileDialog(self)
@@ -241,7 +247,8 @@ class MainWindow (QMainWindow):
         self.play_timer.setInterval(1000 / self.ui.spin_fps.value())
 
     def slot_slideshow_timeout (self):
-        self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
+        if self.image_stack is not None:
+            self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
 
     def showEvent (self, event):
         self.update_image_view()

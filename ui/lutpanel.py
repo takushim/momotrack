@@ -16,8 +16,9 @@ class LutPanel:
     def init_widgets (self, stack = None):
         self.lut_list = []
         self.ui.combo_lut.setEnabled(True)
-        self.ui.combo_channel.clear()
 
+        self.ui.combo_channel.blockSignals(True)
+        self.ui.combo_channel.clear()
         if stack is not None:
             for channel in range(stack.c_count):
                 lut_name = lut.lut_names[channel % len(lut.lut_names)]
@@ -27,6 +28,8 @@ class LutPanel:
         else:
             self.lut_list.append(lut.LUT())
             self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(1)])
+
+        self.ui.combo_channel.blockSignals(False)
 
         self.ui.combo_lut.setCurrentIndex(0)
         self.ui.combo_lut.setEnabled(self.ui.check_color_always.isChecked())
@@ -125,6 +128,7 @@ class LutPanel:
         self.update_labels()
 
     def update_channel_widgets (self):
+
         if self.ui.check_composite.isChecked() or self.ui.check_color_always.isChecked():
             self.ui.combo_lut.setEnabled(True)
         else:
