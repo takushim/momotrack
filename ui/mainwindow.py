@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 from pathlib import Path
+from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
@@ -13,6 +14,7 @@ class MainWindow (QMainWindow):
     def __init__ (self, image_filename = None, record_filename = None):
         super().__init__()
         self.app_name = "PyTrace"
+        self.setWindowTitle(self.app_name)
 
         self.image_stack = None
         self.image_filename = image_filename
@@ -20,6 +22,7 @@ class MainWindow (QMainWindow):
         self.record_modified = False
 
         self.load_ui()
+        self.load_plugins()
 
         if self.image_filename is not None:
             self.load_image()
@@ -43,6 +46,22 @@ class MainWindow (QMainWindow):
         self.play_timer = QTimer(self)
         self.play_timer.setInterval(100)
 
+    def load_plugins (self):
+        package_name = "plugin"
+        self.plugins = []
+        load_failed = []
+        for module_file in Path(package_name).iterdir():
+            if module_file.name.startswith("_"):
+                continue
+            try:
+                module = import_module(name = '{0}.{1}'.format(package_name, str(module_file.stem)))
+                self.plugins.append(module)
+            except ImportError:
+                load_failed.append(str(module_file.stem))
+
+        if len(load_failed) > 0:
+            self.show_message("Plugin error", "Failed to load: {0}".format(', '.join(load_failed)))
+        
     def connect_menubar_to_slots (self):
         self.ui.action_quit.triggered.connect(self.close)
         self.ui.action_open_image.triggered.connect(self.slot_open_image)

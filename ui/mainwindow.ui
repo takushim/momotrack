@@ -706,7 +706,7 @@
     </property>
     <property name="minimumSize">
      <size>
-      <width>300</width>
+      <width>0</width>
       <height>0</height>
      </size>
     </property>
@@ -732,7 +732,7 @@
     </property>
     <property name="minimumSize">
      <size>
-      <width>300</width>
+      <width>0</width>
       <height>0</height>
      </size>
     </property>
@@ -755,7 +755,7 @@
     </property>
     <property name="minimumSize">
      <size>
-      <width>300</width>
+      <width>0</width>
       <height>0</height>
      </size>
     </property>
@@ -768,8 +768,14 @@
     <addaction name="action_quick_help"/>
     <addaction name="action_about_this"/>
    </widget>
+   <widget class="QMenu" name="menu_plugin">
+    <property name="title">
+     <string>&amp;Plugin</string>
+    </property>
+   </widget>
    <addaction name="menu_file"/>
    <addaction name="menu_view"/>
+   <addaction name="menu_plugin"/>
    <addaction name="menu_help"/>
   </widget>
   <action name="action_open_image">
