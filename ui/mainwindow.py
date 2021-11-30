@@ -50,7 +50,7 @@ class MainWindow (QMainWindow):
 
     def load_plugins (self):
         package_name = "plugin"
-        self.plugins = []
+        self.plugin_list = []
         load_failed = []
 
         self.actgroup_plugin = QActionGroup(self.ui.menu_plugin)
@@ -59,17 +59,17 @@ class MainWindow (QMainWindow):
                 continue
             try:
                 module = import_module(name = '{0}.{1}'.format(package_name, str(module_file.stem)))
-                self.plugins.append(module)
+                self.plugin_list.append(module)
             except ImportError:
                 load_failed.append(str(module_file.stem))
 
-        self.plugins = sorted(self.plugins, key = lambda x: x.priority)
-        for plugin in self.plugins:
-            action = QAction(plugin.plugin_name, self.ui.menu_plugin, checkable = True, checked = (plugin is self.plugins[0]))
+        self.plugin_list = sorted(self.plugin_list, key = lambda x: x.priority)
+        for plugin in self.plugin_list:
+            action = QAction(plugin.plugin_name, self.ui.menu_plugin, checkable = True, checked = (plugin is self.plugin_list[0]))
             self.ui.menu_plugin.addAction(action)
             self.actgroup_plugin.addAction(action)
         self.actgroup_plugin.setExclusive(True)
-        self.switch_plugin(self.plugins[0].plugin_name)
+        self.switch_plugin(self.plugin_list[0].plugin_name)
 
         if len(load_failed) > 0:
             self.show_message("Plugin error", "Failed to load: {0}".format(', '.join(load_failed)))
@@ -138,8 +138,34 @@ class MainWindow (QMainWindow):
         ## save here
         self.records_modified = False
 
+    def save_records_as (self):
+        ## save here
+        self.records_modified = False
+
+    def clear_modified_flag (self):
+        if self.record_modified:
+            mbox = QMessageBox()
+            mbox.setWindowTitle("Save Records?")
+            mbox.setText("Record modified. Save?")
+            mbox.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            mbox.setDefaultButton(QMessageBox.Cancel)
+            result = mbox.exec()
+            if result == QMessageBox.Cancel:
+                return False
+            elif result == QMessageBox.Discard:
+                self.record_modified = False
+                return True
+            else:
+                self.save_records()
+                if self.record_modified:
+                    return False
+        return True
+
     def switch_plugin (self, name):
-        self.plugin_panel.update_title(name)
+        module = next((x for x in self.plugin_list if x.plugin_name == name), None)
+        if module is not None and self.clear_modified_flag():
+            self.plugin_module = module
+            self.plugin_panel.update_title(name)
 
     def update_window_title (self):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
@@ -294,22 +320,8 @@ class MainWindow (QMainWindow):
         self.update_image_view()
 
     def closeEvent (self, event):
-        if self.record_modified:
-            mbox = QMessageBox()
-            mbox.setWindowTitle("Save Records?")
-            mbox.setText("Record modified. Save?")
-            mbox.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-            mbox.setDefaultButton(QMessageBox.Cancel)
-            result = mbox.exec()
-            if result == QMessageBox.Cancel:
-                event.ignore()
-            elif result == QMessageBox.Discard:
-                event.accept()
-            else:
-                if self.record_filename is None:
-                    self.slot_save_records_as()
-                else:
-                    self.slot_save_records()
-                if self.record_modified:
-                    event.ignore()
+        if self.clear_modified_flag():
+            event.accept()
+        else:
+            event.rgnore()
 
