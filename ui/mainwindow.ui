@@ -826,7 +826,7 @@
     <string>Zoom &amp;In</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+Shift+=</string>
+    <string>Ctrl++</string>
    </property>
   </action>
   <action name="action_zoom_out">

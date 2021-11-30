@@ -5,6 +5,7 @@ import numpy as np
 from pathlib import Path
 
 plugin_name = 'Particle Tracking'
+priority = 10
 record_suffix = '_track.json'
 
 def with_suffix (filename, suffix = record_suffix):

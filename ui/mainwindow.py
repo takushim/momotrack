@@ -5,9 +5,10 @@ import numpy as np
 from pathlib import Path
 from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
+from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
-from ui import imagepanel, zoompanel, lutpanel
+from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
 class MainWindow (QMainWindow):
@@ -43,6 +44,7 @@ class MainWindow (QMainWindow):
         self.lut_panel = lutpanel.LutPanel(self.ui)
         self.zoom_panel = zoompanel.ZoomPanel(self.ui)
         self.image_panel = imagepanel.ImagePanel(self.ui)
+        self.plugin_panel = pluginpanel.PluginPanel(self.ui)
         self.play_timer = QTimer(self)
         self.play_timer.setInterval(100)
 
@@ -50,6 +52,8 @@ class MainWindow (QMainWindow):
         package_name = "plugin"
         self.plugins = []
         load_failed = []
+
+        self.actgroup_plugin = QActionGroup(self.ui.menu_plugin)
         for module_file in Path(package_name).iterdir():
             if module_file.name.startswith("_"):
                 continue
@@ -59,9 +63,17 @@ class MainWindow (QMainWindow):
             except ImportError:
                 load_failed.append(str(module_file.stem))
 
+        self.plugins = sorted(self.plugins, key = lambda x: x.priority)
+        for plugin in self.plugins:
+            action = QAction(plugin.plugin_name, self.ui.menu_plugin, checkable = True, checked = (plugin is self.plugins[0]))
+            self.ui.menu_plugin.addAction(action)
+            self.actgroup_plugin.addAction(action)
+        self.actgroup_plugin.setExclusive(True)
+        self.switch_plugin(self.plugins[0].plugin_name)
+
         if len(load_failed) > 0:
             self.show_message("Plugin error", "Failed to load: {0}".format(', '.join(load_failed)))
-        
+
     def connect_menubar_to_slots (self):
         self.ui.action_quit.triggered.connect(self.close)
         self.ui.action_open_image.triggered.connect(self.slot_open_image)
@@ -105,6 +117,9 @@ class MainWindow (QMainWindow):
         self.ui.slider_cutoff_upper.valueChanged.connect(self.slot_lut_upper_changed)
         self.ui.button_reset_lut.clicked.connect(self.slot_reset_lut)
 
+        # plugin
+        self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
+
     def load_image (self):
         try:
             self.image_stack = stack.Stack(self.image_filename)
@@ -122,6 +137,9 @@ class MainWindow (QMainWindow):
     def save_records (self):
         ## save here
         self.records_modified = False
+
+    def switch_plugin (self, name):
+        self.plugin_panel.update_title(name)
 
     def update_window_title (self):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
@@ -268,6 +286,9 @@ class MainWindow (QMainWindow):
     def slot_slideshow_timeout (self):
         if self.image_stack is not None:
             self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
+
+    def slot_switch_plugin (self, action):
+        self.switch_plugin(action.text())
 
     def showEvent (self, event):
         self.update_image_view()
