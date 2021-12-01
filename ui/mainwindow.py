@@ -34,7 +34,7 @@ class MainWindow (QMainWindow):
         self.connect_signals_to_slots()
 
     def load_ui (self):
-        file = QFile("ui/mainwindow.ui")
+        file = QFile(str(Path(__file__).parent.joinpath("mainwindow.ui")))
         file.open(QFile.ReadOnly)
         loader = QUiLoader()
         self.ui = loader.load(file)
@@ -50,11 +50,12 @@ class MainWindow (QMainWindow):
 
     def load_plugins (self):
         package_name = "plugin"
+        plugin_folder = str(Path(__file__).parent.parent.joinpath(package_name))
         self.plugin_list = []
         load_failed = []
 
         self.actgroup_plugin = QActionGroup(self.ui.menu_plugin)
-        for module_file in Path(package_name).iterdir():
+        for module_file in Path(plugin_folder).iterdir():
             if module_file.name.startswith("_"):
                 continue
             try:
