@@ -49,6 +49,9 @@ class LutPanel:
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         bit_range = current_lut.bit_range()
 
+        self.ui.slider_cutoff_upper.blockSignals(True)
+        self.ui.slider_cutoff_lower.blockSignals(True)
+
         self.ui.slider_cutoff_upper.setMinimum(bit_range[0])
         self.ui.slider_cutoff_upper.setMaximum(bit_range[1])
         self.ui.slider_cutoff_lower.setMinimum(bit_range[0])
@@ -56,6 +59,9 @@ class LutPanel:
 
         self.ui.slider_cutoff_upper.setValue(current_lut.cutoff_upper)
         self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
+
+        self.ui.slider_cutoff_upper.blockSignals(False)
+        self.ui.slider_cutoff_lower.blockSignals(False)
 
     def update_labels (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
