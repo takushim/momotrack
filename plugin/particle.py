@@ -2,6 +2,7 @@
 
 import sys
 import numpy as np
+import pandas as pd
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QTextEdit, QGraphicsEllipseItem
 from PySide6.QtGui import QPen
@@ -16,11 +17,13 @@ class SPT (PluginBase):
     def __init__ (self):
         super().__init__()
         self.spot_list = []
+        self.spot_radius = 2
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
         self.check_hide_tracks = QCheckBox("Hide All Tracks")
         self.text_message = QTextEdit()
+        self.text_message.setText("Ctrl + click to start tracking.")
         self.vlayout.addWidget(self.check_hide_tracks)
         self.vlayout.addWidget(self.text_message)
 
@@ -49,5 +52,14 @@ class SPT (PluginBase):
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
 
     def mouse_clicked (self, event):
-        print("MOUSE")
+        if event.modifiers() == Qt.CTRL:
+            self.add_spot(event.scenePos(), parent = None)
+        else:
+            print(event)
+            self.select_spot(event.scenePos())
 
+    def add_spot (self, pos, parent = None):
+        print(pos)
+    
+    def select_spot (self, pos):
+        print(pos)

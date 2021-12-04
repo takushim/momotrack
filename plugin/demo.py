@@ -47,3 +47,6 @@ class Demo (PluginBase):
     def key_released (self, event):
         if event.key() == Qt.Key_Control:
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
+
+    def mouse_clicked (self, event):
+        self.text_message.setText("Mouse clicked: ({0}, {1})".format(event.scenePos().x(), event.scenePos().y()))
