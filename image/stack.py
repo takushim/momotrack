@@ -11,17 +11,19 @@ class Stack:
     def __init__ (self, filename = None, keep_color = False):
         self.pixels_um = pixels_um
         self.z_step_um = z_step_um
-        self.z_count = 0
-        self.t_count = 0
-        self.c_count = 0
-        self.height = 0
-        self.width = 0
-        self.axes = None
-        self.colored = False
         self.filename = filename
-        self.image_array = None
 
-        if self.filename is not None:
+        if self.filename is None:
+            self.z_count = 1
+            self.t_count = 1
+            self.c_count = 1
+            self.height = 256
+            self.width = 256
+            self.axes = 'TCZYX'
+            self.colored = False
+            self.filename = None
+            self.image_array = np.zeros((self.t_count, self.c_count, self.z_count, self.height, self.width), dtype = np.uint16)
+        else:
             self.read_image(keep_color = keep_color)
 
     def read_image (self, keep_color = False):

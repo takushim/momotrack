@@ -2,12 +2,23 @@
 
 import sys
 import numpy as np
+from PySide6.QtWidgets import QSizePolicy
 
 class PluginPanel:
     def __init__ (self, ui):
         self.ui = ui
-        self.zoom_ratio = 100
+        self.module = None
 
     def update_title (self, name):
         self.ui.label_plugin.setText("Plugin: {0}".format(name))
 
+    def update_widgets (self, plugin_class):
+        for index in reversed(range(self.ui.vlayout_plugin.count())):
+            self.ui.vlayout_plugin.itemAt(index).widget().deleteLater()
+
+        self.plugin_class = plugin_class
+        self.plugin_class.init_widgets(self.ui.vlayout_plugin)
+        self.plugin_class.connect_signals()
+
+        for index in range(self.ui.vlayout_plugin.count()):
+            self.ui.vlayout_plugin.itemAt(index).widget().setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)

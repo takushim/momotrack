@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import sys, re
 import numpy as np
 from pathlib import Path
 from importlib import import_module
@@ -17,13 +17,16 @@ class MainWindow (QMainWindow):
         self.app_name = "PyTrace"
         self.setWindowTitle(self.app_name)
 
-        self.image_stack = None
+        self.image_stack = stack.Stack()
         self.image_filename = image_filename
         self.record_filename = record_filename
         self.record_modified = False
 
         self.load_ui()
+
+        self.default_plugin = 'plugin.base'
         self.load_plugins()
+        self.switch_plugin(self.plugin_list[0].plugin_name)
 
         if self.image_filename is not None:
             self.load_image()
@@ -64,13 +67,16 @@ class MainWindow (QMainWindow):
             except ImportError:
                 load_failed.append(str(module_file.stem))
 
+        self.plugin_list = [plugin for plugin in self.plugin_list if plugin.priority >= 0]
+        if len(self.plugin_list) == 0:
+            self.plugin_list = [import_module(self.default_plugin)]
+
         self.plugin_list = sorted(self.plugin_list, key = lambda x: x.priority)
         for plugin in self.plugin_list:
             action = QAction(plugin.plugin_name, self.ui.menu_plugin, checkable = True, checked = (plugin is self.plugin_list[0]))
             self.ui.menu_plugin.addAction(action)
             self.actgroup_plugin.addAction(action)
         self.actgroup_plugin.setExclusive(True)
-        self.switch_plugin(self.plugin_list[0].plugin_name)
 
         if len(load_failed) > 0:
             self.show_message("Plugin error", "Failed to load: {0}".format(', '.join(load_failed)))
@@ -133,13 +139,20 @@ class MainWindow (QMainWindow):
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
     def load_records (self):
-        pass
+        print("Load records")
 
     def save_records (self):
         ## save here
         self.records_modified = False
 
     def save_records_as (self):
+        def with_suffix (filename, suffix = '_record.json'):
+            name = Path(filename).stem
+            name = re.sub('\.ome$', '', name, flags = re.IGNORECASE)
+            if name == name + suffix:
+                raise Exception('Empty suffix. May overwrite the original file. Exiting.')
+            return name + suffix
+
         ## save here
         self.records_modified = False
 
@@ -164,19 +177,26 @@ class MainWindow (QMainWindow):
 
     def switch_plugin (self, name):
         module = next((x for x in self.plugin_list if x.plugin_name == name), None)
+        if module is None:
+            module = import_module(self.default_plugin)
+
         if module is not None and self.clear_modified_flag():
             self.plugin_module = module
+            self.plugin_class = getattr(module, module.class_name)()
             self.plugin_panel.update_title(name)
+            self.plugin_panel.update_widgets(self.plugin_class)
+            self.plugin_class.signal_request_image_update.connect(self.slot_image_update)
 
     def update_window_title (self):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
 
     def update_image_view (self):
-        if self.image_stack is not None:
-            self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
-                                                channel = self.lut_panel.current_channel(), composite = self.lut_panel.is_composite(), \
-                                                color_always = self.lut_panel.color_always(), zoom_ratio = self.zoom_panel.zoom_ratio)
-            self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+        self.image_panel.channel = self.lut_panel.current_channel()
+        self.image_panel.composite = self.lut_panel.is_composite()
+        self.image_panel.color_always = self.lut_panel.color_always()
+        self.image_panel.zoom_ratio = self.zoom_panel.zoom_ratio
+        self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list)
+        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
 
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
@@ -194,7 +214,7 @@ class MainWindow (QMainWindow):
         dialog.exec()
 
         # open image here
-        if self.image_stack is None:
+        if self.image_stack.filename is None:
             self.image_filename = dialog.selectedFiles()[0]
             self.load_image()
         else:
@@ -238,28 +258,28 @@ class MainWindow (QMainWindow):
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
 
     def slot_scene_mouse_clicked (self, event):
-        print(event.scenePos())
+        self.plugin_class.mouse_clicked(event, self.ui)
 
     def slot_scene_key_pressed (self, event):
-        self.ui.gview_image.setCursor(Qt.CrossCursor)
+        self.plugin_class.key_pressed(event, self.ui)
 
     def slot_scene_key_released (self, event):
-        self.ui.gview_image.setCursor(Qt.ArrowCursor)
+        self.plugin_class.key_released(event, self.ui)
 
     def slot_image_index_changed (self):
         if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
         self.update_image_view()
 
     def slot_channel_changed (self):
         self.lut_panel.update_channel_widgets()
         if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
         self.update_image_view()
 
     def slot_lut_changed (self):
         if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
         else:
             self.lut_panel.update_current_lut()
         self.update_image_view()
@@ -280,7 +300,7 @@ class MainWindow (QMainWindow):
     
     def slot_auto_lut_changed (self):
         if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack, self.lut_panel.current_channel()))
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
             self.update_image_view()
 
     def slot_reset_lut (self):
@@ -311,11 +331,13 @@ class MainWindow (QMainWindow):
         self.play_timer.setInterval(1000 / self.ui.spin_fps.value())
 
     def slot_slideshow_timeout (self):
-        if self.image_stack is not None:
-            self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
+        self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
 
     def slot_switch_plugin (self, action):
         self.switch_plugin(action.text())
+
+    def slot_image_update (self):
+        self.update_image_view()
 
     def showEvent (self, event):
         self.update_image_view()
