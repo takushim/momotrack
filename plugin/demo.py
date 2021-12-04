@@ -40,13 +40,13 @@ class Demo (PluginBase):
             scene_items.append(item)
         return scene_items
 
-    def key_pressed (self, event):
+    def key_pressed (self, event, image_index, stack):
         if event.key() == Qt.Key_Control:
             self.signal_update_mouse_cursor.emit(Qt.CrossCursor)
 
-    def key_released (self, event):
+    def key_released (self, event, image_index, stack):
         if event.key() == Qt.Key_Control:
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
 
-    def mouse_clicked (self, event):
+    def mouse_clicked (self, event, image_index, stack):
         self.text_message.setText("Mouse clicked: ({0}, {1})".format(event.scenePos().x(), event.scenePos().y()))

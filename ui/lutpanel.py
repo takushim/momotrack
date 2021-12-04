@@ -11,24 +11,12 @@ class LutPanel:
         self.ui = ui
         self.ui.combo_lut.addItems([item for item in lut.lut_dict])
         self.ui.combo_bits.addItems(["Auto"] + [item for item in lut.bit_dict])
-        self.init_widgets()
 
-    def init_widgets (self, stack = None):
-        self.lut_list = []
-        self.ui.combo_lut.setEnabled(True)
-
+    def init_widgets (self, stack):
         self.ui.combo_channel.blockSignals(True)
         self.ui.combo_channel.clear()
-        if stack is not None:
-            for channel in range(stack.c_count):
-                lut_name = lut.lut_names[channel % len(lut.lut_names)]
-                image_lut = lut.LUT(lut_name = lut_name, pixel_values = stack.image_array[:, channel], lut_invert = False, bit_auto = True)
-                self.lut_list.append(image_lut)
-            self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(stack.c_count)])
-        else:
-            self.lut_list.append(lut.LUT())
-            self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(1)])
-
+        self.init_luts(stack)
+        self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(len(self.lut_list))])
         self.ui.combo_channel.blockSignals(False)
 
         self.ui.combo_lut.setCurrentIndex(0)
@@ -45,6 +33,17 @@ class LutPanel:
         self.scene_lut = QGraphicsScene()
         self.scene_lut.setBackgroundBrush(QColor('white'))
         self.ui.gview_lut.setScene(self.scene_lut)
+
+    def init_luts (self, stack):
+        self.lut_list = []
+
+        if stack is None:
+            self.lut_list.append(lut.LUT())
+        else:
+            for channel in range(stack.c_count):
+                lut_name = lut.lut_names[channel % len(lut.lut_names)]
+                image_lut = lut.LUT(lut_name = lut_name, pixel_values = stack.image_array[:, channel], lut_invert = False, bit_auto = True)
+                self.lut_list.append(image_lut)
 
     def update_sliders (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
@@ -128,7 +127,6 @@ class LutPanel:
         self.update_labels()
 
     def update_channel_widgets (self):
-
         if self.ui.check_composite.isChecked() or self.ui.check_color_always.isChecked():
             self.ui.combo_lut.setEnabled(True)
         else:
@@ -165,11 +163,12 @@ class LutPanel:
             y_bottom = height
             y_top = height * (1 - float(hist) / max_hist)
             self.scene_lut.addLine(x, y_bottom, x, y_top, QColor('gray'))
-        
-        x_lower = width * (current_lut.cutoff_lower - bit_range[0]) / (bit_range[1] - bit_range[0])
-        x_upper = width * (current_lut.cutoff_upper - bit_range[0]) / (bit_range[1] - bit_range[0])
-        self.scene_lut.addLine(x_upper, 0, x_upper, height, QColor('black'))
-        self.scene_lut.addLine(x_lower, height, x_upper, 0)
+
+        if np.isclose(bit_range[0], bit_range[1]) == False:
+            x_lower = width * (current_lut.cutoff_lower - bit_range[0]) / (bit_range[1] - bit_range[0])
+            x_upper = width * (current_lut.cutoff_upper - bit_range[0]) / (bit_range[1] - bit_range[0])
+            self.scene_lut.addLine(x_upper, 0, x_upper, height, QColor('black'))
+            self.scene_lut.addLine(x_lower, height, x_upper, 0)
 
     def current_channel (self):
         return self.ui.combo_channel.currentIndex()

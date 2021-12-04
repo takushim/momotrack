@@ -11,30 +11,29 @@ class ImagePanel:
         self.scene = QGraphicsScene()
         self.scene.setBackgroundBrush(self.ui.palette().window())
         self.ui.gview_image.setScene(self.scene)
-        self.current_channel = 0
+        self.channel = 0
         self.composite = False
         self.color_always = False
         self.zoom_ratio = 100
 
-    def init_widgets (self, stack = None):
+    def init_widgets (self, stack):
         self.ui.slider_time.setMaximum(0)
         self.ui.slider_time.setValue(0)
         self.ui.slider_zstack.setMaximum(0)
         self.ui.slider_zstack.setValue(0)
 
-        if stack is not None:
-            # Time slider
-            self.ui.slider_time.setMinimum(0)
-            self.ui.slider_time.setMaximum(stack.t_count - 1)
-            self.ui.slider_time.setValue(0)
-            self.ui.slider_time.setTickInterval(10)
-            self.ui.slider_time.setTickPosition(QSlider.TicksBelow)
-            # Z slider
-            self.ui.slider_zstack.setMinimum(0)
-            self.ui.slider_zstack.setMaximum(stack.z_count - 1)
-            self.ui.slider_zstack.setValue(0)
-            self.ui.slider_zstack.setTickInterval(1)
-            self.ui.slider_zstack.setTickPosition(QSlider.TicksBelow)
+        # Time slider
+        self.ui.slider_time.setMinimum(0)
+        self.ui.slider_time.setMaximum(stack.t_count - 1)
+        self.ui.slider_time.setValue(0)
+        self.ui.slider_time.setTickInterval(10)
+        self.ui.slider_time.setTickPosition(QSlider.TicksBelow)
+        # Z slider
+        self.ui.slider_zstack.setMinimum(0)
+        self.ui.slider_zstack.setMaximum(stack.z_count - 1)
+        self.ui.slider_zstack.setValue(0)
+        self.ui.slider_zstack.setTickInterval(1)
+        self.ui.slider_zstack.setTickPosition(QSlider.TicksBelow)
 
     def update_status (self, stack):
         status = "T: {0}/{1}, Z: {2}/{3}".format(self.ui.slider_time.value(), stack.t_count - 1,
@@ -77,3 +76,8 @@ class ImagePanel:
         t_index = self.ui.slider_time.value()
         z_index = self.ui.slider_zstack.value()
         return stack.image_array[t_index, self.channel, z_index]
+
+    def current_index (self):
+        t_index = self.ui.slider_time.value()
+        z_index = self.ui.slider_zstack.value()
+        return [t_index, self.channel, z_index]

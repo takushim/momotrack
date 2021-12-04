@@ -24,13 +24,13 @@ class PluginBase (QObject):
     def scene_items (self):
         pass
 
-    def key_pressed (self, event):
+    def key_pressed (self, event, image_index, stack):
         pass
 
-    def key_released (self, event):
+    def key_released (self, event, image_index, stack):
         pass
 
-    def mouse_clicked (self, event):
+    def mouse_clicked (self, event, image_index, stack):
         pass
 
     def load_records (self, filename):

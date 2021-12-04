@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 
-import sys, re
-import numpy as np
 from pathlib import Path
 from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtGui import QAction, QActionGroup
-from PySide6.QtCore import QFile, QTimer, Qt
+from PySide6.QtCore import QFile, QTimer
 from PySide6.QtUiTools import QUiLoader
-import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -29,6 +26,8 @@ class MainWindow (QMainWindow):
         self.default_plugin = 'base'
         self.load_plugins()
 
+        self.init_widgets()
+        self.switch_plugin(self.plugin_list[0].plugin_name)
         self.connect_menubar_to_slots()
         self.connect_signals_to_slots()
 
@@ -36,7 +35,6 @@ class MainWindow (QMainWindow):
             self.load_image(image_filename)
         if record_filename is not None:
             self.load_records(record_filename)
-
 
     def load_ui (self):
         file = QFile(str(Path(__file__).parent.joinpath("mainwindow.ui")))
@@ -52,6 +50,14 @@ class MainWindow (QMainWindow):
         self.plugin_panel = pluginpanel.PluginPanel(self.ui)
         self.play_timer = QTimer(self)
         self.play_timer.setInterval(100)
+
+    def init_widgets (self):
+        self.image_panel.init_widgets(self.image_stack)
+        self.zoom_panel.zoom_reset()
+        self.lut_panel.init_widgets(self.image_stack)
+        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
+        self.update_image_view()
+        self.update_window_title()
 
     def load_plugins (self):
         plugin_folder = str(Path(__file__).parent.parent.joinpath(self.plugin_package))
@@ -78,7 +84,8 @@ class MainWindow (QMainWindow):
             self.ui.menu_plugin.addAction(action)
             self.actgroup_plugin.addAction(action)
         self.actgroup_plugin.setExclusive(True)
-        self.switch_plugin(self.plugin_list[0].plugin_name)
+
+        self.init_plugin(self.plugin_list[0])    
 
         if len(load_failed) > 0:
             self.show_message("Plugin error", "Failed to load: {0}".format(', '.join(load_failed)))
@@ -133,11 +140,7 @@ class MainWindow (QMainWindow):
         try:
             self.image_stack = stack.Stack(image_filename)
             self.image_filename = image_filename
-            self.image_panel.init_widgets(self.image_stack)
-            self.zoom_panel.zoom_reset()
-            self.lut_panel.init_widgets(self.image_stack)
-            self.update_image_view()
-            self.update_window_title()
+            self.init_widgets()
         except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
@@ -176,16 +179,20 @@ class MainWindow (QMainWindow):
         if module is None or self.clear_modified_flag() == False:
             return
 
+        self.init_plugin(module)
+        self.update_image_view()
+
+    def init_plugin (self, module):
         self.plugin_module = module
         self.plugin_class = getattr(module, module.class_name)()
-        self.plugin_panel.update_title(name)
+        self.plugin_panel.update_title(module.plugin_name)
         self.plugin_panel.update_widgets(self.plugin_class)
         self.plugin_class.signal_update_image.connect(self.slot_update_image)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
-        self.update_image_view()
 
     def update_window_title (self):
-        self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
+        if self.image_filename is not None:
+            self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
 
     def update_image_view (self):
         self.image_panel.channel = self.lut_panel.current_channel()
@@ -257,13 +264,13 @@ class MainWindow (QMainWindow):
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
 
     def slot_scene_mouse_clicked (self, event):
-        self.plugin_class.mouse_clicked(event)
+        self.plugin_class.mouse_clicked(event, self.image_panel.current_index(), self.image_stack.image_array)
 
     def slot_scene_key_pressed (self, event):
-        self.plugin_class.key_pressed(event)
+        self.plugin_class.key_pressed(event, self.image_panel.current_index(), self.image_stack.image_array)
 
     def slot_scene_key_released (self, event):
-        self.plugin_class.key_released(event)
+        self.plugin_class.key_released(event, self.image_panel.current_index(), self.image_stack.image_array)
 
     def slot_image_index_changed (self):
         if self.lut_panel.is_auto_lut():

@@ -102,7 +102,7 @@ class LUT:
         image = image.astype(float)
 
         if np.isclose(self.cutoff_lower, self.cutoff_upper):
-            image = 0.0
+            image[:] = 0.0
         else:
             image = (image - self.cutoff_lower) / (self.cutoff_upper - self.cutoff_lower)
             image = np.clip(image, 0.0, 1.0)
