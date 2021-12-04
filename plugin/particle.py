@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QTextEdit, QGraphicsEllipseItem
+from PySide6.QtGui import QPen
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -33,7 +34,8 @@ class SPT (PluginBase):
         if self.check_hide_tracks.isChecked() == False:
             for index in range(100):
                 pos = 256 * np.random.random(2)
-                item = QGraphicsEllipseItem(pos[0] - 2, pos[1] - 2, pos[0] + 2, pos[1] + 2)
+                item = QGraphicsEllipseItem(pos[0] - 2, pos[1] - 2, 2, 2)
+                item.setPen(QPen(Qt.white))
                 scene_items.append(item)
         return scene_items        
 
