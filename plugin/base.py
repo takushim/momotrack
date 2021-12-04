@@ -9,7 +9,9 @@ class_name = 'PluginBase'
 record_suffix = '_record.json'
 
 class PluginBase (QObject):
-    signal_update_image = Signal()
+    signal_update_scene = Signal()
+    signal_update_lut = Signal()
+    signal_reset_panels = Signal()
     signal_update_mouse_cursor = Signal(QCursor)
 
     def __init__ (self):

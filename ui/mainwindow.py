@@ -187,7 +187,9 @@ class MainWindow (QMainWindow):
         self.plugin_class = getattr(module, module.class_name)()
         self.plugin_panel.update_title(module.plugin_name)
         self.plugin_panel.update_widgets(self.plugin_class)
-        self.plugin_class.signal_update_image.connect(self.slot_update_image)
+        self.plugin_class.signal_update_scene.connect(self.slot_update_scene)
+        self.plugin_class.signal_update_lut.connect(self.slot_update_lut)
+        self.plugin_class.signal_reset_panels.connect(self.slot_reset_panels)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
 
     def update_window_title (self):
@@ -342,8 +344,19 @@ class MainWindow (QMainWindow):
     def slot_switch_plugin (self, action):
         self.switch_plugin(action.text())
 
-    def slot_update_image (self):
+    def slot_update_scene (self):
         self.update_image_view()
+
+    def slot_update_lut (self):
+        self.lut_panel.init_luts(self.image_stack)
+        if self.lut_panel.is_auto_lut():
+            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
+        else:
+            self.lut_panel.update_current_lut()
+        self.update_image_view()
+
+    def slot_reset_panels (self):
+        self.init_widgets()
 
     def slot_update_mouse_cursor (self, cursor):
         self.ui.setCursor(cursor)

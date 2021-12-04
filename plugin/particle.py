@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import pandas as pd
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QTextEdit, QGraphicsEllipseItem
+from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem, QSizePolicy
 from PySide6.QtGui import QPen
 from plugin.base import PluginBase
 
@@ -22,7 +22,7 @@ class SPT (PluginBase):
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
         self.check_hide_tracks = QCheckBox("Hide All Tracks")
-        self.text_message = QTextEdit()
+        self.text_message = QLabel()
         self.text_message.setText("Ctrl + click to start tracking.")
         self.vlayout.addWidget(self.check_hide_tracks)
         self.vlayout.addWidget(self.text_message)
@@ -31,7 +31,7 @@ class SPT (PluginBase):
         self.check_hide_tracks.stateChanged.connect(self.slot_hide_tracks)
 
     def slot_hide_tracks (self):
-        self.signal_request_image_update.emit()
+        self.signal_update_scene.emit()
 
     def scene_items (self):
         scene_items = []
@@ -40,7 +40,7 @@ class SPT (PluginBase):
                 pos = 256 * np.random.random(2)
                 item = QGraphicsEllipseItem(pos[0] - 2, pos[1] - 2, 2, 2)
                 item.setPen(QPen(Qt.white))
-                scene_items.append(item)
+                #scene_items.append(item)
         return scene_items
 
     def key_pressed (self, event, image_index, stack):

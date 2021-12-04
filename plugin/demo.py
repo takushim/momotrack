@@ -3,7 +3,7 @@
 import sys
 import numpy as np
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QPushButton, QTextEdit, QGraphicsEllipseItem
+from PySide6.QtWidgets import QPushButton, QLabel, QGraphicsEllipseItem
 from PySide6.QtGui import QPen, QColor
 from plugin.base import PluginBase
 
@@ -21,7 +21,7 @@ class Demo (PluginBase):
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
         self.button_demo = QPushButton("Demo Button")
-        self.text_message = QTextEdit()
+        self.text_message = QLabel()
         self.vlayout.addWidget(self.button_demo)
         self.vlayout.addWidget(self.text_message)
 
@@ -29,7 +29,7 @@ class Demo (PluginBase):
         self.button_demo.clicked.connect(self.slot_demo_button)
 
     def slot_demo_button (self):
-        self.signal_update_image.emit()
+        self.signal_update_scene.emit()
 
     def scene_items (self):
         scene_items = []
