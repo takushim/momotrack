@@ -15,6 +15,7 @@ record_suffix = '_track.json'
 class SPT (PluginBase):
     def __init__ (self):
         super().__init__()
+        self.spot_list = []
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
@@ -37,16 +38,16 @@ class SPT (PluginBase):
                 item = QGraphicsEllipseItem(pos[0] - 2, pos[1] - 2, 2, 2)
                 item.setPen(QPen(Qt.white))
                 scene_items.append(item)
-        return scene_items        
+        return scene_items
 
-    def key_pressed (self, event, ui):
+    def key_pressed (self, event):
         if event.key() == Qt.Key_Control:
-            ui.setCursor(Qt.CrossCursor)
+            self.signal_update_mouse_cursor.emit(Qt.CrossCursor)
 
-    def key_released (self, event, ui):
+    def key_released (self, event):
         if event.key() == Qt.Key_Control:
-            ui.setCursor(Qt.ArrowCursor)
+            self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
 
-    def mouse_clicked (self, event, ui):
+    def mouse_clicked (self, event):
         print("MOUSE")
 

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-import sys
-import numpy as np
 from PySide6.QtCore import QObject, Signal
-from PySide6.QtWidgets import QCheckBox, QTextEdit
+from PySide6.QtGui import QCursor
 
 priority = -1
 plugin_name = 'Base class'
@@ -11,7 +9,8 @@ class_name = 'PluginBase'
 record_suffix = '_record.json'
 
 class PluginBase (QObject):
-    signal_request_image_update = Signal()
+    signal_update_image = Signal()
+    signal_update_mouse_cursor = Signal(QCursor)
 
     def __init__ (self):
         super().__init__()
@@ -22,16 +21,16 @@ class PluginBase (QObject):
     def connect_signals (self):
         pass
 
-    def generate_scene_items (self):
+    def scene_items (self):
         pass
 
-    def key_pressed (self, event, ui):
+    def key_pressed (self, event):
         pass
 
-    def key_released (self, event, ui):
+    def key_released (self, event):
         pass
 
-    def mouse_clicked (self, event, ui):
+    def mouse_clicked (self, event):
         pass
 
     def load_records (self, filename):

@@ -180,7 +180,9 @@ class MainWindow (QMainWindow):
         self.plugin_class = getattr(module, module.class_name)()
         self.plugin_panel.update_title(name)
         self.plugin_panel.update_widgets(self.plugin_class)
-        self.plugin_class.signal_request_image_update.connect(self.slot_image_update)
+        self.plugin_class.signal_update_image.connect(self.slot_update_image)
+        self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
+        self.update_image_view()
 
     def update_window_title (self):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
@@ -255,13 +257,13 @@ class MainWindow (QMainWindow):
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
 
     def slot_scene_mouse_clicked (self, event):
-        self.plugin_class.mouse_clicked(event, self.ui)
+        self.plugin_class.mouse_clicked(event)
 
     def slot_scene_key_pressed (self, event):
-        self.plugin_class.key_pressed(event, self.ui)
+        self.plugin_class.key_pressed(event)
 
     def slot_scene_key_released (self, event):
-        self.plugin_class.key_released(event, self.ui)
+        self.plugin_class.key_released(event)
 
     def slot_image_index_changed (self):
         if self.lut_panel.is_auto_lut():
@@ -333,8 +335,11 @@ class MainWindow (QMainWindow):
     def slot_switch_plugin (self, action):
         self.switch_plugin(action.text())
 
-    def slot_image_update (self):
+    def slot_update_image (self):
         self.update_image_view()
+
+    def slot_update_mouse_cursor (self, cursor):
+        self.ui.setCursor(cursor)
 
     def showEvent (self, event):
         self.update_image_view()
