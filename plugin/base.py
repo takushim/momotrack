@@ -33,3 +33,12 @@ class PluginBase (QObject):
 
     def mouse_clicked (self, event, ui):
         pass
+
+    def load_records (self, filename):
+        pass
+
+    def save_records (self, filename):
+        pass
+
+    def clear_records (self):
+        pass

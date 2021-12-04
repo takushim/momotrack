@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
+import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -24,17 +25,18 @@ class MainWindow (QMainWindow):
 
         self.load_ui()
 
-        self.default_plugin = 'plugin.base'
+        self.plugin_package = 'plugin'
+        self.default_plugin = 'base'
         self.load_plugins()
-        self.switch_plugin(self.plugin_list[0].plugin_name)
-
-        if self.image_filename is not None:
-            self.load_image()
-        if self.record_modified is not None:
-            self.load_records()
 
         self.connect_menubar_to_slots()
         self.connect_signals_to_slots()
+
+        if image_filename is not None:
+            self.load_image(image_filename)
+        if record_filename is not None:
+            self.load_records(record_filename)
+
 
     def load_ui (self):
         file = QFile(str(Path(__file__).parent.joinpath("mainwindow.ui")))
@@ -52,8 +54,7 @@ class MainWindow (QMainWindow):
         self.play_timer.setInterval(100)
 
     def load_plugins (self):
-        package_name = "plugin"
-        plugin_folder = str(Path(__file__).parent.parent.joinpath(package_name))
+        plugin_folder = str(Path(__file__).parent.parent.joinpath(self.plugin_package))
         self.plugin_list = []
         load_failed = []
 
@@ -62,14 +63,14 @@ class MainWindow (QMainWindow):
             if module_file.name.startswith("_"):
                 continue
             try:
-                module = import_module(name = '{0}.{1}'.format(package_name, str(module_file.stem)))
+                module = import_module(name = '{0}.{1}'.format(self.plugin_package, str(module_file.stem)))
                 self.plugin_list.append(module)
             except ImportError:
                 load_failed.append(str(module_file.stem))
 
         self.plugin_list = [plugin for plugin in self.plugin_list if plugin.priority >= 0]
         if len(self.plugin_list) == 0:
-            self.plugin_list = [import_module(self.default_plugin)]
+            self.plugin_list = [import_module(name = '{0}.{1}'.format(self.plugin_package, self.default_plugin))]
 
         self.plugin_list = sorted(self.plugin_list, key = lambda x: x.priority)
         for plugin in self.plugin_list:
@@ -77,6 +78,7 @@ class MainWindow (QMainWindow):
             self.ui.menu_plugin.addAction(action)
             self.actgroup_plugin.addAction(action)
         self.actgroup_plugin.setExclusive(True)
+        self.switch_plugin(self.plugin_list[0].plugin_name)
 
         if len(load_failed) > 0:
             self.show_message("Plugin error", "Failed to load: {0}".format(', '.join(load_failed)))
@@ -127,9 +129,10 @@ class MainWindow (QMainWindow):
         # plugin
         self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
 
-    def load_image (self):
+    def load_image (self, image_filename):
         try:
-            self.image_stack = stack.Stack(self.image_filename)
+            self.image_stack = stack.Stack(image_filename)
+            self.image_filename = image_filename
             self.image_panel.init_widgets(self.image_stack)
             self.zoom_panel.zoom_reset()
             self.lut_panel.init_widgets(self.image_stack)
@@ -138,23 +141,15 @@ class MainWindow (QMainWindow):
         except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
-    def load_records (self):
-        print("Load records")
+    def load_records (self, record_filename):
+        if self.plugin_class.load_records(record_filename) == True:
+            self.record_filename = record_filename
+            self.record_modified = False
 
-    def save_records (self):
-        ## save here
-        self.records_modified = False
-
-    def save_records_as (self):
-        def with_suffix (filename, suffix = '_record.json'):
-            name = Path(filename).stem
-            name = re.sub('\.ome$', '', name, flags = re.IGNORECASE)
-            if name == name + suffix:
-                raise Exception('Empty suffix. May overwrite the original file. Exiting.')
-            return name + suffix
-
-        ## save here
-        self.records_modified = False
+    def save_records (self, record_filename):
+        if self.plugin_class.save_records(record_filename) == True:
+            self.record_filename = record_filename
+            self.record_modified = False
 
     def clear_modified_flag (self):
         if self.record_modified:
@@ -177,15 +172,15 @@ class MainWindow (QMainWindow):
 
     def switch_plugin (self, name):
         module = next((x for x in self.plugin_list if x.plugin_name == name), None)
-        if module is None:
-            module = import_module(self.default_plugin)
 
-        if module is not None and self.clear_modified_flag():
-            self.plugin_module = module
-            self.plugin_class = getattr(module, module.class_name)()
-            self.plugin_panel.update_title(name)
-            self.plugin_panel.update_widgets(self.plugin_class)
-            self.plugin_class.signal_request_image_update.connect(self.slot_image_update)
+        if module is None or self.clear_modified_flag() == False:
+            return
+
+        self.plugin_module = module
+        self.plugin_class = getattr(module, module.class_name)()
+        self.plugin_panel.update_title(name)
+        self.plugin_panel.update_widgets(self.plugin_class)
+        self.plugin_class.signal_request_image_update.connect(self.slot_image_update)
 
     def update_window_title (self):
         self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
@@ -214,30 +209,31 @@ class MainWindow (QMainWindow):
         dialog.setViewMode(QFileDialog.List)
         dialog.exec()
 
-        # open image here
-        if self.image_stack.filename is None:
-            self.image_filename = dialog.selectedFiles()[0]
-            self.load_image()
+        if self.image_filename is None:
+            self.load_image(dialog.selectedFiles()[0])
         else:
-            image_filename = dialog.selectedFiles()[0]
-            new_window = MainWindow(image_filename = image_filename)
+            new_window = MainWindow(image_filename = dialog.selectedFiles()[0])
             new_window.show()
 
     def slot_load_records (self):
+        if self.clear_modified_flag() == False:
+            return
+
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select a record to load.")
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
         dialog.exec()
-        # load image here
-        print(dialog.selectedFiles())
+
+        self.load_records(dialog.selectedFiles()[0])
 
     def slot_save_records (self):
         if self.records_filename is None:
             self.slot_save_records_as()
         else:
-            self.save_records()
+            self.save_records(self.records_filename)
+
 
     def slot_save_records_as (self):
         dialog = QFileDialog(self)
@@ -246,9 +242,9 @@ class MainWindow (QMainWindow):
         dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
         result = dialog.exec()
+
         if result == QFileDialog.Save:
-            print(dialog.selectedFiles())
-            self.save_records()
+            self.save_records(dialog.selectedFiles()[0])
 
     def slot_quick_help (self):
         self.show_message(title = "Quick help", message = "Currently nothing to show...")
