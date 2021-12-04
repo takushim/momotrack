@@ -3,7 +3,7 @@
 import sys
 import numpy as np
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QTextEdit
+from PySide6.QtWidgets import QCheckBox, QTextEdit, QGraphicsEllipseItem
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -28,9 +28,14 @@ class SPT (PluginBase):
     def slot_hide_tracks (self):
         self.signal_request_image_update.emit()
 
-    def generate_scene_items (self):
+    def scene_items (self):
+        scene_items = []
         if self.check_hide_tracks.isChecked() == False:
-            pass
+            for index in range(100):
+                pos = 256 * np.random.random(2)
+                item = QGraphicsEllipseItem(pos[0] - 2, pos[1] - 2, pos[0] + 2, pos[1] + 2)
+                scene_items.append(item)
+        return scene_items        
 
     def key_pressed (self, event, ui):
         if event.key() == Qt.Key_Control:
@@ -40,6 +45,6 @@ class SPT (PluginBase):
         if event.key() == Qt.Key_Control:
             ui.setCursor(Qt.ArrowCursor)
 
-    def override_mouse_click (self, event, ui):
+    def mouse_clicked (self, event, ui):
         print("MOUSE")
 

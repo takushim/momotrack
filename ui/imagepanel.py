@@ -41,7 +41,7 @@ class ImagePanel:
                                                  self.ui.slider_zstack.value(), stack.z_count - 1,)
         self.ui.label_status.setText(status)
 
-    def update_image_scene (self, stack, lut_list):
+    def update_image_scene (self, stack, lut_list, item_list = []):
         self.ui.gview_image.resetTransform()
         self.ui.gview_image.scale(self.zoom_ratio / 100, self.zoom_ratio / 100)
 
@@ -67,6 +67,10 @@ class ImagePanel:
 
         self.scene.clear()
         self.scene.addPixmap(QPixmap(qimage))
+
+        for item in item_list:
+            self.scene.addItem(item)
+
         self.update_status(stack)
 
     def current_image (self, stack):
