@@ -14,7 +14,6 @@ class ImagePanel:
         self.channel = 0
         self.composite = False
         self.color_always = False
-        self.zoom_ratio = 100
 
     def init_widgets (self, stack):
         self.ui.slider_time.setMaximum(0)
@@ -40,10 +39,11 @@ class ImagePanel:
                                                  self.ui.slider_zstack.value(), stack.z_count - 1,)
         self.ui.label_status.setText(status)
 
-    def update_image_scene (self, stack, lut_list, item_list = []):
+    def update_zoom (self, zoom_ratio):
         self.ui.gview_image.resetTransform()
-        self.ui.gview_image.scale(self.zoom_ratio / 100, self.zoom_ratio / 100)
+        self.ui.gview_image.scale(zoom_ratio / 100, zoom_ratio / 100)
 
+    def update_image_scene (self, stack, lut_list, item_list = []):
         t_index = self.ui.slider_time.value()
         z_index = self.ui.slider_zstack.value()
 

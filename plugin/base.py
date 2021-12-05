@@ -45,6 +45,9 @@ class PluginBase (QObject):
     def mouse_moved (self, event, stack, tcz_index):
         pass
 
+    def mouse_released (self, event, stack, tcz_index):
+        pass
+
     def load_records (self, records_filename):
         pass
 

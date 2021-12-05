@@ -58,6 +58,7 @@ class MainWindow (QMainWindow):
         self.zoom_panel.zoom_reset()
         self.lut_panel.init_widgets(self.image_stack)
         self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
         self.update_image_view()
         self.update_window_title()
 
@@ -109,6 +110,7 @@ class MainWindow (QMainWindow):
         # scene
         self.image_panel.scene.mousePressEvent = self.slot_scene_mouse_clicked
         self.image_panel.scene.mouseMoveEvent = self.slot_scene_mouse_moved
+        self.image_panel.scene.mouseReleaseEvent = self.slot_scene_mouse_released
         self.image_panel.scene.keyPressEvent = self.slot_scene_key_pressed
         self.image_panel.scene.keyReleaseEvent = self.slot_scene_key_released
         self.image_panel.scene.wheelEvent = self.slot_scene_wheel_moved
@@ -204,7 +206,7 @@ class MainWindow (QMainWindow):
     def zoom_best (self):
         self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
                                   (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
-        self.update_image_view()
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def update_window_title (self):
         if self.image_filename is None:
@@ -216,7 +218,6 @@ class MainWindow (QMainWindow):
         self.image_panel.channel = self.lut_panel.current_channel()
         self.image_panel.composite = self.lut_panel.is_composite()
         self.image_panel.color_always = self.lut_panel.color_always()
-        self.image_panel.zoom_ratio = self.zoom_panel.zoom_ratio
         self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
                                             item_list = self.plugin_class.list_scene_items(self.image_stack, self.image_panel.current_index()))
 
@@ -292,6 +293,11 @@ class MainWindow (QMainWindow):
 
     def slot_scene_mouse_moved (self, event):
         self.plugin_class.mouse_moved(event, self.image_stack, self.image_panel.current_index())
+        self.update_image_view()
+
+    def slot_scene_mouse_released (self, event):
+        self.plugin_class.mouse_released(event, self.image_stack, self.image_panel.current_index())
+        self.update_image_view()
 
     def slot_scene_wheel_moved (self, event):
         if event.delta() > 0:
@@ -359,15 +365,15 @@ class MainWindow (QMainWindow):
 
     def slot_zoomed_in (self):
         self.zoom_panel.zoom_in()
-        self.update_image_view()
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def slot_zoomed_out (self):
         self.zoom_panel.zoom_out()
-        self.update_image_view()
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def slot_zoom_reset (self):
         self.zoom_panel.zoom_reset()
-        self.update_image_view()
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def slot_slideshow_switched (self):
         if self.play_timer.isActive():
