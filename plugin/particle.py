@@ -2,8 +2,8 @@
 
 import numpy as np
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem
-from PySide6.QtGui import QPen
+from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem, QMenu
+from PySide6.QtGui import QPen, QAction
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -34,9 +34,29 @@ class SPT (PluginBase):
         self.vlayout.addWidget(self.text_message)
         self.update_status()
         self.update_mouse_cursor()
+        self.init_context_menu()
 
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
+
+    def init_context_menu (self):
+        self.context_menu = QMenu()
+        self.actions = []
+        self.actions.append(QAction("Menu 1"))
+        self.actions.append(QAction("Menu 2"))
+        self.context_menu.addActions(self.actions)
+
+#        self.context_menu.addAction(QAction("Remove spot"))
+#        action.triggered.connect(self.slot_remove_spot)
+#        self.context_menu.addAction(action)
+
+#        action = QAction("Remove tree")
+#        action.triggered.connect(self.slot_remove_tree)
+#        self.context_menu.addAction(action)
+
+#        action = QAction("Remove track")
+#        action.triggered.connect(self.slot_remove_track)
+#        self.context_menu.addAction(action)
 
     def slot_onoff_tracks (self):
         if self.check_hide_tracks.isChecked():
@@ -45,6 +65,15 @@ class SPT (PluginBase):
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
+
+    def slot_remove_spot (self):
+        pass
+
+    def slot_remove_tree (self):
+        pass
+
+    def slot_remove_track (self):
+        pass
 
     def list_scene_items (self, tcz_index):
         if self.check_hide_tracks.isChecked():
@@ -121,12 +150,12 @@ class SPT (PluginBase):
             self.update_mouse_cursor()
             return
 
-        pos = event.scenePos()
         if event.button() == Qt.RightButton:
             if event.modifiers() == Qt.NoModifier:
-                self.select_spot(pos.x(), pos.y(), *tcz_index)
-                self.show_context_menu()
+                #if self.current_spot is not None:
+                self.context_menu.popup(event.screenPos())
         elif event.button() == Qt.LeftButton:
+            pos = event.scenePos()
             if event.modifiers() == Qt.CTRL:
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
             elif event.modifiers() == Qt.NoModifier:
@@ -151,9 +180,6 @@ class SPT (PluginBase):
             self.current_spot['x'] = event.scenePos().x()
             self.current_spot['y'] = event.scenePos().y()
             self.signal_update_scene.emit()
-
-    def show_context_menu (self):
-        pass
 
     def add_spot (self, x, y, time, channel, z_index, parent = None):
         if parent is None:
