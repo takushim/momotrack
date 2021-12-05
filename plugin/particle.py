@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import time, json
+from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
@@ -28,6 +30,7 @@ class SPT (PluginBase):
         self.z_limits = [0, 0]
         self.t_limits = [0, 0]
         self.c_limits = [0, 0]
+        self.records_modified = False
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
@@ -67,6 +70,37 @@ class SPT (PluginBase):
         action.triggered.connect(self.slot_remove_track)
         self.context_menu.addAction(action)
 
+    def load_records (self, records_filename):
+        with open(records_filename, 'r') as f:
+            json_dict = json.load(f)
+
+        self.spot_list = json_dict['spot_list']
+        self.current_spot = None
+        self.signal_update_scene.emit()
+        self.update_status()
+        self.update_mouse_cursor()
+        self.records_modified = False
+
+    def save_records (self, records_filename, image_filename):
+        output_dict = {'summary': {'plugin': plugin_name, \
+                                   'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y"), \
+                                   'image_filename': image_filename}, \
+                       'spot_list': self.spot_list}
+
+        with open(records_filename, 'w') as f:
+            json.dump(output_dict, f, ensure_ascii = False, indent = 4, sort_keys = False, \
+                      separators = (',', ': '), cls = NumpyEncoder)
+
+        self.records_modified = False
+
+    def clear_records (self):
+        self.spot_list = []
+        self.current_spot = None
+        self.signal_update_scene.emit()
+        self.update_status()
+        self.update_mouse_cursor()
+        self.records_modified = False
+
     def slot_onoff_tracks (self):
         if self.check_hide_tracks.isChecked():
             self.current_spot = None
@@ -99,7 +133,8 @@ class SPT (PluginBase):
 
     def slot_remove_track (self):
         if self.current_spot is not None:
-            self.remove_tree(self.find_root(self.current_spot['index']))
+            root_spot = self.find_root(self.current_spot['index'])
+            self.remove_tree(root_spot['index'])
             self.current_spot = None
             self.signal_update_scene.emit()
 
@@ -244,9 +279,13 @@ class SPT (PluginBase):
             return
 
         if event.buttons() == Qt.LeftButton and event.modifiers() == Qt.NoModifier:
-            self.current_spot['x'] = event.scenePos().x()
-            self.current_spot['y'] = event.scenePos().y()
+            self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y())
             self.signal_update_scene.emit()
+
+    def move_spot (self, spot, x, y):
+        spot['x'] = x
+        spot['y'] = y
+        self.records_modified = True
 
     def add_spot (self, x, y, time, channel, z_index, parent = None):
         if parent is None:
@@ -255,28 +294,35 @@ class SPT (PluginBase):
             parent_index = parent['index']
         spot = {'index': len(self.spot_list), 'time': time, 'channel': channel, \
                 'x': x, 'y': y, 'z': z_index, 'parent': parent_index}
+        print("Adding spot", spot)
         self.spot_list.append(spot)
         self.current_spot = spot
+        self.records_modified = True
 
     def remove_tree (self, index):
         delete_spot = self.find_spot(index)
         child_list = self.find_children(delete_spot)
-        if len(child_list) == 0:
-            self.remove_spot(delete_spot['index'])
-        else:
-            for child_spot in child_list:
-                self.remove_tree(child_spot['index'])
+
+        for child_spot in child_list:
+            self.remove_tree(child_spot['index'])
+
+        self.remove_spot(delete_spot['index'])
+        self.records_modified = True
 
     def remove_spot (self, index):
         delete_spot = self.find_spot(index)
+        print("Removing spot", delete_spot)
         for child_spot in self.find_children(delete_spot):
             child_spot['parent'] = None
         self.spot_list = [spot for spot in self.spot_list if spot['index'] != index]
+        self.records_modified = True
 
     def find_root (self, index):
         current_spot = self.find_spot(index)
+        parent_spot = self.find_spot(current_spot['parent'])
         while current_spot['parent'] is not None:
-            current_spot = self.find_spot(current_spot['parent'])
+            current_spot = parent_spot
+            parent_spot = self.find_spot(current_spot['parent'])
         return current_spot
 
     def find_children (self, spot):
@@ -301,7 +347,7 @@ class SPT (PluginBase):
 
     def find_spots_by_position (self, x, y, time, channel, z_index):
         if len(self.spot_list) == 0:
-            return None
+            return []
 
         cand_spots = [spot for spot in self.spot_list \
                       if (x - self.spot_radius <= spot['x']) and (spot['x'] <= x + self.spot_radius) and
@@ -335,3 +381,9 @@ class SPT (PluginBase):
             self.signal_update_mouse_cursor.emit(Qt.CrossCursor)
         else:
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
+
+    def is_modified (self):
+        return self.records_modified
+
+    def help_message (self):
+        return "Single-particle tracking."

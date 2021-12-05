@@ -752,7 +752,7 @@
       <x>507</x>
       <y>107</y>
       <width>147</width>
-      <height>170</height>
+      <height>194</height>
      </rect>
     </property>
     <property name="sizePolicy">
@@ -777,6 +777,7 @@
     <addaction name="action_load_records"/>
     <addaction name="action_save_records"/>
     <addaction name="action_save_records_as"/>
+    <addaction name="action_clear_records"/>
     <addaction name="separator"/>
     <addaction name="action_quit"/>
    </widget>
@@ -910,6 +911,11 @@
   <action name="action_about_this">
    <property name="text">
     <string>&amp;About This Script</string>
+   </property>
+  </action>
+  <action name="action_clear_records">
+   <property name="text">
+    <string>&amp;Clear Records</string>
    </property>
   </action>
  </widget>

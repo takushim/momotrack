@@ -50,3 +50,6 @@ class Demo (PluginBase):
 
     def mouse_clicked (self, event, stack, tcz_index):
         self.text_message.setText("Mouse clicked: ({0}, {1})".format(event.scenePos().x(), event.scenePos().y()))
+
+    def help_message (self):
+        return "Demo class for plugin."

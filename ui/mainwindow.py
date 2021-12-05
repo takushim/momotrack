@@ -10,15 +10,14 @@ from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
 class MainWindow (QMainWindow):
-    def __init__ (self, image_filename = None, record_filename = None):
+    def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
         super().__init__()
         self.app_name = "PyTrace"
         self.setWindowTitle(self.app_name)
 
         self.image_stack = stack.Stack()
         self.image_filename = image_filename
-        self.record_filename = record_filename
-        self.record_modified = False
+        self.records_filename = records_filename
 
         self.load_ui()
 
@@ -27,14 +26,17 @@ class MainWindow (QMainWindow):
         self.load_plugins()
 
         self.init_widgets()
-        self.switch_plugin(self.plugin_list[0].plugin_name)
+        if plugin_name is None:
+            self.switch_plugin(self.plugin_list[0].plugin_name)
+        else:
+            self.switch_plugin(plugin_name)
         self.connect_menubar_to_slots()
         self.connect_signals_to_slots()
 
         if image_filename is not None:
             self.load_image(image_filename)
-        if record_filename is not None:
-            self.load_records(record_filename)
+        if records_filename is not None:
+            self.load_records(records_filename)
 
     def load_ui (self):
         file = QFile(str(Path(__file__).parent.joinpath("mainwindow.ui")))
@@ -96,6 +98,7 @@ class MainWindow (QMainWindow):
         self.ui.action_load_records.triggered.connect(self.slot_load_records)
         self.ui.action_save_records.triggered.connect(self.slot_save_records)
         self.ui.action_save_records_as.triggered.connect(self.slot_save_records_as)
+        self.ui.action_clear_records.triggered.connect(self.slot_clear_records)
         self.ui.action_zoom_in.triggered.connect(self.slot_zoomed_in)
         self.ui.action_zoom_out.triggered.connect(self.slot_zoomed_out)
         self.ui.action_zoom_reset.triggered.connect(self.slot_zoom_reset)
@@ -145,18 +148,20 @@ class MainWindow (QMainWindow):
         except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
-    def load_records (self, record_filename):
-        if self.plugin_class.load_records(record_filename) == True:
-            self.record_filename = record_filename
-            self.record_modified = False
+    def load_records (self, records_filename):
+        if self.plugin_class.load_records(records_filename) == True:
+            self.records_filename = records_filename
 
-    def save_records (self, record_filename):
-        if self.plugin_class.save_records(record_filename) == True:
-            self.record_filename = record_filename
-            self.record_modified = False
+    def save_records (self, records_filename, image_filename):
+        if self.plugin_class.save_records(records_filename, image_filename) == True:
+            self.records_filename = records_filename
+
+    def clear_records (self):
+        self.plugin_class.clear_records()
+        self.records_filename = None
 
     def clear_modified_flag (self):
-        if self.record_modified:
+        if self.plugin_class.is_modified():
             mbox = QMessageBox()
             mbox.setWindowTitle("Save Records?")
             mbox.setText("Record modified. Save?")
@@ -166,11 +171,11 @@ class MainWindow (QMainWindow):
             if result == QMessageBox.Cancel:
                 return False
             elif result == QMessageBox.Discard:
-                self.record_modified = False
+                self.plugin_class.clear_records()
                 return True
             else:
-                self.save_records()
-                if self.record_modified:
+                self.save_records(self.records_filename, self.image_filename)
+                if self.plugin_class.is_modified():
                     return False
         return True
 
@@ -222,13 +227,13 @@ class MainWindow (QMainWindow):
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters(["Images (*.tiff *.tif *.stk)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
-        dialog.exec()
 
-        if self.image_filename is None:
-            self.load_image(dialog.selectedFiles()[0])
-        else:
-            new_window = MainWindow(image_filename = dialog.selectedFiles()[0])
-            new_window.show()
+        if dialog.exec():
+            if self.image_filename is None:
+                self.load_image(dialog.selectedFiles()[0])
+            else:
+                new_window = MainWindow(image_filename = dialog.selectedFiles()[0])
+                new_window.show()
 
     def slot_load_records (self):
         if self.clear_modified_flag() == False:
@@ -239,15 +244,16 @@ class MainWindow (QMainWindow):
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
-        dialog.exec()
 
-        self.load_records(dialog.selectedFiles()[0])
+        if dialog.exec():
+            self.load_records(dialog.selectedFiles()[0])
+            self.update_image_view()
 
     def slot_save_records (self):
         if self.records_filename is None:
             self.slot_save_records_as()
         else:
-            self.save_records(self.records_filename)
+            self.save_records(self.records_filename, self.image_filename)
 
     def slot_save_records_as (self):
         dialog = QFileDialog(self)
@@ -255,10 +261,14 @@ class MainWindow (QMainWindow):
         dialog.setFileMode(QFileDialog.AnyFile)
         dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
-        result = dialog.exec()
+        dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
 
-        if result == QFileDialog.Save:
-            self.save_records(dialog.selectedFiles()[0])
+        if dialog.exec():
+            self.save_records(dialog.selectedFiles()[0], self.image_filename)
+
+    def slot_clear_records (self):
+        self.clear_records()
+        self.update_image_view()
 
     def slot_quick_help (self):
         self.show_message(title = "Quick help", message = "Currently nothing to show...")
@@ -383,5 +393,5 @@ class MainWindow (QMainWindow):
         if self.clear_modified_flag():
             event.accept()
         else:
-            event.rgnore()
+            event.ignore()
 
