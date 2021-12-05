@@ -146,6 +146,7 @@ class MainWindow (QMainWindow):
             self.image_stack = stack.Stack(image_filename)
             self.image_filename = image_filename
             self.init_widgets()
+            self.plugin_class.update_stack_info(self.image_stack)
         except FileNotFoundError:
             self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
 
@@ -188,6 +189,7 @@ class MainWindow (QMainWindow):
 
         self.init_plugin(module)
         self.update_image_view()
+        self.plugin_class.update_stack_info(self.image_stack)
 
     def init_plugin (self, module):
         self.plugin_module = module

@@ -214,8 +214,6 @@ class SPT (PluginBase):
         return pen
 
     def key_pressed (self, event, stack, tcz_index):
-        self.update_limits(stack)
-
         if self.check_hide_tracks.isChecked():
             return
 
@@ -229,8 +227,6 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def key_released (self, event, stack, tcz_index):
-        self.update_limits(stack)
-
         if self.check_hide_tracks.isChecked():
             return
 
@@ -241,8 +237,6 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def mouse_clicked (self, event, stack, tcz_index):
-        self.update_limits(stack)
-
         if self.check_hide_tracks.isChecked():
             self.current_spot = None
             self.update_status()
@@ -273,8 +267,6 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def mouse_moved (self, event, stack, tcz_index):
-        self.update_limits(stack)
-
         if self.current_spot is None:
             return
 
@@ -363,7 +355,7 @@ class SPT (PluginBase):
         else:
             self.current_spot = spot_list[-1]
 
-    def update_limits (self, stack):
+    def update_stack_info (self, stack):
         self.z_limits = [0, stack.z_count - 1]
         self.c_limits = [0, stack.c_count - 1]
         self.t_limits = [0, stack.t_count - 1]

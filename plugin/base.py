@@ -24,6 +24,9 @@ class PluginBase (QObject):
     def init_widgets (self, vlayout):
         pass
 
+    def update_stack_info (self, stack):
+        pass
+
     def connect_signals (self):
         pass
 
