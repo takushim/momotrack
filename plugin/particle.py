@@ -254,7 +254,7 @@ class SPT (PluginBase):
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
             elif event.modifiers() == Qt.SHIFT:
                 if self.current_spot is not None:
-                    self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
+                    self.move_spot(self.current_spot, pos.x(), pos.y(), *tcz_index)
             else:
                 if self.current_spot is None:
                     self.select_spot(pos.x(), pos.y(), *tcz_index)
@@ -264,20 +264,17 @@ class SPT (PluginBase):
                         self.current_spot = spot_list[-1]
                     else:
                         self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
-            self.signal_update_scene.emit()
 
         self.update_status()
         self.update_mouse_cursor()
 
     def mouse_moved (self, event, stack, tcz_index):
-        pass
-        #if self.current_spot is None:
-        #    return
-        #
+        if self.current_spot is None:
+            return
+        
         #if event.buttons() == Qt.LeftButton and event.modifiers() == Qt.NoModifier:
-        #    print("Moving")
-        #    self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y())
-        #    self.signal_update_scene.emit()
+            #self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
+            #self.signal_update_scene.emit()
 
     def move_spot (self, spot, x, y, time, channel, z_index):
         spot['x'] = x
