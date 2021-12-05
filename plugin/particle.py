@@ -39,11 +39,14 @@ class SPT (PluginBase):
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
 
-    def init_context_menu (self):
+    def init_context_menu (self, main = None):
         self.context_menu = QMenu()
         self.actions = []
-        self.actions.append(QAction("Menu 1"))
-        self.actions.append(QAction("Menu 2"))
+        self.actions.append(QAction("Move spot to Z+"))
+        self.actions.append(QAction("Move spot to Z+"))
+        self.actions.append(QAction("Remove this spot"))
+        self.actions.append(QAction("Remove this tree"))
+        self.actions.append(QAction("Remove this track"))
         self.context_menu.addActions(self.actions)
 
 #        self.context_menu.addAction(QAction("Remove spot"))

@@ -23,7 +23,7 @@ class PluginBase (QObject):
     def connect_signals (self):
         pass
 
-    def list_scene_items (self):
+    def list_scene_items (self, tcz_index):
         pass
 
     def key_pressed (self, event, stack, tcz_index):
