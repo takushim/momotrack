@@ -162,15 +162,16 @@ class SPT (PluginBase):
             self.update_mouse_cursor()
             return
 
+        pos = event.scenePos()
         if event.button() == Qt.RightButton:
-            if event.modifiers() == Qt.NoModifier:
-                if self.current_spot is not None:
-                    self.context_menu.exec(event.screenPos())
+            self.select_spot(pos.x(), pos.y(), *tcz_index)
+            if self.current_spot is not None:
+                self.signal_update_scene.emit()
+                self.context_menu.exec(event.screenPos())
         elif event.button() == Qt.LeftButton:
-            pos = event.scenePos()
             if event.modifiers() == Qt.CTRL:
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
-            elif event.modifiers() == Qt.NoModifier:
+            else:
                 if self.current_spot is None:
                     self.select_spot(pos.x(), pos.y(), *tcz_index)
                 else:
@@ -179,8 +180,8 @@ class SPT (PluginBase):
                         self.current_spot = spot
                     else:
                         self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
+            self.signal_update_scene.emit()
 
-        self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
 
