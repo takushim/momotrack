@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-import sys
 import numpy as np
-import pandas as pd
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem, QSizePolicy
+from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem
 from PySide6.QtGui import QPen
 from plugin.base import PluginBase
 
@@ -17,49 +15,158 @@ class SPT (PluginBase):
     def __init__ (self):
         super().__init__()
         self.spot_list = []
-        self.spot_radius = 2
+        self.spot_radius = 4
+        self.spot_penwidth = 2
+        self.current_spot = None
+        self.adding_spot = False
+        self.color_first = Qt.red
+        self.color_cont = Qt.darkGreen
+        self.color_last = Qt.blue
+        self.color_selected = Qt.red
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
         self.check_hide_tracks = QCheckBox("Hide All Tracks")
         self.text_message = QLabel()
-        self.text_message.setText("Ctrl + click to start tracking.")
         self.vlayout.addWidget(self.check_hide_tracks)
         self.vlayout.addWidget(self.text_message)
+        self.update_status()
+        self.update_mouse_cursor()
 
     def connect_signals (self):
-        self.check_hide_tracks.stateChanged.connect(self.slot_hide_tracks)
+        self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
 
-    def slot_hide_tracks (self):
+    def slot_onoff_tracks (self):
+        if self.check_hide_tracks.isChecked():
+            self.current_spot = None
+            self.adding_spot = False
         self.signal_update_scene.emit()
+        self.update_status()
+        self.update_mouse_cursor()
 
-    def scene_items (self):
+    def list_scene_items (self, tcz_index):
+        if self.check_hide_tracks.isChecked():
+            return []
+
         scene_items = []
-        if self.check_hide_tracks.isChecked() == False:
-            for index in range(100):
-                pos = 256 * np.random.random(2)
-                item = QGraphicsEllipseItem(pos[0] - 2, pos[1] - 2, 2, 2)
-                item.setPen(QPen(Qt.white))
-                #scene_items.append(item)
+        target_spots = [spot for spot in self.spot_list \
+                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                           (spot['time'] == tcz_index[0])]
+        for spot in target_spots:
+            item = QGraphicsEllipseItem(spot['x'] - self.spot_radius, spot['y'] - self.spot_radius, \
+                                        self.spot_radius * 2, self.spot_radius * 2)
+            item.setPen(self.select_pen(spot))
+            scene_items.append(item)
+
+        if self.current_spot is not None:
+            item = QGraphicsEllipseItem(self.current_spot['x'] - self.spot_radius * 2, \
+                                        self.current_spot['y'] - self.spot_radius * 2, \
+                                        self.spot_radius * 4, self.spot_radius * 4)
+            item.setPen(self.select_pen(self.current_spot))
+            scene_items.append(item)
+
         return scene_items
 
-    def key_pressed (self, event, image_index, stack):
-        if event.key() == Qt.Key_Control:
-            self.signal_update_mouse_cursor.emit(Qt.CrossCursor)
-
-    def key_released (self, event, image_index, stack):
-        if event.key() == Qt.Key_Control:
-            self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
-
-    def mouse_clicked (self, event, image_index, stack):
-        if event.modifiers() == Qt.CTRL:
-            self.add_spot(event.scenePos(), parent = None)
+    def select_pen(self, spot):
+        if spot['parent'] is None:
+            pen = QPen(self.color_first)
+        elif len([x for x in self.spot_list if (x['parent'] == spot['index'])]) > 0:
+            pen = QPen(self.color_cont)
         else:
-            print(event)
-            self.select_spot(event.scenePos())
+            pen = QPen(self.color_last)
+        pen.setWidth(self.spot_penwidth)
+        return pen
 
-    def add_spot (self, pos, parent = None):
-        print(pos)
-    
-    def select_spot (self, pos):
-        print(pos)
+    def key_pressed (self, event, stack, tcz_index):
+        if self.check_hide_tracks.isChecked():
+            return
+
+        if event.key() == Qt.Key_Control:
+            self.adding_spot = True
+        elif event.key() == Qt.Key_Escape:
+            self.current_spot = None
+            self.adding_spot = False
+            self.signal_update_scene.emit()
+        self.update_status()
+        self.update_mouse_cursor()
+
+    def key_released (self, event, stack, tcz_index):
+        if self.check_hide_tracks.isChecked():
+            return
+
+        if event.key() == Qt.Key_Control:
+            self.adding_spot = False
+
+        self.update_status()
+        self.update_mouse_cursor()
+
+    def mouse_clicked (self, event, stack, tcz_index):
+        if self.check_hide_tracks.isChecked():
+            self.current_spot = None
+            self.update_status()
+            self.update_mouse_cursor()
+            return
+
+        pos = event.scenePos()
+        if event.button() == Qt.RightButton:
+            if event.modifiers() == Qt.NoModifier:
+                self.select_spot(pos.x(), pos.y(), *tcz_index)
+                self.show_context_menu()
+        elif event.button() == Qt.LeftButton:
+            if event.modifiers() == Qt.CTRL:
+                self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
+            elif event.modifiers() == Qt.NoModifier:
+                if self.current_spot is None:
+                    self.select_spot(pos.x(), pos.y(), *tcz_index)
+                else:
+                    self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
+
+        self.signal_update_scene.emit()
+        self.update_status()
+        self.update_mouse_cursor()
+
+    def show_context_menu (self):
+        pass
+
+    def add_spot (self, x, y, time, channel, z_index, parent = None):
+        if parent is None:
+            parent_index = None
+        else:
+            parent_index = parent['index']
+        spot = {'index': len(self.spot_list), 'time': time, 'channel': channel, \
+                'x': x, 'y': y, 'z': z_index, 'parent': parent_index}
+        self.spot_list.append(spot)
+        self.current_spot = spot
+
+    def delete_spot (self, index):
+        pass
+
+    def select_spot (self, x, y, time, channel, z_index):
+        if len(self.spot_list) == 0:
+            self.current_spot = None
+            return
+
+        cand_spots = [spot for spot in self.spot_list \
+                      if (spot['x'] - self.spot_radius <= x) and (x <= spot['x'] + self.spot_radius) and
+                         (spot['y'] - self.spot_radius <= y) and (y <= spot['y'] + self.spot_radius) and
+                         (spot['z'] == z_index) and (spot['time'] == time) and (spot['channel'] == channel)]
+
+        cand_spots = sorted(cand_spots, key = lambda x: x['index'])
+        if len(cand_spots) == 0:
+            self.current_spot = None
+        else:
+            self.current_spot = cand_spots[-1]
+
+    def update_status (self):
+        if self.check_hide_tracks.isChecked():
+            self.text_message.setText("Spots not shown.")
+        elif self.current_spot is None:
+            self.text_message.setText("Ctrl + click to start tracking.")
+        else:
+            self.text_message.setText("Spot = {0}. Click or hit ESC.".format(self.current_spot['index']))
+
+    def update_mouse_cursor(self):
+        if self.adding_spot or self.current_spot is not None:
+            self.signal_update_mouse_cursor.emit(Qt.CrossCursor)
+        else:
+            self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)

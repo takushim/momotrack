@@ -31,7 +31,7 @@ class Demo (PluginBase):
     def slot_demo_button (self):
         self.signal_update_scene.emit()
 
-    def scene_items (self):
+    def list_scene_items (self):
         scene_items = []
         for index in range(100):
             pos = 256 * np.random.random(2)
@@ -40,13 +40,13 @@ class Demo (PluginBase):
             scene_items.append(item)
         return scene_items
 
-    def key_pressed (self, event, image_index, stack):
+    def key_pressed (self, event, stack, tcz_index):
         if event.key() == Qt.Key_Control:
             self.signal_update_mouse_cursor.emit(Qt.CrossCursor)
 
-    def key_released (self, event, image_index, stack):
+    def key_released (self, event, stack, tcz_index):
         if event.key() == Qt.Key_Control:
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
 
-    def mouse_clicked (self, event, image_index, stack):
+    def mouse_clicked (self, event, stack, tcz_index):
         self.text_message.setText("Mouse clicked: ({0}, {1})".format(event.scenePos().x(), event.scenePos().y()))

@@ -193,7 +193,9 @@ class MainWindow (QMainWindow):
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
 
     def update_window_title (self):
-        if self.image_filename is not None:
+        if self.image_filename is None:
+            self.setWindowTitle(self.app_name)
+        else:
             self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
 
     def update_image_view (self):
@@ -201,7 +203,8 @@ class MainWindow (QMainWindow):
         self.image_panel.composite = self.lut_panel.is_composite()
         self.image_panel.color_always = self.lut_panel.color_always()
         self.image_panel.zoom_ratio = self.zoom_panel.zoom_ratio
-        self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, item_list = self.plugin_class.scene_items())
+        self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
+                                            item_list = self.plugin_class.list_scene_items(self.image_panel.current_index()))
 
         self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
 
@@ -266,13 +269,13 @@ class MainWindow (QMainWindow):
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
 
     def slot_scene_mouse_clicked (self, event):
-        self.plugin_class.mouse_clicked(event, self.image_panel.current_index(), self.image_stack.image_array)
+        self.plugin_class.mouse_clicked(event, self.image_stack, self.image_panel.current_index())
 
     def slot_scene_key_pressed (self, event):
-        self.plugin_class.key_pressed(event, self.image_panel.current_index(), self.image_stack.image_array)
+        self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
 
     def slot_scene_key_released (self, event):
-        self.plugin_class.key_released(event, self.image_panel.current_index(), self.image_stack.image_array)
+        self.plugin_class.key_released(event, self.image_stack, self.image_panel.current_index())
 
     def slot_image_index_changed (self):
         if self.lut_panel.is_auto_lut():

@@ -23,16 +23,16 @@ class PluginBase (QObject):
     def connect_signals (self):
         pass
 
-    def scene_items (self):
+    def list_scene_items (self):
         pass
 
-    def key_pressed (self, event, image_index, stack):
+    def key_pressed (self, event, stack, tcz_index):
         pass
 
-    def key_released (self, event, image_index, stack):
+    def key_released (self, event, stack, tcz_index):
         pass
 
-    def mouse_clicked (self, event, image_index, stack):
+    def mouse_clicked (self, event, stack, tcz_index):
         pass
 
     def load_records (self, filename):
