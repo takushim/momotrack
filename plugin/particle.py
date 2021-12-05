@@ -254,7 +254,7 @@ class SPT (PluginBase):
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
             elif event.modifiers() == Qt.SHIFT:
                 if self.current_spot is not None:
-                    self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y())
+                    self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
             else:
                 if self.current_spot is None:
                     self.select_spot(pos.x(), pos.y(), *tcz_index)
@@ -279,9 +279,12 @@ class SPT (PluginBase):
         #    self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y())
         #    self.signal_update_scene.emit()
 
-    def move_spot (self, spot, x, y):
+    def move_spot (self, spot, x, y, time, channel, z_index):
         spot['x'] = x
         spot['y'] = y
+        spot['z'] = z_index
+        spot['time'] = time
+        spot['channel'] = channel
         self.records_modified = True
 
     def add_spot (self, x, y, time, channel, z_index, parent = None):
@@ -369,9 +372,14 @@ class SPT (PluginBase):
         if self.check_hide_tracks.isChecked():
             self.text_message.setText("Spots not shown.")
         elif self.current_spot is None:
-            self.text_message.setText("Ctrl + click to start tracking.")
+            self.text_message.setText("No spots selected\n" +
+                                      "* Ctrl + click to start tracking.\n" +
+                                      "* Click to select.")
         else:
-            self.text_message.setText("Spot = {0}. Click or hit ESC.".format(self.current_spot['index']))
+            self.text_message.setText("Spot {0} selected.\n".format(self.current_spot['index']) +
+                                      "* Click to add track.\n" +
+                                      "* Shift + click: move.\n" +
+                                      "* ESC to quit.")
 
     def update_mouse_cursor(self):
         if self.adding_spot or self.current_spot is not None:
