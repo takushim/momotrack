@@ -276,13 +276,13 @@ class MainWindow (QMainWindow):
 
     def slot_scene_key_pressed (self, event):
         if event.key() == Qt.Key_Right:
-            self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
+            self.ui.slider_time.setValue(min(self.ui.slider_time.value() + 1,  self.image_stack.t_count - 1))
         elif event.key() == Qt.Key_Left:
-            self.ui.slider_time.setValue((self.ui.slider_time.value() - 1) % self.image_stack.t_count)
-        elif event.key() == Qt.Key_Down:
-            self.ui.slider_zstack.setValue((self.ui.slider_zstack.value() + 1) % self.image_stack.z_count)
+            self.ui.slider_time.setValue(max(self.ui.slider_time.value() - 1, 0))
         elif event.key() == Qt.Key_Up:
-            self.ui.slider_zstack.setValue((self.ui.slider_zstack.value() - 1) % self.image_stack.z_count)
+            self.ui.slider_zstack.setValue(min(self.ui.slider_zstack.value() + 1,  self.image_stack.z_count - 1))
+        elif event.key() == Qt.Key_Down:
+            self.ui.slider_zstack.setValue(max(self.ui.slider_zstack.value() - 1, 0))
         else:
             self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
 

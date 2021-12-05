@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import numpy as np
-from PySide6.QtCore import Qt, QPoint
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem, QMenu
 from PySide6.QtGui import QPen, QAction
 from plugin.base import PluginBase
@@ -24,7 +23,10 @@ class SPT (PluginBase):
         self.color_first = Qt.magenta
         self.color_cont = Qt.darkGreen
         self.color_last = Qt.blue
-        self.color_ghost = Qt.darkGreen
+        self.color_ghost = Qt.darkBlue
+        self.z_limits = [0, 0]
+        self.t_limits = [0, 0]
+        self.c_limits = [0, 0]
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
@@ -73,10 +75,14 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def slot_z_increment (self):
-        pass
+        if self.current_spot is not None:
+            self.current_spot['z'] = min(self.current_spot['z'] + 1, self.z_limits[1])
+            self.signal_update_scene.emit()
 
     def slot_z_decrement (self):
-        pass
+        if self.current_spot is not None:
+            self.current_spot['z'] = max(self.current_spot['z'] - 1, self.z_limits[0])
+            self.signal_update_scene.emit()
 
     def slot_remove_spot (self):
         pass
@@ -122,7 +128,7 @@ class SPT (PluginBase):
 
         return scene_items
 
-    def select_pen(self, spot):
+    def select_pen (self, spot):
         if spot['parent'] is None:
             pen = QPen(self.color_first)
         elif len([x for x in self.spot_list if (x['parent'] == spot['index'])]) > 0:
@@ -133,6 +139,8 @@ class SPT (PluginBase):
         return pen
 
     def key_pressed (self, event, stack, tcz_index):
+        self.update_limits(stack)
+
         if self.check_hide_tracks.isChecked():
             return
 
@@ -146,6 +154,8 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def key_released (self, event, stack, tcz_index):
+        self.update_limits(stack)
+
         if self.check_hide_tracks.isChecked():
             return
 
@@ -156,6 +166,8 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def mouse_clicked (self, event, stack, tcz_index):
+        self.update_limits(stack)
+
         if self.check_hide_tracks.isChecked():
             self.current_spot = None
             self.update_status()
@@ -186,6 +198,8 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def mouse_moved (self, event, stack, tcz_index):
+        self.update_limits(stack)
+
         if self.current_spot is None:
             return
 
@@ -224,6 +238,11 @@ class SPT (PluginBase):
 
     def select_spot (self, x, y, time, channel, z_index):
         self.current_spot = self.find_spot(x, y, time, channel, z_index)
+
+    def update_limits (self, stack):
+        self.z_limits = [0, stack.z_count - 1]
+        self.c_limits = [0, stack.c_count - 1]
+        self.t_limits = [0, stack.t_count - 1]
 
     def update_status (self):
         if self.check_hide_tracks.isChecked():
