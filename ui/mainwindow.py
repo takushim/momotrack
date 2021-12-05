@@ -289,15 +289,12 @@ class MainWindow (QMainWindow):
 
     def slot_scene_mouse_clicked (self, event):
         self.plugin_class.mouse_clicked(event, self.image_stack, self.image_panel.current_index())
-        self.update_image_view()
 
     def slot_scene_mouse_moved (self, event):
         self.plugin_class.mouse_moved(event, self.image_stack, self.image_panel.current_index())
-        self.update_image_view()
 
     def slot_scene_mouse_released (self, event):
         self.plugin_class.mouse_released(event, self.image_stack, self.image_panel.current_index())
-        self.update_image_view()
 
     def slot_scene_wheel_moved (self, event):
         if event.delta() > 0:
@@ -316,11 +313,9 @@ class MainWindow (QMainWindow):
             self.ui.slider_zstack.setValue(max(self.ui.slider_zstack.value() - 1, 0))
         else:
             self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
-            self.update_image_view()
 
     def slot_scene_key_released (self, event):
         self.plugin_class.key_released(event, self.image_stack, self.image_panel.current_index())
-        self.update_image_view()
 
     def slot_image_index_changed (self):
         if self.lut_panel.is_auto_lut():

@@ -265,6 +265,7 @@ class SPT (PluginBase):
                     else:
                         self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
 
+        self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
 
@@ -274,7 +275,7 @@ class SPT (PluginBase):
         
         if event.buttons() == Qt.LeftButton and event.modifiers() == Qt.NoModifier:
             self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
-            #self.signal_update_scene.emit()
+            self.signal_update_scene.emit()
 
     def move_spot (self, spot, x, y, time, channel, z_index):
         spot['x'] = x
