@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import sys
-import numpy as np
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QSizePolicy
 
 class PluginPanel:
@@ -22,3 +21,4 @@ class PluginPanel:
 
         for index in range(self.ui.vlayout_plugin.count()):
             self.ui.vlayout_plugin.itemAt(index).widget().setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+            self.ui.vlayout_plugin.itemAt(index).widget().setFocusPolicy(Qt.NoFocus)
