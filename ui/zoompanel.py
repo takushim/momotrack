@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-import sys
-import numpy as np
-
-zoom_ratios = [25, 50, 75, 100, 150, 200, 300, 400]
+zoom_limits = [25, 400]
+zoom_delta = 25
 
 class ZoomPanel:
     def __init__ (self, ui):
@@ -15,11 +13,11 @@ class ZoomPanel:
         self.ui.label_zoom_status.setText(status)
 
     def zoom_in (self):
-        self.zoom_ratio = zoom_ratios[min(zoom_ratios.index(self.zoom_ratio) + 1, len(zoom_ratios) - 1)]
+        self.zoom_ratio = min(self.zoom_ratio + zoom_delta, zoom_limits[1])
         self.update_zoom_label()
 
     def zoom_out (self):
-        self.zoom_ratio = zoom_ratios[max(zoom_ratios.index(self.zoom_ratio) - 1, 0)]
+        self.zoom_ratio = max(self.zoom_ratio - zoom_delta, zoom_limits[0])
         self.update_zoom_label()
 
     def zoom_reset (self):
