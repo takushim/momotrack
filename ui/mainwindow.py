@@ -205,6 +205,7 @@ class MainWindow (QMainWindow):
         self.plugin_class.signal_update_lut.connect(self.slot_update_lut)
         self.plugin_class.signal_reset_panels.connect(self.slot_reset_panels)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
+        self.plugin_class.signal_move_by_tczindex.connect(self.slot_move_by_tczindex)
 
     def zoom_best (self):
         self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
@@ -400,6 +401,12 @@ class MainWindow (QMainWindow):
         else:
             self.lut_panel.update_current_lut()
         self.update_image_view()
+
+    def slot_move_by_tczindex (self, time, channel, z_index):
+        if channel != self.lut_panel.current_channel():
+            self.ui.combo_channel.setCurrentIndex(channel)
+        self.ui.slider_time.setValue(time)
+        self.ui.slider_zstack.setValue(z_index)
 
     def slot_reset_panels (self):
         self.init_widgets()

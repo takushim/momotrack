@@ -35,8 +35,11 @@ class SPT (PluginBase):
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
         self.check_hide_tracks = QCheckBox("Hide All Tracks")
+        self.check_auto_moving = QCheckBox("Move automatically")
+        self.check_auto_moving.setChecked(True)
         self.text_message = QLabel()
         self.vlayout.addWidget(self.check_hide_tracks)
+        self.vlayout.addWidget(self.check_auto_moving)
         self.vlayout.addWidget(self.text_message)
         self.update_status()
         self.update_mouse_cursor()
@@ -251,6 +254,8 @@ class SPT (PluginBase):
         elif event.button() == Qt.LeftButton:
             if event.modifiers() == Qt.CTRL:
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
+                if self.check_auto_moving.isChecked():
+                    self.move_time_forward(*tcz_index)
             elif event.modifiers() == Qt.SHIFT:
                 if self.current_spot is not None:
                     self.move_spot(self.current_spot, pos.x(), pos.y(), *tcz_index)
@@ -263,6 +268,8 @@ class SPT (PluginBase):
                         self.current_spot = spot_list[-1]
                     else:
                         self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
+                        if self.check_auto_moving.isChecked():
+                            self.move_time_forward(*tcz_index)
 
         self.signal_update_scene.emit()
         self.update_status()
@@ -375,6 +382,10 @@ class SPT (PluginBase):
             self.current_spot = None
         else:
             self.current_spot = spot_list[-1]
+
+    def move_time_forward(self, time, channel, z_index):
+        time = min(time + 1, self.t_limits[1])
+        self.signal_move_by_tczindex.emit(time, channel, z_index)
 
     def update_stack_info (self, stack):
         self.z_limits = [0, stack.z_count - 1]
