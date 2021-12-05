@@ -11,7 +11,6 @@ from plugin.base import PluginBase
 plugin_name = 'Particle Tracking'
 class_name = 'SPT'
 priority = 10
-record_suffix = '_track.json'
 
 class SPT (PluginBase):
     def __init__ (self):
@@ -31,6 +30,7 @@ class SPT (PluginBase):
         self.t_limits = [0, 0]
         self.c_limits = [0, 0]
         self.records_modified = False
+        self.record_suffix = '_track.json'
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout

@@ -8,8 +8,6 @@ from PySide6.QtGui import QCursor
 priority = -1
 plugin_name = 'Base class'
 class_name = 'PluginBase'
-record_suffix = '_record.json'
-default_filename = 'default' + record_suffix
 
 class PluginBase (QObject):
     signal_update_scene = Signal()
@@ -20,6 +18,8 @@ class PluginBase (QObject):
     def __init__ (self):
         super().__init__()
         self.records_modified = False
+        self.record_suffix = '_record.json'
+        self.default_stem = 'default'
 
     def init_widgets (self, vlayout):
         pass
@@ -27,7 +27,7 @@ class PluginBase (QObject):
     def connect_signals (self):
         pass
 
-    def list_scene_items (self, tcz_index):
+    def list_scene_items (self, stack, tcz_index):
         pass
 
     def key_pressed (self, event, stack, tcz_index):
@@ -53,11 +53,11 @@ class PluginBase (QObject):
 
     def suggest_filename (self, image_filename):
         if image_filename is None:
-            return default_filename
+            return self.default_filename + self.record_suffix
 
         name = Path(image_filename).stem
         name = re.sub('\.ome$', '', name, flags=re.IGNORECASE)
-        return name + record_suffix
+        return name + self.record_suffix
 
     def is_modified (self):
         return self.records_modified

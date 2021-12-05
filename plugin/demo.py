@@ -10,7 +10,6 @@ from plugin.base import PluginBase
 plugin_name = 'Demo'
 class_name = 'Demo'
 priority = 100
-record_suffix = '_demo.json'
 
 class Demo (PluginBase):
     def __init__ (self):
@@ -18,6 +17,7 @@ class Demo (PluginBase):
         self.diameter = 4
         self.color_list = [Qt.white, Qt.red, Qt.green, Qt.blue, Qt.magenta, Qt.yellow, Qt.cyan]
         self.item_list = []
+        self.record_suffix = '_demo.json'
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
