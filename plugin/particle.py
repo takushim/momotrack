@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem, QMenu
+from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
 from PySide6.QtGui import QPen, QAction
 from plugin.base import PluginBase
 
@@ -18,6 +19,7 @@ class SPT (PluginBase):
         self.selected_radius = self.spot_radius * 2
         self.ghost_radius = self.spot_radius // 2
         self.spot_penwidth = 1
+        self.marker_size = 4
         self.current_spot = None
         self.adding_spot = False
         self.color_first = Qt.magenta
@@ -106,37 +108,66 @@ class SPT (PluginBase):
             return []
 
         scene_items = []
-        drawn_spots = [spot for spot in self.spot_list \
-                       if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                          (spot['z'] == tcz_index[2])]
+        if self.current_spot is not None:
+            drawn_spots = [spot for spot in self.spot_list \
+                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                            (spot['z'] == tcz_index[2]) and (spot['index'] != self.current_spot['index'])]
+        else:
+            drawn_spots = [spot for spot in self.spot_list \
+                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                            (spot['z'] == tcz_index[2])]
         for spot in drawn_spots:
-            item = self.create_spot_item(spot, self.spot_radius, color = None)
-            scene_items.append(item)
+            scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
+            scene_items.extend(self.create_marker_items(spot, self.spot_radius, color = None))
 
         ghost_spots = [spot for spot in self.spot_list \
                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
                           (spot['z'] == tcz_index[2] - 1 or spot['z'] == tcz_index[2] + 1)]
         for spot in ghost_spots:
-            item = self.create_spot_item(spot, self.ghost_radius, color = None)
-            scene_items.append(item)
+            scene_items.append(self.create_spot_item(spot, self.ghost_radius, color = None))
+            scene_items.extend(self.create_marker_items(spot, self.ghost_radius, color = None))
 
         if self.current_spot is not None:
             spot = self.current_spot
             if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot['z'] == tcz_index[2]):
-                item = self.create_spot_item(spot, self.selected_radius, color = None)
-                scene_items.append(item)
+                scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
+                scene_items.append(self.create_spot_item(spot, self.selected_radius, color = None))
+                scene_items.extend(self.create_marker_items(spot, self.selected_radius, color = None))
 
         return scene_items
 
     def create_spot_item (self, spot, radius, color = None):
-        item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
         if color is None:
             pen = self.select_pen(spot)
         else:
             pen = QPen(color)
         pen.setWidth(self.spot_penwidth)
+        item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
         item.setPen(pen)
         return item
+
+    def create_marker_items (self, spot, radius, color = None):
+        if len(self.find_children(spot)) <= 1:
+            return []
+
+        if color is None:
+            pen = self.select_pen(spot)
+        else:
+            pen = QPen(color)
+        pen.setWidth(self.spot_penwidth)
+
+        item_list = []
+        center_x = spot['x'] - radius
+        center_y = spot['y'] - radius
+        item = QGraphicsLineItem(center_x - self.marker_size, center_y, center_x + self.marker_size, center_y)
+        item.setPen(pen)
+        item_list.append(item)
+
+        item = QGraphicsLineItem(center_x, center_y - self.marker_size, center_x, center_y + self.marker_size)
+        item.setPen(pen)
+        item_list.append(item)
+
+        return item_list
 
     def select_pen (self, spot):
         if spot['parent'] is None:
