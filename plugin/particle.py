@@ -280,7 +280,7 @@ class SPT (PluginBase):
 
         if event.buttons() == Qt.LeftButton and event.modifiers() == Qt.NoModifier:
             self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y())
-            self.signal_update_scene.emit()
+            #self.signal_update_scene.emit()
 
     def move_spot (self, spot, x, y):
         spot['x'] = x
