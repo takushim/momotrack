@@ -23,7 +23,6 @@ class SPT (PluginBase):
         self.color_first = Qt.magenta
         self.color_cont = Qt.darkGreen
         self.color_last = Qt.blue
-        self.color_ghost = Qt.darkBlue
         self.z_limits = [0, 0]
         self.t_limits = [0, 0]
         self.c_limits = [0, 0]
@@ -58,11 +57,11 @@ class SPT (PluginBase):
         action.triggered.connect(self.slot_remove_spot)
         self.context_menu.addAction(action)
 
-        action = QAction("Remove this and linked spots", self.context_menu)
+        action = QAction("Remove this tree", self.context_menu)
         action.triggered.connect(self.slot_remove_tree)
         self.context_menu.addAction(action)
 
-        action = QAction("Remove the entire track", self.context_menu)
+        action = QAction("Remove from the root", self.context_menu)
         action.triggered.connect(self.slot_remove_track)
         self.context_menu.addAction(action)
 
@@ -111,31 +110,33 @@ class SPT (PluginBase):
                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
                           (spot['z'] == tcz_index[2])]
         for spot in drawn_spots:
-            item = QGraphicsEllipseItem(spot['x'] - self.spot_radius, spot['y'] - self.spot_radius, \
-                                        self.spot_radius * 2, self.spot_radius * 2)
-            item.setPen(self.select_pen(spot))
+            item = self.create_spot_item(spot, self.spot_radius, color = None)
             scene_items.append(item)
 
         ghost_spots = [spot for spot in self.spot_list \
                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
                           (spot['z'] == tcz_index[2] - 1 or spot['z'] == tcz_index[2] + 1)]
         for spot in ghost_spots:
-            item = QGraphicsEllipseItem(spot['x'] - self.ghost_radius, spot['y'] - self.ghost_radius, \
-                                        self.ghost_radius * 2, self.ghost_radius * 2)
-            pen = QPen(self.color_ghost)
-            pen.setWidth(self.spot_penwidth)
-            item.setPen(pen)
+            item = self.create_spot_item(spot, self.ghost_radius, color = None)
             scene_items.append(item)
 
         if self.current_spot is not None:
             spot = self.current_spot
             if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot['z'] == tcz_index[2]):
-                item = QGraphicsEllipseItem(spot['x'] - self.selected_radius, spot['y'] - self.selected_radius, \
-                                            self.selected_radius * 2, self.selected_radius * 2)
-                item.setPen(self.select_pen(spot))
+                item = self.create_spot_item(spot, self.selected_radius, color = None)
                 scene_items.append(item)
 
         return scene_items
+
+    def create_spot_item (self, spot, radius, color = None):
+        item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
+        if color is None:
+            pen = self.select_pen(spot)
+        else:
+            pen = QPen(color)
+        pen.setWidth(self.spot_penwidth)
+        item.setPen(pen)
+        return item
 
     def select_pen (self, spot):
         if spot['parent'] is None:
@@ -144,7 +145,6 @@ class SPT (PluginBase):
             pen = QPen(self.color_cont)
         else:
             pen = QPen(self.color_last)
-        pen.setWidth(self.spot_penwidth)
         return pen
 
     def key_pressed (self, event, stack, tcz_index):
