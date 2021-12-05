@@ -31,8 +31,10 @@ class Demo (PluginBase):
 
     def slot_demo_button (self):
         self.text_message.setText("Button clicked.")
+        self.signal_update_scene.emit()
 
-    def list_scene_items (self, tcz_index):
+    def list_scene_items (self, stack, tcz_index):
+        self.update_spots(stack.width, stack.height)
         return self.item_list
 
     def key_pressed (self, event, stack, tcz_index):
@@ -45,14 +47,17 @@ class Demo (PluginBase):
 
     def mouse_clicked (self, event, stack, tcz_index):
         self.text_message.setText("Mouse clicked: ({0:.2f}, {1:.2f})".format(event.scenePos().x(), event.scenePos().y()))
+        self.update_spots(stack.width, stack.height)
+        self.signal_update_scene.emit()
+
+    def update_spots (self, width, height):
         self.item_list = []
         for index in range(100):
-            x = stack.width * np.random.random(1)
-            y = stack.height * np.random.random(1)
+            x = width * np.random.random(1)
+            y = height * np.random.random(1)
             item = QGraphicsEllipseItem(x - self.diameter, y - self.diameter, self.diameter, self.diameter)
             item.setPen(QPen(self.color_list[index % len(self.color_list)]))
             self.item_list.append(item)
-        self.signal_update_scene.emit()
 
     def help_message (self):
         return "Demo class for plugin."

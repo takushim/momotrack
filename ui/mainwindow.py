@@ -216,7 +216,7 @@ class MainWindow (QMainWindow):
         self.image_panel.color_always = self.lut_panel.color_always()
         self.image_panel.zoom_ratio = self.zoom_panel.zoom_ratio
         self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
-                                            item_list = self.plugin_class.list_scene_items(self.image_panel.current_index()))
+                                            item_list = self.plugin_class.list_scene_items(self.image_stack, self.image_panel.current_index()))
 
         self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
 

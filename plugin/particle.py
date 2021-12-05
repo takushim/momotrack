@@ -138,7 +138,7 @@ class SPT (PluginBase):
             self.current_spot = None
             self.signal_update_scene.emit()
 
-    def list_scene_items (self, tcz_index):
+    def list_scene_items (self, stack, tcz_index):
         if self.check_hide_tracks.isChecked():
             return []
 
