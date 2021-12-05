@@ -4,7 +4,7 @@ from pathlib import Path
 from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtGui import QAction, QActionGroup
-from PySide6.QtCore import QFile, QTimer
+from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
@@ -105,6 +105,7 @@ class MainWindow (QMainWindow):
     def connect_signals_to_slots (self):
         # scene
         self.image_panel.scene.mousePressEvent = self.slot_scene_mouse_clicked
+        self.image_panel.scene.mouseMoveEvent = self.slot_scene_mouse_moved
         self.image_panel.scene.keyPressEvent = self.slot_scene_key_pressed
         self.image_panel.scene.keyReleaseEvent = self.slot_scene_key_released
 
@@ -248,7 +249,6 @@ class MainWindow (QMainWindow):
         else:
             self.save_records(self.records_filename)
 
-
     def slot_save_records_as (self):
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select a filename to save records.")
@@ -271,8 +271,20 @@ class MainWindow (QMainWindow):
     def slot_scene_mouse_clicked (self, event):
         self.plugin_class.mouse_clicked(event, self.image_stack, self.image_panel.current_index())
 
+    def slot_scene_mouse_moved (self, event):
+        self.plugin_class.mouse_moved(event, self.image_stack, self.image_panel.current_index())
+
     def slot_scene_key_pressed (self, event):
-        self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
+        if event.key() == Qt.Key_Right:
+            self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
+        elif event.key() == Qt.Key_Left:
+            self.ui.slider_time.setValue((self.ui.slider_time.value() - 1) % self.image_stack.t_count)
+        elif event.key() == Qt.Key_Down:
+            self.ui.slider_zstack.setValue((self.ui.slider_zstack.value() + 1) % self.image_stack.z_count)
+        elif event.key() == Qt.Key_Up:
+            self.ui.slider_zstack.setValue((self.ui.slider_zstack.value() - 1) % self.image_stack.z_count)
+        else:
+            self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
 
     def slot_scene_key_released (self, event):
         self.plugin_class.key_released(event, self.image_stack, self.image_panel.current_index())

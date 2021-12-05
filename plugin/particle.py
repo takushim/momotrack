@@ -16,13 +16,15 @@ class SPT (PluginBase):
         super().__init__()
         self.spot_list = []
         self.spot_radius = 4
-        self.spot_penwidth = 2
+        self.selected_radius = self.spot_radius * 2
+        self.ghost_radius = self.spot_radius // 2
+        self.spot_penwidth = 1
         self.current_spot = None
         self.adding_spot = False
-        self.color_first = Qt.red
+        self.color_first = Qt.magenta
         self.color_cont = Qt.darkGreen
         self.color_last = Qt.blue
-        self.color_selected = Qt.red
+        self.color_ghost = Qt.darkGreen
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
@@ -49,21 +51,33 @@ class SPT (PluginBase):
             return []
 
         scene_items = []
-        target_spots = [spot for spot in self.spot_list \
-                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                           (spot['time'] == tcz_index[0])]
-        for spot in target_spots:
+        drawn_spots = [spot for spot in self.spot_list \
+                       if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                          (spot['z'] == tcz_index[2])]
+        for spot in drawn_spots:
             item = QGraphicsEllipseItem(spot['x'] - self.spot_radius, spot['y'] - self.spot_radius, \
                                         self.spot_radius * 2, self.spot_radius * 2)
             item.setPen(self.select_pen(spot))
             scene_items.append(item)
 
-        if self.current_spot is not None:
-            item = QGraphicsEllipseItem(self.current_spot['x'] - self.spot_radius * 2, \
-                                        self.current_spot['y'] - self.spot_radius * 2, \
-                                        self.spot_radius * 4, self.spot_radius * 4)
-            item.setPen(self.select_pen(self.current_spot))
+        ghost_spots = [spot for spot in self.spot_list \
+                       if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                          (spot['z'] == tcz_index[2] - 1 or spot['z'] == tcz_index[2] + 1)]
+        for spot in ghost_spots:
+            item = QGraphicsEllipseItem(spot['x'] - self.ghost_radius, spot['y'] - self.ghost_radius, \
+                                        self.ghost_radius * 2, self.ghost_radius * 2)
+            pen = QPen(self.color_ghost)
+            pen.setWidth(self.spot_penwidth)
+            item.setPen(pen)
             scene_items.append(item)
+
+        if self.current_spot is not None:
+            spot = self.current_spot
+            if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot['z'] == tcz_index[2]):
+                item = QGraphicsEllipseItem(spot['x'] - self.selected_radius, spot['y'] - self.selected_radius, \
+                                            self.selected_radius * 2, self.selected_radius * 2)
+                item.setPen(self.select_pen(spot))
+                scene_items.append(item)
 
         return scene_items
 
@@ -119,11 +133,24 @@ class SPT (PluginBase):
                 if self.current_spot is None:
                     self.select_spot(pos.x(), pos.y(), *tcz_index)
                 else:
-                    self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
+                    spot = self.find_spot(pos.x(), pos.y(), *tcz_index)
+                    if spot is not None and spot['index'] == self.current_spot['index']:
+                        self.current_spot = spot
+                    else:
+                        self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
 
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
+
+    def mouse_moved (self, event, stack, tcz_index):
+        if self.current_spot is None:
+            return
+
+        if event.buttons() == Qt.LeftButton and event.modifiers() == Qt.NoModifier:
+            self.current_spot['x'] = event.scenePos().x()
+            self.current_spot['y'] = event.scenePos().y()
+            self.signal_update_scene.emit()
 
     def show_context_menu (self):
         pass
@@ -141,21 +168,23 @@ class SPT (PluginBase):
     def delete_spot (self, index):
         pass
 
-    def select_spot (self, x, y, time, channel, z_index):
+    def find_spot (self, x, y, time, channel, z_index):
         if len(self.spot_list) == 0:
-            self.current_spot = None
-            return
+            return None
 
         cand_spots = [spot for spot in self.spot_list \
-                      if (spot['x'] - self.spot_radius <= x) and (x <= spot['x'] + self.spot_radius) and
-                         (spot['y'] - self.spot_radius <= y) and (y <= spot['y'] + self.spot_radius) and
+                      if (x - self.spot_radius <= spot['x']) and (spot['x'] <= x + self.spot_radius) and
+                         (y - self.spot_radius <= spot['y']) and (spot['y'] <= y + self.spot_radius) and
                          (spot['z'] == z_index) and (spot['time'] == time) and (spot['channel'] == channel)]
 
         cand_spots = sorted(cand_spots, key = lambda x: x['index'])
         if len(cand_spots) == 0:
-            self.current_spot = None
+            return None
         else:
-            self.current_spot = cand_spots[-1]
+            return cand_spots[-1]
+
+    def select_spot (self, x, y, time, channel, z_index):
+        self.current_spot = self.find_spot(x, y, time, channel, z_index)
 
     def update_status (self):
         if self.check_hide_tracks.isChecked():

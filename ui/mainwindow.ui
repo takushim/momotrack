@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>640</height>
+    <height>650</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -21,6 +21,9 @@
     <width>400</width>
     <height>300</height>
    </size>
+  </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
@@ -57,11 +60,20 @@
         </property>
         <item>
          <widget class="QGraphicsView" name="gview_image">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="minimumSize">
            <size>
             <width>512</width>
             <height>512</height>
            </size>
+          </property>
+          <property name="mouseTracking">
+           <bool>false</bool>
           </property>
           <property name="autoFillBackground">
            <bool>false</bool>
@@ -677,7 +689,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -691,8 +703,8 @@
      <rect>
       <x>507</x>
       <y>107</y>
-      <width>147</width>
-      <height>170</height>
+      <width>170</width>
+      <height>183</height>
      </rect>
     </property>
     <property name="sizePolicy">
