@@ -3,7 +3,7 @@
 import time, json
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
+from PySide6.QtWidgets import QCheckBox, QLabel, QMenu, QHBoxLayout, QDoubleSpinBox
 from PySide6.QtWidgets import QGraphicsEllipseItem
 from PySide6.QtGui import QPen, QBrush, QAction
 from plugin.base import PluginBase
@@ -18,7 +18,7 @@ class SPT (PluginBase):
         self.spot_list = []
         self.spot_radius = 4
         self.selected_radius = self.spot_radius * 2
-        self.ghost_radius = self.spot_radius // 2
+        self.ghost_radius = self.spot_radius / 2
         self.spot_penwidth = 1
         self.marker_size = 4
         self.current_spot = None
@@ -40,6 +40,19 @@ class SPT (PluginBase):
         self.text_message = QLabel()
         self.vlayout.addWidget(self.check_hide_tracks)
         self.vlayout.addWidget(self.check_auto_moving)
+
+        hlayout = QHBoxLayout()
+        label = QLabel("Marker radius:")
+        hlayout.addWidget(label)
+        self.dspin_marker_radius = QDoubleSpinBox()
+        self.dspin_marker_radius.setRange(1, 20)
+        self.dspin_marker_radius.setFocusPolicy(Qt.ClickFocus)
+        self.dspin_marker_radius.setSingleStep(0.1)
+        self.dspin_marker_radius.setKeyboardTracking(False)
+        self.dspin_marker_radius.setValue(self.spot_radius)
+        hlayout.addWidget(self.dspin_marker_radius)
+        self.vlayout.addLayout(hlayout)
+
         self.vlayout.addWidget(self.text_message)
         self.update_status()
         self.update_mouse_cursor()
@@ -47,6 +60,7 @@ class SPT (PluginBase):
 
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
+        self.dspin_marker_radius.valueChanged.connect(self.slot_marker_changed)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -111,6 +125,12 @@ class SPT (PluginBase):
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
+
+    def slot_marker_changed (self):
+        self.spot_radius = self.dspin_marker_radius.value()
+        self.ghost_radius = self.spot_radius / 2
+        self.selected_radius = self.spot_radius * 2
+        self.signal_update_scene.emit()
 
     def slot_z_increment (self):
         if self.current_spot is not None:
