@@ -85,13 +85,22 @@ class SPT (PluginBase):
             self.signal_update_scene.emit()
 
     def slot_remove_spot (self):
-        pass
+        if self.current_spot is not None:
+            self.remove_spot(self.current_spot['index'])
+            self.current_spot = None
+            self.signal_update_scene.emit()
 
     def slot_remove_tree (self):
-        pass
+        if self.current_spot is not None:
+            self.remove_tree(self.current_spot['index'])
+            self.current_spot = None
+            self.signal_update_scene.emit()
 
     def slot_remove_track (self):
-        pass
+        if self.current_spot is not None:
+            self.remove_tree(self.find_root(self.current_spot['index']))
+            self.current_spot = None
+            self.signal_update_scene.emit()
 
     def list_scene_items (self, tcz_index):
         if self.check_hide_tracks.isChecked():
@@ -131,7 +140,7 @@ class SPT (PluginBase):
     def select_pen (self, spot):
         if spot['parent'] is None:
             pen = QPen(self.color_first)
-        elif len([x for x in self.spot_list if (x['parent'] == spot['index'])]) > 0:
+        elif len(self.find_children(spot)) > 0:
             pen = QPen(self.color_cont)
         else:
             pen = QPen(self.color_last)
@@ -187,9 +196,9 @@ class SPT (PluginBase):
                 if self.current_spot is None:
                     self.select_spot(pos.x(), pos.y(), *tcz_index)
                 else:
-                    spot = self.find_spot(pos.x(), pos.y(), *tcz_index)
-                    if spot is not None and spot['index'] == self.current_spot['index']:
-                        self.current_spot = spot
+                    spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
+                    if len(spot_list) > 0:
+                        self.current_spot = spot_list[-1]
                     else:
                         self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
             self.signal_update_scene.emit()
@@ -218,10 +227,48 @@ class SPT (PluginBase):
         self.spot_list.append(spot)
         self.current_spot = spot
 
-    def delete_spot (self, index):
-        pass
+    def remove_tree (self, index):
+        delete_spot = self.find_spot(index)
+        child_list = self.find_children(delete_spot)
+        if len(child_list) == 0:
+            self.remove_spot(delete_spot['index'])
+        else:
+            for child_spot in child_list:
+                self.remove_tree(child_spot['index'])
 
-    def find_spot (self, x, y, time, channel, z_index):
+    def remove_spot (self, index):
+        delete_spot = self.find_spot(index)
+        for child_spot in self.find_children(delete_spot):
+            child_spot['parent'] = None
+        self.spot_list = [spot for spot in self.spot_list if spot['index'] != index]
+
+    def find_root (self, index):
+        current_spot = self.find_spot(index)
+        while current_spot['parent'] is not None:
+            current_spot = self.find_spot(current_spot['parent'])
+        return current_spot
+
+    def find_children (self, spot):
+        if spot is None:
+            spot_list = []
+        else:
+            spot_list = [x for x in self.spot_list if (x['parent'] == spot['index'])]
+        
+        return spot_list
+
+    def find_spot (self, index):
+        spot_list = [spot for spot in self.spot_list if spot['index'] == index]
+        if len(spot_list) > 1:
+            print("Multiple spots have the same index. Using the first spot.")
+
+        if len(spot_list) == 0:
+            spot = None
+        else:
+            spot = spot_list[0]
+        
+        return spot
+
+    def find_spots_by_position (self, x, y, time, channel, z_index):
         if len(self.spot_list) == 0:
             return None
 
@@ -230,14 +277,14 @@ class SPT (PluginBase):
                          (y - self.spot_radius <= spot['y']) and (spot['y'] <= y + self.spot_radius) and
                          (spot['z'] == z_index) and (spot['time'] == time) and (spot['channel'] == channel)]
 
-        cand_spots = sorted(cand_spots, key = lambda x: x['index'])
-        if len(cand_spots) == 0:
-            return None
-        else:
-            return cand_spots[-1]
+        return sorted(cand_spots, key = lambda x: x['index'])
 
     def select_spot (self, x, y, time, channel, z_index):
-        self.current_spot = self.find_spot(x, y, time, channel, z_index)
+        spot_list = self.find_spots_by_position(x, y, time, channel, z_index)
+        if len(spot_list) == 0:
+            self.current_spot = None
+        else:
+            self.current_spot = spot_list[-1]
 
     def update_limits (self, stack):
         self.z_limits = [0, stack.z_count - 1]
