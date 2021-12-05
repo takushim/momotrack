@@ -4,8 +4,8 @@ import time, json
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
-from PySide6.QtGui import QPen, QAction
+from PySide6.QtWidgets import QGraphicsEllipseItem
+from PySide6.QtGui import QPen, QBrush, QAction
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -81,10 +81,10 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
         self.records_modified = False
 
-    def save_records (self, records_filename, image_filename):
+    def save_records (self, records_filename, settings = {}):
         output_dict = {'summary': {'plugin': plugin_name, \
-                                   'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y"), \
-                                   'image_filename': image_filename}, \
+                                   'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y")},
+                       'settings': settings, \
                        'spot_list': self.spot_list}
 
         with open(records_filename, 'w') as f:
@@ -145,35 +145,45 @@ class SPT (PluginBase):
         scene_items = []
         if self.current_spot is not None:
             drawn_spots = [spot for spot in self.spot_list \
-                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                            (spot['z'] == tcz_index[2]) and (spot['index'] != self.current_spot['index'])]
+                           if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                              (spot['z'] == tcz_index[2]) and (spot['index'] != self.current_spot['index'])]
+            ancestors = self.find_ancestors(self.current_spot)
+            descendants = self.find_descendants(self.current_spot)
         else:
             drawn_spots = [spot for spot in self.spot_list \
-                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                            (spot['z'] == tcz_index[2])]
+                           if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                              (spot['z'] == tcz_index[2])]
+            ancestors = []
+            descendants = []
+
         for spot in drawn_spots:
             scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
-            scene_items.extend(self.create_marker_items(spot, self.spot_radius, color = None))
+            if spot in ancestors:
+                scene_items.extend(self.create_marker_items(spot, self.spot_radius, color = None, fill = True))
+            if spot in descendants:
+                scene_items.extend(self.create_marker_items(spot, self.spot_radius, color = None, fill = False))
 
         ghost_spots = [spot for spot in self.spot_list \
                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
                           (spot['z'] == tcz_index[2] - 1 or spot['z'] == tcz_index[2] + 1)]
         for spot in ghost_spots:
             scene_items.append(self.create_spot_item(spot, self.ghost_radius, color = None))
-            scene_items.extend(self.create_marker_items(spot, self.ghost_radius, color = None))
+            if spot in ancestors:
+                scene_items.extend(self.create_marker_items(spot, self.ghost_radius, color = None, fill = True))
+            if spot in descendants:
+                scene_items.extend(self.create_marker_items(spot, self.ghost_radius, color = None, fill = False))
 
         if self.current_spot is not None:
             spot = self.current_spot
             if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot['z'] == tcz_index[2]):
                 scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
                 scene_items.append(self.create_spot_item(spot, self.selected_radius, color = None))
-                scene_items.extend(self.create_marker_items(spot, self.selected_radius, color = None))
 
         return scene_items
 
     def create_spot_item (self, spot, radius, color = None):
         if color is None:
-            pen = self.select_pen(spot)
+            pen = QPen(self.select_color(spot))
         else:
             pen = QPen(color)
         pen.setWidth(self.spot_penwidth)
@@ -181,37 +191,26 @@ class SPT (PluginBase):
         item.setPen(pen)
         return item
 
-    def create_marker_items (self, spot, radius, color = None):
-        if len(self.find_children(spot)) <= 1:
-            return []
-
+    def create_marker_items (self, spot, radius, color = None, fill = False):
         if color is None:
-            pen = self.select_pen(spot)
-        else:
-            pen = QPen(color)
+            color = self.select_color(spot)
+
+        item = QGraphicsEllipseItem(spot['x'] - radius - 1, spot['y'] - radius - 1, 2, 2)
+        pen = QPen(self.select_color(spot))
         pen.setWidth(self.spot_penwidth)
+        item.setPen(QPen(self.select_color(spot)))
+        if fill is True:
+            item.setBrush(QBrush(self.select_color(spot)))
+        return [item]
 
-        item_list = []
-        center_x = spot['x'] - radius
-        center_y = spot['y'] - radius
-        item = QGraphicsLineItem(center_x - self.marker_size, center_y, center_x + self.marker_size, center_y)
-        item.setPen(pen)
-        item_list.append(item)
-
-        item = QGraphicsLineItem(center_x, center_y - self.marker_size, center_x, center_y + self.marker_size)
-        item.setPen(pen)
-        item_list.append(item)
-
-        return item_list
-
-    def select_pen (self, spot):
+    def select_color (self, spot):
         if spot['parent'] is None:
-            pen = QPen(self.color_first)
+            color = self.color_first
         elif len(self.find_children(spot)) > 0:
-            pen = QPen(self.color_cont)
+            color = self.color_cont
         else:
-            pen = QPen(self.color_last)
-        return pen
+            color = self.color_last
+        return color
 
     def key_pressed (self, event, stack, tcz_index):
         if self.check_hide_tracks.isChecked():
@@ -329,6 +328,22 @@ class SPT (PluginBase):
         else:
             spot_list = [x for x in self.spot_list if (x['parent'] == spot['index'])]
         
+        return spot_list
+
+    def find_ancestors(self, spot):
+        spot_list = []
+        current_spot = self.find_spot(spot['parent'])
+        while current_spot is not None:
+            spot_list.append(current_spot)
+            current_spot = self.find_spot(current_spot['parent'])
+        return spot_list
+
+    def find_descendants(self, spot):
+        spot_list = []
+        child_list = self.find_children(spot)
+        for child in child_list:
+            spot_list.append(child)
+            spot_list.extend(self.find_descendants(child))
         return spot_list
 
     def find_spot (self, index):

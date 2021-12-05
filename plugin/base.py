@@ -51,7 +51,7 @@ class PluginBase (QObject):
     def load_records (self, records_filename):
         pass
 
-    def save_records (self, records_filename, image_filename):
+    def save_records (self, records_filename, settings = {}):
         pass
 
     def clear_records (self):

@@ -157,12 +157,15 @@ class MainWindow (QMainWindow):
             self.records_filename = records_filename
 
     def save_records (self, records_filename, image_filename):
-        if self.plugin_class.save_records(records_filename, image_filename) == True:
+        if self.plugin_class.save_records(records_filename, settings = self.archive_settings()) == True:
             self.records_filename = records_filename
 
     def clear_records (self):
         self.plugin_class.clear_records()
         self.records_filename = None
+
+    def archive_settings (self):
+        return {'image_filename': self.image_filename}
 
     def clear_modified_flag (self):
         if self.plugin_class.is_modified():
