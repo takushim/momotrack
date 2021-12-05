@@ -17,6 +17,7 @@ class Demo (PluginBase):
         super().__init__()
         self.diameter = 4
         self.color_list = [Qt.white, Qt.red, Qt.green, Qt.blue, Qt.magenta, Qt.yellow, Qt.cyan]
+        self.item_list = []
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
@@ -29,16 +30,10 @@ class Demo (PluginBase):
         self.button_demo.clicked.connect(self.slot_demo_button)
 
     def slot_demo_button (self):
-        self.signal_update_scene.emit()
+        self.text_message.setText("Button clicked.")
 
     def list_scene_items (self, tcz_index):
-        scene_items = []
-        for index in range(100):
-            pos = 256 * np.random.random(2)
-            item = QGraphicsEllipseItem(pos[0] - self.diameter, pos[1] - self.diameter, self.diameter, self.diameter)
-            item.setPen(QPen(self.color_list[index % len(self.color_list)]))
-            scene_items.append(item)
-        return scene_items
+        return self.item_list
 
     def key_pressed (self, event, stack, tcz_index):
         if event.key() == Qt.Key_Control:
@@ -49,7 +44,15 @@ class Demo (PluginBase):
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
 
     def mouse_clicked (self, event, stack, tcz_index):
-        self.text_message.setText("Mouse clicked: ({0}, {1})".format(event.scenePos().x(), event.scenePos().y()))
+        self.text_message.setText("Mouse clicked: ({0:.2f}, {1:.2f})".format(event.scenePos().x(), event.scenePos().y()))
+        self.item_list = []
+        for index in range(100):
+            x = stack.width * np.random.random(1)
+            y = stack.height * np.random.random(1)
+            item = QGraphicsEllipseItem(x - self.diameter, y - self.diameter, self.diameter, self.diameter)
+            item.setPen(QPen(self.color_list[index % len(self.color_list)]))
+            self.item_list.append(item)
+        self.signal_update_scene.emit()
 
     def help_message (self):
         return "Demo class for plugin."

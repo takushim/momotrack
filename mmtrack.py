@@ -42,5 +42,6 @@ window_y = (screen_size.height() - window_height) // 2
 window.move(window_x, window_y)
 window.resize(window_width, window_height)
 window.show()
+window.zoom_best()
 
 sys.exit(app.exec())

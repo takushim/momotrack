@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import numpy as np
+
 zoom_limits = [25, 400]
 zoom_delta = 25
 
@@ -24,4 +26,12 @@ class ZoomPanel:
         self.zoom_ratio = 100
         self.update_zoom_label()
 
-
+    def zoom_best (self, image_size, scene_size):
+        ratio = np.min((np.array(scene_size).astype(float) / np.array(image_size).astype(float)) * 100.0)
+        current_zoom = zoom_limits[0]
+        next_zoom = current_zoom + zoom_delta
+        while next_zoom <= min(zoom_limits[1], ratio):
+            current_zoom = next_zoom
+            next_zoom = current_zoom + zoom_delta
+        self.zoom_ratio = current_zoom
+        self.update_zoom_label()

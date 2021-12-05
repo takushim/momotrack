@@ -199,6 +199,11 @@ class MainWindow (QMainWindow):
         self.plugin_class.signal_reset_panels.connect(self.slot_reset_panels)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
 
+    def zoom_best (self):
+        self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
+                                  (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
+        self.update_image_view()
+
     def update_window_title (self):
         if self.image_filename is None:
             self.setWindowTitle(self.app_name)
