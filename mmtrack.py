@@ -32,5 +32,15 @@ plugin_name = args.plugin_name
 # start the Qt system
 app = QApplication(sys.argv[:1] + unparsed_args)
 window = mainwindow.MainWindow(image_filename = image_filename, records_filename = records_filename, plugin_name = plugin_name)
+
+screen_size = window.screen().availableSize()
+window_width = int(screen_size.width() * 0.8)
+window_height = int(screen_size.height() * 0.8)
+window_x = (screen_size.width() - window_width) // 2
+window_y = (screen_size.height() - window_height) // 2
+
+window.move(window_x, window_y)
+window.resize(window_width, window_height)
 window.show()
+
 sys.exit(app.exec())

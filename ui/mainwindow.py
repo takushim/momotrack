@@ -271,7 +271,7 @@ class MainWindow (QMainWindow):
         self.update_image_view()
 
     def slot_quick_help (self):
-        self.show_message(title = "Quick help", message = "Currently nothing to show...")
+        self.show_message(title = "Quick help", message = self.plugin_class.help_message())
 
     def slot_about_this (self):
         self.show_message(title = "About This",

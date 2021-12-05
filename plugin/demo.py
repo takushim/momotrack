@@ -31,7 +31,7 @@ class Demo (PluginBase):
     def slot_demo_button (self):
         self.signal_update_scene.emit()
 
-    def list_scene_items (self):
+    def list_scene_items (self, tcz_index):
         scene_items = []
         for index in range(100):
             pos = 256 * np.random.random(2)
