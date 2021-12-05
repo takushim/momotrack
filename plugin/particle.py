@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import numpy as np
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QPoint
 from PySide6.QtWidgets import QCheckBox, QLabel, QGraphicsEllipseItem, QMenu
 from PySide6.QtGui import QPen, QAction
 from plugin.base import PluginBase
@@ -39,27 +39,20 @@ class SPT (PluginBase):
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
 
-    def init_context_menu (self, main = None):
+    def init_context_menu (self):
         self.context_menu = QMenu()
-        self.actions = []
-        self.actions.append(QAction("Move spot to Z+"))
-        self.actions.append(QAction("Move spot to Z+"))
-        self.actions.append(QAction("Remove this spot"))
-        self.actions.append(QAction("Remove this tree"))
-        self.actions.append(QAction("Remove this track"))
-        self.context_menu.addActions(self.actions)
 
-#        self.context_menu.addAction(QAction("Remove spot"))
-#        action.triggered.connect(self.slot_remove_spot)
-#        self.context_menu.addAction(action)
+        action = QAction("Remove spot", self.context_menu)
+        action.triggered.connect(self.slot_remove_spot)
+        self.context_menu.addAction(action)
 
-#        action = QAction("Remove tree")
-#        action.triggered.connect(self.slot_remove_tree)
-#        self.context_menu.addAction(action)
+        action = QAction("Remove tree", self.context_menu)
+        action.triggered.connect(self.slot_remove_tree)
+        self.context_menu.addAction(action)
 
-#        action = QAction("Remove track")
-#        action.triggered.connect(self.slot_remove_track)
-#        self.context_menu.addAction(action)
+        action = QAction("Remove track", self.context_menu)
+        action.triggered.connect(self.slot_remove_track)
+        self.context_menu.addAction(action)
 
     def slot_onoff_tracks (self):
         if self.check_hide_tracks.isChecked():
@@ -156,7 +149,7 @@ class SPT (PluginBase):
         if event.button() == Qt.RightButton:
             if event.modifiers() == Qt.NoModifier:
                 #if self.current_spot is not None:
-                self.context_menu.popup(event.screenPos())
+                self.context_menu.exec(event.screenPos())
         elif event.button() == Qt.LeftButton:
             pos = event.scenePos()
             if event.modifiers() == Qt.CTRL:
