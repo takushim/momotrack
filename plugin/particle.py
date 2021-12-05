@@ -42,15 +42,25 @@ class SPT (PluginBase):
     def init_context_menu (self):
         self.context_menu = QMenu()
 
-        action = QAction("Remove spot", self.context_menu)
+        action = QAction("Increment Z index", self.context_menu)
+        action.triggered.connect(self.slot_z_increment)
+        self.context_menu.addAction(action)
+
+        action = QAction("Decrement Z index", self.context_menu)
+        action.triggered.connect(self.slot_z_decrement)
+        self.context_menu.addAction(action)
+
+        self.context_menu.addSeparator()
+
+        action = QAction("Remove this spot", self.context_menu)
         action.triggered.connect(self.slot_remove_spot)
         self.context_menu.addAction(action)
 
-        action = QAction("Remove tree", self.context_menu)
+        action = QAction("Remove this and linked spots", self.context_menu)
         action.triggered.connect(self.slot_remove_tree)
         self.context_menu.addAction(action)
 
-        action = QAction("Remove track", self.context_menu)
+        action = QAction("Remove the entire track", self.context_menu)
         action.triggered.connect(self.slot_remove_track)
         self.context_menu.addAction(action)
 
@@ -61,6 +71,12 @@ class SPT (PluginBase):
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
+
+    def slot_z_increment (self):
+        pass
+
+    def slot_z_decrement (self):
+        pass
 
     def slot_remove_spot (self):
         pass
@@ -148,8 +164,8 @@ class SPT (PluginBase):
 
         if event.button() == Qt.RightButton:
             if event.modifiers() == Qt.NoModifier:
-                #if self.current_spot is not None:
-                self.context_menu.exec(event.screenPos())
+                if self.current_spot is not None:
+                    self.context_menu.exec(event.screenPos())
         elif event.button() == Qt.LeftButton:
             pos = event.scenePos()
             if event.modifiers() == Qt.CTRL:
