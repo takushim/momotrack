@@ -111,6 +111,7 @@ class MainWindow (QMainWindow):
         self.image_panel.scene.mouseMoveEvent = self.slot_scene_mouse_moved
         self.image_panel.scene.keyPressEvent = self.slot_scene_key_pressed
         self.image_panel.scene.keyReleaseEvent = self.slot_scene_key_released
+        self.image_panel.scene.wheelEvent = self.slot_scene_wheel_moved
 
         # time and zstack
         self.ui.slider_time.valueChanged.connect(self.slot_image_index_changed)
@@ -283,6 +284,12 @@ class MainWindow (QMainWindow):
 
     def slot_scene_mouse_moved (self, event):
         self.plugin_class.mouse_moved(event, self.image_stack, self.image_panel.current_index())
+
+    def slot_scene_wheel_moved (self, event):
+        if event.delta() > 0:
+            self.slot_zoomed_in()
+        elif event.delta() < 0:
+            self.slot_zoomed_out()
 
     def slot_scene_key_pressed (self, event):
         if event.key() == Qt.Key_Right:
