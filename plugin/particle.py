@@ -4,7 +4,7 @@ import time, json
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu, QHBoxLayout, QDoubleSpinBox
-from PySide6.QtWidgets import QGraphicsEllipseItem
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem
 from PySide6.QtGui import QPen, QBrush, QAction
 from plugin.base import PluginBase
 
@@ -20,7 +20,7 @@ class SPT (PluginBase):
         self.selected_radius = self.spot_radius * 2
         self.ghost_radius = self.spot_radius / 2
         self.spot_penwidth = 1
-        self.marker_size = 4
+        self.marker_size = 1
         self.current_spot = None
         self.adding_spot = False
         self.color_first = Qt.magenta
@@ -186,26 +186,29 @@ class SPT (PluginBase):
 
         for spot in drawn_spots:
             scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
+            scene_items.extend(self.create_node_marker_items(spot, self.spot_radius, color = None))
             if spot in ancestors:
-                scene_items.extend(self.create_marker_items(spot, self.spot_radius, color = None, fill = True))
+                scene_items.extend(self.create_relative_marker_items(spot, self.spot_radius, color = None, fill = True))
             if spot in descendants:
-                scene_items.extend(self.create_marker_items(spot, self.spot_radius, color = None, fill = False))
+                scene_items.extend(self.create_relative_marker_items(spot, self.spot_radius, color = None, fill = False))
 
         ghost_spots = [spot for spot in self.spot_list \
                        if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
                           (spot['z'] == tcz_index[2] - 1 or spot['z'] == tcz_index[2] + 1)]
         for spot in ghost_spots:
             scene_items.append(self.create_spot_item(spot, self.ghost_radius, color = None))
+            scene_items.extend(self.create_node_marker_items(spot, self.ghost_radius, color = None))
             if spot in ancestors:
-                scene_items.extend(self.create_marker_items(spot, self.ghost_radius, color = None, fill = True))
+                scene_items.extend(self.create_relative_marker_items(spot, self.ghost_radius, color = None, fill = True))
             if spot in descendants:
-                scene_items.extend(self.create_marker_items(spot, self.ghost_radius, color = None, fill = False))
+                scene_items.extend(self.create_relative_marker_items(spot, self.ghost_radius, color = None, fill = False))
 
         if self.current_spot is not None:
             spot = self.current_spot
             if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot['z'] == tcz_index[2]):
                 scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
                 scene_items.append(self.create_spot_item(spot, self.selected_radius, color = None))
+                scene_items.extend(self.create_node_marker_items(spot, self.selected_radius, color = None))
 
         return scene_items
 
@@ -219,16 +222,29 @@ class SPT (PluginBase):
         item.setPen(pen)
         return item
 
-    def create_marker_items (self, spot, radius, color = None, fill = False):
+    def create_relative_marker_items (self, spot, radius, color = None, fill = False):
         if color is None:
             color = self.select_color(spot)
 
-        item = QGraphicsEllipseItem(spot['x'] - radius - 1, spot['y'] - radius - 1, 2, 2)
+        item = QGraphicsEllipseItem(spot['x'] - radius - self.marker_size, spot['y'] - radius - self.marker_size, \
+                                    self.marker_size * 2, self.marker_size * 2)
         pen = QPen(self.select_color(spot))
         pen.setWidth(self.spot_penwidth)
         item.setPen(QPen(self.select_color(spot)))
         if fill is True:
             item.setBrush(QBrush(self.select_color(spot)))
+        return [item]
+
+    def create_node_marker_items (self, spot, radius, color = None, fill = False):
+        child_count = len(self.find_children(spot))
+        if child_count <= 1:
+            return []
+
+        item = QGraphicsTextItem()
+        item.setPlainText(str(child_count))
+        item.setPos(spot['x'] + radius, spot['y'] - radius)
+        item.setDefaultTextColor(self.select_color(spot))
+        item.setScale(0.5)
         return [item]
 
     def select_color (self, spot):
