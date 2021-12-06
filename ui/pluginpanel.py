@@ -14,7 +14,9 @@ class PluginPanel:
     def update_widgets (self, plugin_class):
         for index in reversed(range(self.ui.vlayout_plugin.count())):
             if self.ui.vlayout_plugin.itemAt(index).widget() is None:
-                self.ui.vlayout_plugin.itemAt(index).layout().deleteLater()
+                layout = self.ui.vlayout_plugin.itemAt(index).layout()
+                for subindex in reversed(range(layout.count())):
+                    layout.itemAt(subindex).widget().deleteLater()
             else:
                 self.ui.vlayout_plugin.itemAt(index).widget().deleteLater()
 
@@ -27,4 +29,3 @@ class PluginPanel:
                 self.ui.vlayout_plugin.itemAt(index).layout().setSizeConstraint(QLayout.SetMinimumSize)
             else:
                 self.ui.vlayout_plugin.itemAt(index).widget().setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
-                self.ui.vlayout_plugin.itemAt(index).widget().setFocusPolicy(Qt.NoFocus)
