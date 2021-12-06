@@ -35,12 +35,6 @@ class SPT (PluginBase):
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
-        self.check_hide_tracks = QCheckBox("Hide All Tracks")
-        self.check_auto_moving = QCheckBox("Move automatically")
-        self.check_auto_moving.setChecked(True)
-        self.text_message = QLabel()
-        self.vlayout.addWidget(self.check_hide_tracks)
-        self.vlayout.addWidget(self.check_auto_moving)
 
         hlayout = QHBoxLayout()
         label = QLabel("Marker radius:")
@@ -53,6 +47,14 @@ class SPT (PluginBase):
         self.dspin_marker_radius.setValue(self.spot_radius)
         hlayout.addWidget(self.dspin_marker_radius)
         self.vlayout.addLayout(hlayout)
+
+        self.check_hide_tracks = QCheckBox("Hide All Tracks")
+        self.check_auto_moving = QCheckBox("Move automatically")
+        self.check_auto_moving.setChecked(True)
+
+        self.text_message = QLabel()
+        self.vlayout.addWidget(self.check_hide_tracks)
+        self.vlayout.addWidget(self.check_auto_moving)
 
         self.vlayout.addWidget(self.text_message)
         self.update_status()
