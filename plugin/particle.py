@@ -31,6 +31,7 @@ class SPT (PluginBase):
         self.c_limits = [0, 0]
         self.records_modified = False
         self.record_suffix = '_track.json'
+        self.track_start = None
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
@@ -92,15 +93,19 @@ class SPT (PluginBase):
             json_dict = json.load(f)
 
         self.spot_list = json_dict['spot_list']
+        if 'marker_radius' in json_dict['summary']:
+            self.update_marker_size(json_dict['summary']['marker_radius'])
         self.current_spot = None
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
         self.records_modified = False
+        self.track_start = None
 
     def save_records (self, records_filename, settings = {}):
         output_dict = {'summary': {'plugin': plugin_name, \
-                                   'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y")},
+                                   'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y"), \
+                                   'marker_radius': self.spot_radius},
                        'settings': settings, \
                        'spot_list': self.spot_list}
 
@@ -127,9 +132,7 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def slot_marker_changed (self):
-        self.spot_radius = self.dspin_marker_radius.value()
-        self.ghost_radius = self.spot_radius / 2
-        self.selected_radius = self.spot_radius * 2
+        self.update_marker_size(self.dspin_marker_radius.value())
         self.signal_update_scene.emit()
 
     def slot_z_increment (self):
@@ -242,9 +245,14 @@ class SPT (PluginBase):
         if event.key() == Qt.Key_Control:
             self.adding_spot = True
         elif event.key() == Qt.Key_Escape:
+            if self.current_spot is None:
+                self.signal_update_scene.emit()
+            elif self.check_auto_moving.isChecked():
+                self.signal_move_by_tczindex.emit(*self.track_start)
+
             self.current_spot = None
             self.adding_spot = False
-            self.signal_update_scene.emit()
+            self.track_start = None
         self.update_status()
         self.update_mouse_cursor()
 
@@ -274,23 +282,22 @@ class SPT (PluginBase):
         elif event.button() == Qt.LeftButton:
             if event.modifiers() == Qt.CTRL:
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
+                self.track_start = tcz_index
                 if self.check_auto_moving.isChecked():
                     self.move_time_forward(*tcz_index)
             elif event.modifiers() == Qt.SHIFT:
                 if self.current_spot is not None:
                     self.move_spot(self.current_spot, pos.x(), pos.y(), *tcz_index)
             else:
-                if self.current_spot is None:
-                    self.select_spot(pos.x(), pos.y(), *tcz_index)
+                spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
+                if len(spot_list) > 0:
+                    self.current_spot = spot_list[-1]
+                    self.track_start = tcz_index
                 else:
-                    spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
-                    if len(spot_list) > 0:
-                        self.current_spot = spot_list[-1]
-                    else:
-                        self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
-                        if self.check_auto_moving.isChecked():
-                            self.move_time_forward(*tcz_index)
-
+                    self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
+                    if self.check_auto_moving.isChecked():
+                        self.move_time_forward(*tcz_index)
+                
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
@@ -424,6 +431,11 @@ class SPT (PluginBase):
                                       "* Click to add track.\n" +
                                       "* Shift + click: move.\n" +
                                       "* ESC to quit.")
+
+    def update_marker_size (self, radius):
+        self.spot_radius = radius
+        self.ghost_radius = self.spot_radius / 2
+        self.selected_radius = self.spot_radius * 2
 
     def update_mouse_cursor(self):
         if self.adding_spot or self.current_spot is not None:

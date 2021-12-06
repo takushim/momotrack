@@ -55,7 +55,8 @@ class Demo (PluginBase):
         for index in range(100):
             x = width * np.random.random(1)
             y = height * np.random.random(1)
-            item = QGraphicsEllipseItem(x - self.diameter, y - self.diameter, self.diameter, self.diameter)
+            d = self.diameter * np.random.random(1)
+            item = QGraphicsEllipseItem(x - d, y - d, d, d)
             item.setPen(QPen(self.color_list[index % len(self.color_list)]))
             self.item_list.append(item)
 
