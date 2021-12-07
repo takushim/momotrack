@@ -28,7 +28,7 @@ class MainWindow (QMainWindow):
         self.init_widgets()
         if plugin_name is None:
             self.switch_plugin(self.plugin_list[0].plugin_name)
-        else:
+        elif plugin_name != self.plugin_module.plugin_name:
             self.switch_plugin(plugin_name)
         self.connect_menubar_to_slots()
         self.connect_signals_to_slots()

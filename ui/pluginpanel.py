@@ -12,20 +12,26 @@ class PluginPanel:
         self.ui.label_plugin.setText("Plugin: {0}".format(name))
 
     def update_widgets (self, plugin_class):
-        for index in reversed(range(self.ui.vlayout_plugin.count())):
-            if self.ui.vlayout_plugin.itemAt(index).widget() is None:
-                layout = self.ui.vlayout_plugin.itemAt(index).layout()
-                for subindex in reversed(range(layout.count())):
-                    layout.itemAt(subindex).widget().deleteLater()
-            else:
-                self.ui.vlayout_plugin.itemAt(index).widget().deleteLater()
+        self.delete_plugin_widgets(self.ui.vlayout_plugin)
 
         self.plugin_class = plugin_class
         self.plugin_class.init_widgets(self.ui.vlayout_plugin)
         self.plugin_class.connect_signals()
 
-        for index in range(self.ui.vlayout_plugin.count()):
-            if self.ui.vlayout_plugin.itemAt(index).widget() is None:
-                self.ui.vlayout_plugin.itemAt(index).layout().setSizeConstraint(QLayout.SetMinimumSize)
+        self.set_policy_of_plugin_widgets(self.ui.vlayout_plugin)
+
+    def delete_plugin_widgets (self, layout):
+        for index in reversed(range(layout.count())):
+            if layout.itemAt(index).widget() is None:
+                self.delete_plugin_widgets(layout.itemAt(index).layout())
             else:
-                self.ui.vlayout_plugin.itemAt(index).widget().setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+                layout.itemAt(index).widget().deleteLater()
+
+    def set_policy_of_plugin_widgets (self, layout):
+        for index in reversed(range(layout.count())):
+            if layout.itemAt(index).widget() is None:
+                layout.itemAt(index).layout().setSizeConstraint(QLayout.SetMinimumSize)
+                self.set_policy_of_plugin_widgets(layout.itemAt(index).layout())
+            else:
+                layout.itemAt(index).widget().setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+
