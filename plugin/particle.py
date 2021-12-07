@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
-from PySide6.QtGui import QPen, QBrush, QAction, QPainterPath
+from PySide6.QtGui import QPen, QBrush, QAction, QPainterPath, QFont
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -296,17 +296,20 @@ class SPT (PluginBase):
         spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
         spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
 
-        items_first = [self.create_node_item(spot, radius, self.color_first) for spot in spots_first]
-        items_last = [self.create_node_item(spot, radius, self.color_last) for spot in spots_last]
-        items_cont = [self.create_node_item(spot, radius, self.color_cont) for spot in spots_cont]
+        font = QFont()
+
+        items_first = [self.create_node_item(spot, radius, font, self.color_first) for spot in spots_first]
+        items_last = [self.create_node_item(spot, radius, font, self.color_last) for spot in spots_last]
+        items_cont = [self.create_node_item(spot, radius, font, self.color_cont) for spot in spots_cont]
 
         return items_first + items_last + items_cont
 
-    def create_node_item (self, spot, radius, color):
+    def create_node_item (self, spot, radius, font, color):
         child_count = len(self.find_children(spot))
 
         item = QGraphicsTextItem()
         item.setPlainText(str(child_count))
+        item.set
         item.setPos(spot['x'] + radius, spot['y'] - radius)
         item.setDefaultTextColor(color)
         item.setScale(0.5)
