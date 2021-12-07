@@ -2,7 +2,7 @@
 
 import sys
 import numpy as np
-from PySide6.QtWidgets import QGraphicsScene, QSlider
+from PySide6.QtWidgets import QGraphicsScene, QSlider, QGraphicsPixmapItem
 from PySide6.QtGui import QImage, QPixmap
 
 class ImagePanel:
@@ -65,11 +65,14 @@ class ImagePanel:
                 qimage = QImage(image.data, stack.width, stack.height, QImage.Format_Grayscale8)
 
         self.scene.clear()
-        self.scene.addPixmap(QPixmap(qimage))
+        pixmap_item = QGraphicsPixmapItem()
+        pixmap_item.setPixmap(QPixmap(qimage))
+        self.scene.addItem(pixmap_item)
 
         for item in item_list:
             self.scene.addItem(item)
 
+        self.scene.setSceneRect(self.scene.itemsBoundingRect())
         self.update_status(stack)
 
     def current_image (self, stack):
