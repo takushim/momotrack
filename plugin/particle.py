@@ -5,8 +5,8 @@ from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem
-from PySide6.QtGui import QPen, QBrush, QAction
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
+from PySide6.QtGui import QPen, QBrush, QAction, QPainterPath
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -212,54 +212,67 @@ class SPT (PluginBase):
             return []
 
         scene_items = []
+        candidate_spots = [spot for spot in self.spot_list \
+                           if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot != self.current_spot)]
+
         if self.current_spot is not None:
-            drawn_spots = [spot for spot in self.spot_list \
-                           if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                              (spot['z'] == tcz_index[2]) and (spot['index'] != self.current_spot['index'])]
+            scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
+            scene_items.extend(self.list_spot_items([self.current_spot], self.selected_radius))
+            scene_items.extend(self.list_node_items([self.current_spot], self.selected_radius))
             ancestors = self.find_ancestors(self.current_spot)
             descendants = self.find_descendants(self.current_spot)
         else:
-            drawn_spots = [spot for spot in self.spot_list \
-                           if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                              (spot['z'] == tcz_index[2])]
             ancestors = []
             descendants = []
 
-        for spot in drawn_spots:
-            scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
-            scene_items.extend(self.create_node_marker_items(spot, self.spot_radius, color = None))
+        existing_spots = [spot for spot in candidate_spots if (spot['z'] == tcz_index[2])]
+        scene_items.extend(self.list_spot_items(existing_spots, self.spot_radius))
+        scene_items.extend(self.list_node_items(existing_spots, self.spot_radius))
+
+        ghost_spots = [spot for spot in candidate_spots \
+                       if (abs(spot['z'] - tcz_index[2]) <= self.ghost_z_range) and (spot['z'] != tcz_index[2])]
+        scene_items.extend(self.list_spot_items(ghost_spots, self.ghost_radius))
+        scene_items.extend(self.list_node_items(ghost_spots, self.ghost_radius))
+
+        for spot in existing_spots:
             if spot in ancestors:
                 scene_items.extend(self.create_relative_marker_items(spot, self.spot_radius, color = None, fill = True))
             if spot in descendants:
                 scene_items.extend(self.create_relative_marker_items(spot, self.spot_radius, color = None, fill = False))
 
-        ghost_spots = [spot for spot in self.spot_list \
-                       if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                          (spot['z'] == tcz_index[2] - 1 or spot['z'] == tcz_index[2] + 1)]
         for spot in ghost_spots:
-            scene_items.append(self.create_spot_item(spot, self.ghost_radius, color = None))
-            scene_items.extend(self.create_node_marker_items(spot, self.ghost_radius, color = None))
             if spot in ancestors:
                 scene_items.extend(self.create_relative_marker_items(spot, self.ghost_radius, color = None, fill = True))
             if spot in descendants:
                 scene_items.extend(self.create_relative_marker_items(spot, self.ghost_radius, color = None, fill = False))
 
-        if self.current_spot is not None:
-            spot = self.current_spot
-            if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot['z'] == tcz_index[2]):
-                scene_items.append(self.create_spot_item(spot, self.spot_radius, color = None))
-                scene_items.append(self.create_spot_item(spot, self.selected_radius, color = None))
-                scene_items.extend(self.create_node_marker_items(spot, self.selected_radius, color = None))
-
         return scene_items
 
-    def create_spot_item (self, spot, radius, color = None):
-        if color is None:
-            pen = QPen(self.select_color(spot))
-        else:
-            pen = QPen(color)
-        pen.setWidth(self.spot_penwidth)
+    def list_spot_items (self, spot_list, radius):
+        spots_first = [spot for spot in spot_list if spot['parent'] is None]
+        spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
+        spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
+
+        items_first = [self.create_spot_item(spot, radius, QPen(self.color_first)) for spot in spots_first]
+        items_last = [self.create_spot_item(spot, radius, QPen(self.color_last)) for spot in spots_last]
+        items_cont = [self.create_spot_item(spot, radius, QPen(self.color_cont)) for spot in spots_cont]
+
+        spots_one = [spot for spot in spot_list if (spot['parent'] is None) and (len(self.find_children(spot)) == 0)]
+        items_one = [self.create_spot_item_one(spot, radius, QPen(self.color_last)) for spot in spots_one]
+
+        return items_first + items_last + items_cont + items_one
+
+    def create_spot_item (self, spot, radius, pen):
         item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
+        item.setPen(pen)
+        return item
+
+    def create_spot_item_one (self, spot, radius, pen):
+        path = QPainterPath()
+        path.arcMoveTo(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2, 225.0)
+        path.arcTo(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2, 225.0, 180)
+
+        item = QGraphicsPathItem(path)
         item.setPen(pen)
         return item
 
@@ -276,17 +289,29 @@ class SPT (PluginBase):
             item.setBrush(QBrush(self.select_color(spot)))
         return [item]
 
-    def create_node_marker_items (self, spot, radius, color = None, fill = False):
+    def list_node_items (self, spot_list, radius):
+        spot_list = [spot for spot in spot_list if len(self.find_children(spot)) > 1]
+
+        spots_first = [spot for spot in spot_list if spot['parent'] is None]
+        spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
+        spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
+
+        items_first = [self.create_node_item(spot, radius, self.color_first) for spot in spots_first]
+        items_last = [self.create_node_item(spot, radius, self.color_last) for spot in spots_last]
+        items_cont = [self.create_node_item(spot, radius, self.color_cont) for spot in spots_cont]
+
+        return items_first + items_last + items_cont
+
+    def create_node_item (self, spot, radius, color):
         child_count = len(self.find_children(spot))
-        if child_count <= 1:
-            return []
 
         item = QGraphicsTextItem()
         item.setPlainText(str(child_count))
         item.setPos(spot['x'] + radius, spot['y'] - radius)
-        item.setDefaultTextColor(self.select_color(spot))
+        item.setDefaultTextColor(color)
         item.setScale(0.5)
-        return [item]
+
+        return item
 
     def select_color (self, spot):
         if spot['parent'] is None:
@@ -304,14 +329,14 @@ class SPT (PluginBase):
         if event.key() == Qt.Key_Control:
             self.adding_spot = True
         elif event.key() == Qt.Key_Escape:
-            if self.current_spot is None:
-                self.signal_update_scene.emit()
-            elif self.check_auto_moving.isChecked():
+            if self.check_auto_moving.isChecked():
                 self.signal_move_by_tczindex.emit(*self.track_start)
 
             self.current_spot = None
             self.adding_spot = False
             self.track_start = None
+            self.signal_update_scene.emit()
+
         self.update_status()
         self.update_mouse_cursor()
 
