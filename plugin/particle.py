@@ -3,7 +3,8 @@
 import time, json
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QCheckBox, QLabel, QMenu, QHBoxLayout, QDoubleSpinBox
+from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
+from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem
 from PySide6.QtGui import QPen, QBrush, QAction
 from plugin.base import PluginBase
@@ -21,6 +22,7 @@ class SPT (PluginBase):
         self.ghost_radius = self.spot_radius / 2
         self.spot_penwidth = 1
         self.marker_size = 1
+        self.ghost_z_range = 1
         self.current_spot = None
         self.adding_spot = False
         self.color_first = Qt.magenta
@@ -36,11 +38,18 @@ class SPT (PluginBase):
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
 
+        self.check_auto_moving = QCheckBox("Move automatically")
+        self.check_auto_moving.setChecked(True)
+        self.vlayout.addWidget(self.check_auto_moving)
+
+        self.check_hide_tracks = QCheckBox("Hide All Tracks")
+        self.vlayout.addWidget(self.check_hide_tracks)
+
         hlayout = QHBoxLayout()
         label = QLabel("Marker radius:")
         hlayout.addWidget(label)
         self.dspin_marker_radius = QDoubleSpinBox()
-        self.dspin_marker_radius.setRange(1, 20)
+        self.dspin_marker_radius.setRange(1, 40)
         self.dspin_marker_radius.setFocusPolicy(Qt.ClickFocus)
         self.dspin_marker_radius.setSingleStep(0.1)
         self.dspin_marker_radius.setKeyboardTracking(False)
@@ -48,15 +57,33 @@ class SPT (PluginBase):
         hlayout.addWidget(self.dspin_marker_radius)
         self.vlayout.addLayout(hlayout)
 
-        self.check_hide_tracks = QCheckBox("Hide All Tracks")
-        self.check_auto_moving = QCheckBox("Move automatically")
-        self.check_auto_moving.setChecked(True)
+        hlayout = QHBoxLayout()
+        label = QLabel("Marker line width:")
+        hlayout.addWidget(label)
+        self.dspin_marker_penwidth = QDoubleSpinBox()
+        self.dspin_marker_penwidth.setRange(0.1, 10)
+        self.dspin_marker_penwidth.setFocusPolicy(Qt.ClickFocus)
+        self.dspin_marker_penwidth.setSingleStep(0.1)
+        self.dspin_marker_penwidth.setKeyboardTracking(False)
+        self.dspin_marker_penwidth.setValue(self.spot_penwidth)
+        hlayout.addWidget(self.dspin_marker_penwidth)
+        self.vlayout.addLayout(hlayout)
+
+        hlayout = QHBoxLayout()
+        label = QLabel("Ghost z-range:")
+        hlayout.addWidget(label)
+        self.spin_marker_z_range = QSpinBox()
+        self.spin_marker_z_range.setRange(1, 100)
+        self.spin_marker_z_range.setFocusPolicy(Qt.ClickFocus)
+        self.spin_marker_z_range.setSingleStep(1)
+        self.spin_marker_z_range.setKeyboardTracking(False)
+        self.spin_marker_z_range.setValue(self.ghost_z_range)
+        hlayout.addWidget(self.spin_marker_z_range)
+        self.vlayout.addLayout(hlayout)
 
         self.text_message = QLabel()
-        self.vlayout.addWidget(self.check_hide_tracks)
-        self.vlayout.addWidget(self.check_auto_moving)
-
         self.vlayout.addWidget(self.text_message)
+
         self.update_status()
         self.update_mouse_cursor()
         self.init_context_menu()
@@ -64,6 +91,8 @@ class SPT (PluginBase):
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
         self.dspin_marker_radius.valueChanged.connect(self.slot_marker_changed)
+        self.spin_marker_z_range.valueChanged.connect(self.slot_marker_changed)
+        self.dspin_marker_penwidth.valueChanged.connect(self.slot_marker_changed)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -135,6 +164,8 @@ class SPT (PluginBase):
 
     def slot_marker_changed (self):
         self.update_marker_size(self.dspin_marker_radius.value())
+        self.ghost_z_range = self.spin_marker_z_range.value()
+        self.spot_penwidth = self.dspin_marker_penwidth.value()
         self.signal_update_scene.emit()
 
     def slot_z_increment (self):
