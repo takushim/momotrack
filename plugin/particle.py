@@ -72,13 +72,13 @@ class SPT (PluginBase):
         hlayout = QHBoxLayout()
         label = QLabel("Ghost z-range:")
         hlayout.addWidget(label)
-        self.spin_marker_z_range = QSpinBox()
-        self.spin_marker_z_range.setRange(1, 100)
-        self.spin_marker_z_range.setFocusPolicy(Qt.ClickFocus)
-        self.spin_marker_z_range.setSingleStep(1)
-        self.spin_marker_z_range.setKeyboardTracking(False)
-        self.spin_marker_z_range.setValue(self.ghost_z_range)
-        hlayout.addWidget(self.spin_marker_z_range)
+        self.spin_ghost_z_range = QSpinBox()
+        self.spin_ghost_z_range.setRange(1, 100)
+        self.spin_ghost_z_range.setFocusPolicy(Qt.ClickFocus)
+        self.spin_ghost_z_range.setSingleStep(1)
+        self.spin_ghost_z_range.setKeyboardTracking(False)
+        self.spin_ghost_z_range.setValue(self.ghost_z_range)
+        hlayout.addWidget(self.spin_ghost_z_range)
         self.vlayout.addLayout(hlayout)
 
         self.text_message = QLabel()
@@ -91,7 +91,7 @@ class SPT (PluginBase):
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
         self.dspin_marker_radius.valueChanged.connect(self.slot_marker_changed)
-        self.spin_marker_z_range.valueChanged.connect(self.slot_marker_changed)
+        self.spin_ghost_z_range.valueChanged.connect(self.slot_marker_changed)
         self.dspin_marker_penwidth.valueChanged.connect(self.slot_marker_changed)
 
     def init_context_menu (self):
@@ -125,18 +125,28 @@ class SPT (PluginBase):
 
         self.spot_list = json_dict['spot_list']
         if 'marker_radius' in json_dict['summary']:
-            self.update_marker_size(json_dict['summary']['marker_radius'])
+            self.dspin_marker_radius.setValue(json_dict['summary']['marker_radius'])
+
+        if 'marker_penwidth' in json_dict['summary']:
+            self.dspin_marker_penwidth.setValue(json_dict['summary']['marker_penwidth'])
+
+        if 'ghost_z_range' in json_dict['summary']:
+            self.spin_ghost_z_range.setValue(json_dict['summary']['ghost_z_range'])
+
         self.current_spot = None
-        self.signal_update_scene.emit()
-        self.update_status()
-        self.update_mouse_cursor()
         self.records_modified = False
         self.track_start = None
+
+        self.update_status()
+        self.update_mouse_cursor()
+        self.signal_update_scene.emit()
 
     def save_records (self, records_filename, settings = {}):
         output_dict = {'summary': {'plugin': plugin_name, \
                                    'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y"), \
-                                   'marker_radius': self.spot_radius},
+                                   'marker_radius': self.spot_radius,
+                                   'marker_penwidth': self.spot_penwidth,
+                                   'ghost_z_range': self.ghost_z_range},
                        'settings': settings, \
                        'spot_list': self.spot_list}
 
@@ -164,7 +174,7 @@ class SPT (PluginBase):
 
     def slot_marker_changed (self):
         self.update_marker_size(self.dspin_marker_radius.value())
-        self.ghost_z_range = self.spin_marker_z_range.value()
+        self.ghost_z_range = self.spin_ghost_z_range.value()
         self.spot_penwidth = self.dspin_marker_penwidth.value()
         self.signal_update_scene.emit()
 
