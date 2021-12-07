@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
-from PySide6.QtGui import QPen, QBrush, QAction, QPainterPath, QFont
+from PySide6.QtGui import QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -39,7 +39,6 @@ class SPT (PluginBase):
         self.vlayout = vlayout
 
         self.check_auto_moving = QCheckBox("Move automatically")
-        self.check_auto_moving.setChecked(True)
         self.vlayout.addWidget(self.check_auto_moving)
 
         self.check_hide_tracks = QCheckBox("Hide All Tracks")
@@ -213,7 +212,18 @@ class SPT (PluginBase):
 
         scene_items = []
         candidate_spots = [spot for spot in self.spot_list \
-                           if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and (spot != self.current_spot)]
+                           if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
+                              (spot != self.current_spot)]
+
+
+        existing_spots = [spot for spot in candidate_spots if (spot['z'] == tcz_index[2])]
+        scene_items.extend(self.list_spot_items(existing_spots, self.spot_radius))
+        scene_items.extend(self.list_node_items(existing_spots, self.spot_radius))
+
+        ghost_spots = [spot for spot in candidate_spots \
+                       if (abs(spot['z'] - tcz_index[2]) <= self.ghost_z_range) and (spot['z'] != tcz_index[2])]
+        scene_items.extend(self.list_spot_items(ghost_spots, self.ghost_radius))
+        scene_items.extend(self.list_node_items(ghost_spots, self.ghost_radius))
 
         if self.current_spot is not None:
             scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
@@ -224,15 +234,6 @@ class SPT (PluginBase):
         else:
             ancestors = []
             descendants = []
-
-        existing_spots = [spot for spot in candidate_spots if (spot['z'] == tcz_index[2])]
-        scene_items.extend(self.list_spot_items(existing_spots, self.spot_radius))
-        scene_items.extend(self.list_node_items(existing_spots, self.spot_radius))
-
-        ghost_spots = [spot for spot in candidate_spots \
-                       if (abs(spot['z'] - tcz_index[2]) <= self.ghost_z_range) and (spot['z'] != tcz_index[2])]
-        scene_items.extend(self.list_spot_items(ghost_spots, self.ghost_radius))
-        scene_items.extend(self.list_node_items(ghost_spots, self.ghost_radius))
 
         for spot in existing_spots:
             if spot in ancestors:
@@ -253,18 +254,22 @@ class SPT (PluginBase):
         spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
         spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
 
-        items_first = [self.create_spot_item(spot, radius, QPen(self.color_first)) for spot in spots_first]
-        items_last = [self.create_spot_item(spot, radius, QPen(self.color_last)) for spot in spots_last]
-        items_cont = [self.create_spot_item(spot, radius, QPen(self.color_cont)) for spot in spots_cont]
+        items_first = [self.create_spot_item(spot, radius, self.color_first) for spot in spots_first]
+        items_last = [self.create_spot_item(spot, radius, self.color_last) for spot in spots_last]
+        items_cont = [self.create_spot_item(spot, radius, self.color_cont) for spot in spots_cont]
 
         spots_one = [spot for spot in spot_list if (spot['parent'] is None) and (len(self.find_children(spot)) == 0)]
         items_one = [self.create_spot_item_one(spot, radius, QPen(self.color_last)) for spot in spots_one]
 
         return items_first + items_last + items_cont + items_one
 
-    def create_spot_item (self, spot, radius, pen):
+    def create_spot_item (self, spot, radius, color):
         item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
+
+        pen = QPen(color)
+        pen.setWidth(self.spot_penwidth)
         item.setPen(pen)
+
         return item
 
     def create_spot_item_one (self, spot, radius, pen):
@@ -296,23 +301,27 @@ class SPT (PluginBase):
         spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
         spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
 
-        font = QFont()
-
-        items_first = [self.create_node_item(spot, radius, font, self.color_first) for spot in spots_first]
-        items_last = [self.create_node_item(spot, radius, font, self.color_last) for spot in spots_last]
-        items_cont = [self.create_node_item(spot, radius, font, self.color_cont) for spot in spots_cont]
+        items_first = [self.create_node_item(spot, radius, self.color_first) for spot in spots_first]
+        items_last = [self.create_node_item(spot, radius, self.color_last) for spot in spots_last]
+        items_cont = [self.create_node_item(spot, radius, self.color_cont) for spot in spots_cont]
 
         return items_first + items_last + items_cont
 
-    def create_node_item (self, spot, radius, font, color):
+    def create_node_item (self, spot, radius, color):
         child_count = len(self.find_children(spot))
 
+        document = QTextDocument(str(child_count))
+        document.setDocumentMargin(0)
+
         item = QGraphicsTextItem()
-        item.setPlainText(str(child_count))
-        item.set
-        item.setPos(spot['x'] + radius, spot['y'] - radius)
+        item.setDocument(document)
         item.setDefaultTextColor(color)
-        item.setScale(0.5)
+
+        font = QFont()
+        font.setPixelSize(self.spot_radius * 2)
+        item.setFont(font)
+
+        item.setPos(spot['x'] + radius, spot['y'] - radius - item.boundingRect().height())
 
         return item
 
