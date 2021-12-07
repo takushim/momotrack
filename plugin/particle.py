@@ -79,6 +79,7 @@ class SPT (PluginBase):
         self.vlayout.addLayout(hlayout)
 
         self.text_message = QLabel()
+        self.text_message.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.vlayout.addWidget(self.text_message)
 
         self.update_status()

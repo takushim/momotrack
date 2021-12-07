@@ -23,6 +23,7 @@ class Demo (PluginBase):
         self.vlayout = vlayout
         self.button_demo = QPushButton("Demo Button")
         self.text_message = QLabel()
+        self.text_message.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.vlayout.addWidget(self.button_demo)
         self.vlayout.addWidget(self.text_message)
 
