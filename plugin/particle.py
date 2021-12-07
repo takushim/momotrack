@@ -18,10 +18,8 @@ class SPT (PluginBase):
         super().__init__()
         self.spot_list = []
         self.spot_radius = 4
-        self.selected_radius = self.spot_radius * 2
-        self.ghost_radius = self.spot_radius / 2
+        self.update_marker_radii(self.spot_radius)
         self.spot_penwidth = 1
-        self.marker_size = 1
         self.ghost_z_range = 1
         self.current_spot = None
         self.adding_spot = False
@@ -123,11 +121,11 @@ class SPT (PluginBase):
             json_dict = json.load(f)
 
         self.spot_list = json_dict['spot_list']
-        if 'marker_radius' in json_dict['summary']:
-            self.dspin_marker_radius.setValue(json_dict['summary']['marker_radius'])
+        if 'spot_radius' in json_dict['summary']:
+            self.dspin_marker_radius.setValue(json_dict['summary']['spot_radius'])
 
-        if 'marker_penwidth' in json_dict['summary']:
-            self.dspin_marker_penwidth.setValue(json_dict['summary']['marker_penwidth'])
+        if 'spot_penwidth' in json_dict['summary']:
+            self.dspin_marker_penwidth.setValue(json_dict['summary']['spot_penwidth'])
 
         if 'ghost_z_range' in json_dict['summary']:
             self.spin_ghost_z_range.setValue(json_dict['summary']['ghost_z_range'])
@@ -143,8 +141,8 @@ class SPT (PluginBase):
     def save_records (self, records_filename, settings = {}):
         output_dict = {'summary': {'plugin': plugin_name, \
                                    'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y"), \
-                                   'marker_radius': self.spot_radius,
-                                   'marker_penwidth': self.spot_penwidth,
+                                   'spot_radius': self.spot_radius,
+                                   'spot_penwidth': self.spot_penwidth,
                                    'ghost_z_range': self.ghost_z_range},
                        'settings': settings, \
                        'spot_list': self.spot_list}
@@ -172,7 +170,7 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def slot_marker_changed (self):
-        self.update_marker_size(self.dspin_marker_radius.value())
+        self.update_marker_radii(self.dspin_marker_radius.value())
         self.ghost_z_range = self.spin_ghost_z_range.value()
         self.spot_penwidth = self.dspin_marker_penwidth.value()
         self.signal_update_scene.emit()
@@ -229,23 +227,16 @@ class SPT (PluginBase):
             scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
             scene_items.extend(self.list_spot_items([self.current_spot], self.selected_radius))
             scene_items.extend(self.list_node_items([self.current_spot], self.selected_radius))
-            ancestors = self.find_ancestors(self.current_spot)
-            descendants = self.find_descendants(self.current_spot)
-        else:
-            ancestors = []
-            descendants = []
 
-        for spot in existing_spots:
-            if spot in ancestors:
-                scene_items.extend(self.create_relative_marker_items(spot, self.spot_radius, color = None, fill = True))
-            if spot in descendants:
-                scene_items.extend(self.create_relative_marker_items(spot, self.spot_radius, color = None, fill = False))
+            existing_ancestors = [spot for spot in self.find_ancestors(self.current_spot) if spot in existing_spots]
+            existing_descendants = [spot for spot in self.find_descendants(self.current_spot) if spot in existing_spots]
+            scene_items.extend(self.list_ancestor_items(existing_ancestors, self.spot_radius))
+            scene_items.extend(self.list_descendant_items(existing_descendants, self.spot_radius))
 
-        for spot in ghost_spots:
-            if spot in ancestors:
-                scene_items.extend(self.create_relative_marker_items(spot, self.ghost_radius, color = None, fill = True))
-            if spot in descendants:
-                scene_items.extend(self.create_relative_marker_items(spot, self.ghost_radius, color = None, fill = False))
+            ghost_ancestors = [spot for spot in self.find_ancestors(self.current_spot) if spot in ghost_spots]
+            ghots_descendants = [spot for spot in self.find_descendants(self.current_spot) if spot in ghost_spots]
+            scene_items.extend(self.list_ancestor_items(ghost_ancestors, self.ghost_radius))
+            scene_items.extend(self.list_descendant_items(ghots_descendants, self.ghost_radius))
 
         return scene_items
 
@@ -267,7 +258,7 @@ class SPT (PluginBase):
         item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
 
         pen = QPen(color)
-        pen.setWidth(self.spot_penwidth)
+        pen.setWidthF(self.spot_penwidth)
         item.setPen(pen)
 
         return item
@@ -280,19 +271,6 @@ class SPT (PluginBase):
         item = QGraphicsPathItem(path)
         item.setPen(pen)
         return item
-
-    def create_relative_marker_items (self, spot, radius, color = None, fill = False):
-        if color is None:
-            color = self.select_color(spot)
-
-        item = QGraphicsEllipseItem(spot['x'] - radius - self.marker_size, spot['y'] - radius - self.marker_size, \
-                                    self.marker_size * 2, self.marker_size * 2)
-        pen = QPen(self.select_color(spot))
-        pen.setWidth(self.spot_penwidth)
-        item.setPen(QPen(self.select_color(spot)))
-        if fill is True:
-            item.setBrush(QBrush(self.select_color(spot)))
-        return [item]
 
     def list_node_items (self, spot_list, radius):
         spot_list = [spot for spot in spot_list if len(self.find_children(spot)) > 1]
@@ -308,31 +286,66 @@ class SPT (PluginBase):
         return items_first + items_last + items_cont
 
     def create_node_item (self, spot, radius, color):
-        child_count = len(self.find_children(spot))
-
-        document = QTextDocument(str(child_count))
+        document = QTextDocument(str(len(self.find_children(spot))))
         document.setDocumentMargin(0)
+        font = QFont()
+        font.setPixelSize(self.spot_radius * 2)
 
         item = QGraphicsTextItem()
         item.setDocument(document)
         item.setDefaultTextColor(color)
-
-        font = QFont()
-        font.setPixelSize(self.spot_radius * 2)
         item.setFont(font)
-
         item.setPos(spot['x'] + radius, spot['y'] - radius - item.boundingRect().height())
 
         return item
 
-    def select_color (self, spot):
-        if spot['parent'] is None:
-            color = self.color_first
-        elif len(self.find_children(spot)) > 0:
-            color = self.color_cont
-        else:
-            color = self.color_last
-        return color
+    def list_ancestor_items (self, spot_list, radius):
+        spots_first = [spot for spot in spot_list if spot['parent'] is None]
+        spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
+        spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
+
+        items_first = [self.create_ancestor_item(spot, radius, self.color_first) for spot in spots_first]
+        items_last = [self.create_ancestor_item(spot, radius, self.color_last) for spot in spots_last]
+        items_cont = [self.create_ancestor_item(spot, radius, self.color_cont) for spot in spots_cont]
+
+        return items_first + items_last + items_cont
+
+    def create_ancestor_item (self, spot, radius, color):
+        item = QGraphicsEllipseItem(spot['x'] - radius - self.marker_radius, spot['y'] - radius - self.marker_radius, \
+                                    self.marker_radius * 2, self.marker_radius * 2)
+
+        pen = QPen(color)
+        pen.setWidthF(self.spot_penwidth)
+        item.setPen(pen)
+
+        if (self.current_spot is not None) and (spot['index'] == self.current_spot['parent']):
+            item.setBrush(QBrush(color))
+
+        return item
+
+    def list_descendant_items (self, spot_list, radius):
+        spots_first = [spot for spot in spot_list if spot['parent'] is None]
+        spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
+        spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
+
+        items_first = [self.create_descendant_item(spot, radius, self.color_first) for spot in spots_first]
+        items_last = [self.create_descendant_item(spot, radius, self.color_last) for spot in spots_last]
+        items_cont = [self.create_descendant_item(spot, radius, self.color_cont) for spot in spots_cont]
+
+        return items_first + items_last + items_cont
+
+    def create_descendant_item (self, spot, radius, color):
+        item = QGraphicsEllipseItem(spot['x'] + radius - self.marker_radius, spot['y'] + radius - self.marker_radius, \
+                                    self.marker_radius * 2, self.marker_radius * 2)
+
+        pen = QPen(color)
+        pen.setWidthF(self.spot_penwidth)
+        item.setPen(pen)
+
+        if (self.current_spot is not None) and (spot['parent'] == self.current_spot['index']):
+            item.setBrush(QBrush(color))
+
+        return item
 
     def key_pressed (self, event, stack, tcz_index):
         if self.check_hide_tracks.isChecked():
@@ -528,9 +541,10 @@ class SPT (PluginBase):
                                       "* Shift + click: move.\n" +
                                       "* ESC to quit.")
 
-    def update_marker_size (self, radius):
+    def update_marker_radii (self, radius):
         self.spot_radius = radius
         self.ghost_radius = self.spot_radius / 2
+        self.marker_radius = self.spot_radius / 2
         self.selected_radius = self.spot_radius * 2
 
     def update_mouse_cursor(self):
