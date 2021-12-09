@@ -145,13 +145,10 @@ class MainWindow (QMainWindow):
         # plugin
         self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
 
-
     def open_images (self, image_filename_list):
         stack_exts = [item for values in stack.file_types.values() for item in values]
 
         screen_size = self.screen().availableSize()
-        window_width = int(screen_size.width() * 0.8)
-        window_height = int(screen_size.height() * 0.8)
         delta = int(screen_size.width() * 0.05)
         window_x = self.x() + delta
         window_y = self.y() + delta
@@ -162,13 +159,13 @@ class MainWindow (QMainWindow):
                     self.load_image(image_filename)
                 else:
                     new_window = MainWindow(image_filename = image_filename)
+                    new_window.resize_best()
                     new_window.move(window_x, window_y)
-                    new_window.resize(window_width, window_height)
                     new_window.show()
                     new_window.zoom_best()
 
-                    window_x = (window_x + delta) % (window_width // 2)
-                    window_y = (window_y + delta) % (window_height // 2)
+                    window_x = (window_x + delta) % (screen_size.width() // 2)
+                    window_y = (window_y + delta) % (screen_size.height() // 2)
 
     def load_image (self, image_filename):
         try:
@@ -241,6 +238,12 @@ class MainWindow (QMainWindow):
         self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
                                   (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
         self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
+
+    def resize_best (self):
+        screen_size = self.screen().availableSize()
+        width = int(screen_size.width() * 0.8)
+        height = int(screen_size.height() * 0.8)
+        self.resize(width, height)
 
     def update_window_title (self):
         if self.image_filename is None:
