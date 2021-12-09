@@ -2,7 +2,7 @@
 
 import numpy as np
 
-zoom_limits = [25, 400]
+zoom_limits = [25, 800]
 zoom_delta = 25
 
 class ZoomPanel:
