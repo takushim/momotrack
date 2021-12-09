@@ -157,6 +157,7 @@ class MainWindow (QMainWindow):
             if any([Path(image_filename).match(ext) for ext in stack_exts]):
                 if self.image_filename is None:
                     self.load_image(image_filename)
+                    self.zoom_best()
                 else:
                     new_window = MainWindow(image_filename = image_filename)
                     new_window.resize_best()
@@ -452,8 +453,23 @@ class MainWindow (QMainWindow):
             stack_exts = [item for values in stack.file_types.values() for item in values]
             record_exts = [item for values in self.plugin_class.file_types.values() for item in values]
 
-            filenames = [url.toLocalFile() for url in event.mimedata().urls()]
-            print(filenames)
+            files = [Path(url.toLocalFile()) for url in event.mimeData().urls()]
+            stack_files = [file for file in files if any([file.match(ext) for ext in stack_exts])]
+            record_files = [file for file in files if any([file.match(ext) for ext in record_exts])]
+            error_files = [file for file in files if (file not in stack_files) and (file not in record_files)]
+
+            if len(stack_files) > 0:
+                self.open_images([str(file) for file in stack_files])
+                error_files.extend(record_files)
+            elif len(record_files) > 0:
+                if self.image_filename is not None and len(record_files) == 1:
+                    self.load_records(record_files[0])
+                else:
+                    error_files.extend(record_files)
+            
+            if len(error_files) > 0:
+                self.show_message(title = "Drug and drop error", \
+                                  message = "Unable to open: {0}".format(', '.join([str(file) for file in error_files])))
 
     def showEvent (self, event):
         self.update_image_view()
