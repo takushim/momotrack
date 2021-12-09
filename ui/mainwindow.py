@@ -449,7 +449,11 @@ class MainWindow (QMainWindow):
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
-            print(event.mimeData().urls())
+            stack_exts = [item for values in stack.file_types.values() for item in values]
+            record_exts = [item for values in self.plugin_class.file_types.values() for item in values]
+
+            filenames = [url.toLocalFile() for url in event.mimedata().urls()]
+            print(filenames)
 
     def showEvent (self, event):
         self.update_image_view()
