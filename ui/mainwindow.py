@@ -144,6 +144,15 @@ class MainWindow (QMainWindow):
         # plugin
         self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
 
+
+    def open_images (self, image_filename_list):
+        for image_filename in image_filename_list:
+            if self.image_filename is None:
+                self.load_image(image_filename)
+            else:
+                new_window = MainWindow(image_filename = image_filename)
+                new_window.show()
+
     def load_image (self, image_filename):
         try:
             self.image_stack = stack.Stack(image_filename)
@@ -237,17 +246,13 @@ class MainWindow (QMainWindow):
 
     def slot_open_image (self):
         dialog = QFileDialog(self)
-        dialog.setWindowTitle("Select an image to open.")
-        dialog.setFileMode(QFileDialog.ExistingFile)
+        dialog.setWindowTitle("Select images to open.")
+        dialog.setFileMode(QFileDialog.ExistingFiles)
         dialog.setNameFilters(["Images (*.tiff *.tif *.stk)", "Any (*.*)"])
         dialog.setViewMode(QFileDialog.List)
 
         if dialog.exec():
-            if self.image_filename is None:
-                self.load_image(dialog.selectedFiles()[0])
-            else:
-                new_window = MainWindow(image_filename = dialog.selectedFiles()[0])
-                new_window.show()
+            self.open_images(dialog.selectedFiles())
 
     def slot_load_records (self):
         if self.clear_modified_flag() == False:
