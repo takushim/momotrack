@@ -45,6 +45,7 @@ class MainWindow (QMainWindow):
         self.ui = loader.load(file)
         file.close()
         self.setCentralWidget(self.ui)
+        self.setAcceptDrops(True)
 
         self.lut_panel = lutpanel.LutPanel(self.ui)
         self.zoom_panel = zoompanel.ZoomPanel(self.ui)
@@ -413,6 +414,14 @@ class MainWindow (QMainWindow):
 
     def slot_update_mouse_cursor (self, cursor):
         self.ui.setCursor(cursor)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            print(event.mimeData().urls())
 
     def showEvent (self, event):
         self.update_image_view()
