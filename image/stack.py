@@ -6,6 +6,7 @@ from pathlib import Path
 
 pixels_um = [0.1625, 0.1625]
 z_step_um = 0.5
+file_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 
 class Stack:
     def __init__ (self, filename = None, keep_color = False):

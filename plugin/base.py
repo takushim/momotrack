@@ -21,6 +21,7 @@ class PluginBase (QObject):
         self.records_modified = False
         self.record_suffix = '_record.json'
         self.default_stem = 'default'
+        self.file_types = {"JSON text": ["*.json"]}
 
     def init_widgets (self, vlayout):
         pass

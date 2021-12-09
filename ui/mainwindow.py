@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
+import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -146,12 +147,28 @@ class MainWindow (QMainWindow):
 
 
     def open_images (self, image_filename_list):
+        stack_exts = [item for values in stack.file_types.values() for item in values]
+
+        screen_size = self.screen().availableSize()
+        window_width = int(screen_size.width() * 0.8)
+        window_height = int(screen_size.height() * 0.8)
+        delta = int(screen_size.width() * 0.05)
+        window_x = self.x() + delta
+        window_y = self.y() + delta
+
         for image_filename in image_filename_list:
-            if self.image_filename is None:
-                self.load_image(image_filename)
-            else:
-                new_window = MainWindow(image_filename = image_filename)
-                new_window.show()
+            if any([Path(image_filename).match(ext) for ext in stack_exts]):
+                if self.image_filename is None:
+                    self.load_image(image_filename)
+                else:
+                    new_window = MainWindow(image_filename = image_filename)
+                    new_window.move(window_x, window_y)
+                    new_window.resize(window_width, window_height)
+                    new_window.show()
+                    new_window.zoom_best()
+
+                    window_x = (window_x + delta) % (window_width // 2)
+                    window_y = (window_y + delta) % (window_height // 2)
 
     def load_image (self, image_filename):
         try:
@@ -160,7 +177,10 @@ class MainWindow (QMainWindow):
             self.init_widgets()
             self.plugin_class.update_stack_info(self.image_stack)
         except FileNotFoundError:
-            self.show_message(title = "Image loading error", message = "Failed to load image: {0}".format(self.image_filename))
+            self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(self.image_filename))
+            return False
+        
+        return True
 
     def load_records (self, records_filename):
         if self.plugin_class.load_records(records_filename) == True:
@@ -248,7 +268,7 @@ class MainWindow (QMainWindow):
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select images to open.")
         dialog.setFileMode(QFileDialog.ExistingFiles)
-        dialog.setNameFilters(["Images (*.tiff *.tif *.stk)", "Any (*.*)"])
+        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in stack.file_types.items()])
         dialog.setViewMode(QFileDialog.List)
 
         if dialog.exec():
@@ -261,7 +281,7 @@ class MainWindow (QMainWindow):
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select a record to load.")
         dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
+        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.plugin_class.file_types.items()])
         dialog.setViewMode(QFileDialog.List)
 
         if dialog.exec():
@@ -278,7 +298,7 @@ class MainWindow (QMainWindow):
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select a filename to save records.")
         dialog.setFileMode(QFileDialog.AnyFile)
-        dialog.setNameFilters(["JSON file (*.json)", "Any (*.*)"])
+        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.plugin_class.file_types.items()])
         dialog.setViewMode(QFileDialog.List)
         dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
 
