@@ -183,11 +183,14 @@ class MainWindow (QMainWindow):
         try:
             self.image_stack = stack.Stack(image_filename)
             self.image_filename = image_filename
+        except OSError:
+            self.image_filename = None
+            self.image_stack = stack.Stack()
+            self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(self.image_filename))
+        finally:
             self.init_widgets()
             self.plugin_class.update_stack_info(self.image_stack)
             self.zoom_best()
-        except OSError:
-            self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(self.image_filename))
 
     def load_records (self, records_filename):
         try:

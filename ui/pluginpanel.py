@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QSizePolicy, QLayout
 class PluginPanel:
     def __init__ (self, ui):
         self.ui = ui
+        self.update_filename(filename = None)
 
     def update_title (self, name):
         self.ui.label_plugin.setText("Plugin: {0}".format(name))
