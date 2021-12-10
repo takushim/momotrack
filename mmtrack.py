@@ -41,16 +41,14 @@ for index in range(max(1, len(image_filenames))):
     plugin_name = plugin_names[index] if len(plugin_names) > index else None
     records_filename = records_filenames[index] if len(records_filenames) > index else None
 
-    window = mainwindow.MainWindow(plugin_name = plugin_name)
+    window = mainwindow.MainWindow(image_filename = image_filename, \
+                                   records_filename = records_filename, \
+                                   plugin_name = plugin_name)
     window.resize_best()
 
     window_x, window_y = window.next_window_position(window_x, window_y)
     window.move(window_x, window_y)
     window.show()
-
-    if image_filename is not None:
-        window.load_image(image_filename)
-        if records_filename is not None:
-            window.load_records(records_filename)
+    window.zoom_best()
 
 sys.exit(app.exec())

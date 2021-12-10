@@ -36,12 +36,10 @@ class Stack:
     def read_image_by_chunk (self, fileio, keep_color = False, chunk_size = chunk_size):
         try:
             byte_data = bytearray()
-            current_bytes = 0
             with open(fileio, 'rb') as file:
                 while len(chunk := file.read(chunk_size)) > 0:
                     byte_data.extend(chunk)
-                    current_bytes = current_bytes + len(chunk)
-                    yield current_bytes
+                    yield len(byte_data)
 
             with io.BytesIO(byte_data) as bytes_io:
                 self.read_image(bytes_io, keep_color = keep_color)
