@@ -152,7 +152,6 @@ class MainWindow (QMainWindow):
             if any([Path(image_filename).match(ext) for ext in stack_exts]):
                 if self.image_filename is None:
                     self.load_image(image_filename)
-                    self.zoom_best()
                 else:
                     new_window = MainWindow(image_filename = image_filename)
                     new_window.resize_best()
@@ -160,7 +159,7 @@ class MainWindow (QMainWindow):
                     window_x, window_y = self.next_window_position(window_x, window_y)
                     new_window.move(window_x, window_y)
                     new_window.show()
-                    new_window.zoom_best()
+                    new_window.load_image(image_filename)
 
     def next_window_position (self, x, y):
         screen_size = self.screen().availableSize()
@@ -186,6 +185,7 @@ class MainWindow (QMainWindow):
             self.image_filename = image_filename
             self.init_widgets()
             self.plugin_class.update_stack_info(self.image_stack)
+            self.zoom_best()
         except OSError:
             self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(self.image_filename))
 
