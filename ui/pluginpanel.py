@@ -11,7 +11,6 @@ class PluginPanel:
         self.ui.label_plugin.setText("Plugin: {0}".format(name))
 
     def update_filename (self, filename):
-        print("HI")
         if filename is None:
             filename = "(None)"
         self.ui.label_records_filename.setText("Current file: {0}".format(Path(filename).name))
