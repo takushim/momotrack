@@ -38,6 +38,9 @@ class ImagePanel:
                                                  self.ui.slider_zstack.value(), stack.z_count - 1,)
         self.ui.label_status.setText(status)
 
+    def show_message (self, message):
+        self.ui.label_status.setText(message)
+
     def update_zoom (self, zoom_ratio):
         self.ui.gview_image.resetTransform()
         self.ui.gview_image.scale(zoom_ratio / 100, zoom_ratio / 100)

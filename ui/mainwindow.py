@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
+import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -181,7 +182,11 @@ class MainWindow (QMainWindow):
 
     def load_image (self, image_filename):
         try:
-            self.image_stack = stack.Stack(image_filename)
+            self.image_stack = stack.Stack()
+            file_size = Path(image_filename).stat().st_size
+            for count in self.image_stack.read_image_by_chunk(image_filename):
+                ratio = int(count / file_size * 100)
+                print("{0} - {1}% loaded.".format(Path(image_filename).name, ratio))
             self.image_filename = image_filename
         except OSError:
             self.image_filename = None

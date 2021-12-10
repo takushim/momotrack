@@ -1,19 +1,29 @@
 #!/usr/bin/env python
 
-import tifffile
+import io, tifffile
+from numpy.lib.arraysetops import isin
 import numpy as np
 
 file_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 pixels_um = [0.1625, 0.1625]
 z_step_um = 0.5
+chunk_size = 1024 * 64
 
 class Stack:
-    def __init__ (self, filename = None, keep_color = False):
+    def __init__ (self, fileio = None, keep_color = False):
         self.pixels_um = pixels_um.copy()
         self.z_step_um = z_step_um
-        self.filename = filename
 
-        if self.filename is None:
+        if fileio is None:
+            self.set_defaults()
+        else:
+            try:
+                self.read_image(fileio, keep_color = keep_color)
+            except OSError:
+                self.set_defaults()
+                raise
+
+    def set_defaults (self):
             self.z_count = 1
             self.t_count = 1
             self.c_count = 1
@@ -21,14 +31,28 @@ class Stack:
             self.width = 256
             self.axes = 'TCZYX'
             self.colored = False
-            self.filename = None
             self.image_array = np.zeros((self.t_count, self.c_count, self.z_count, self.height, self.width), dtype = np.uint16)
-        else:
-            self.read_image(keep_color = keep_color)
 
-    def read_image (self, keep_color = False):
+    def read_image_by_chunk (self, fileio, keep_color = False, chunk_size = chunk_size):
+        try:
+            byte_data = bytearray()
+            current_bytes = 0
+            with open(fileio, 'rb') as file:
+                while len(chunk := file.read(chunk_size)) > 0:
+                    byte_data.extend(chunk)
+                    current_bytes = current_bytes + len(chunk)
+                    yield current_bytes
+
+            with io.BytesIO(byte_data) as bytes_io:
+                self.read_image(bytes_io, keep_color = keep_color)
+
+        except OSError:
+            self.set_defaults()
+            raise
+
+    def read_image (self, fileio, keep_color = False):
         # read TIFF file (assumes TZ(C)YX(S) order)
-        with tifffile.TiffFile(self.filename) as tiff:
+        with tifffile.TiffFile(fileio) as tiff:
             axes = tiff.series[0].axes
             self.image_array = tiff.asarray(series = 0)
             self.read_metadata(tiff)
