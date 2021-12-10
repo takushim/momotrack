@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
-import sys, tifffile
+import tifffile
 import numpy as np
-from pathlib import Path
 
+file_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 pixels_um = [0.1625, 0.1625]
 z_step_um = 0.5
-file_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 
 class Stack:
     def __init__ (self, filename = None, keep_color = False):
-        self.pixels_um = pixels_um
+        self.pixels_um = pixels_um.copy()
         self.z_step_um = z_step_um
         self.filename = filename
 
@@ -65,7 +64,7 @@ class Stack:
             self.colored = False
 
     def read_metadata (self, tiff):
-        self.pixels_um = pixels_um
+        self.pixels_um = pixels_um.copy()
         self.z_step_um = z_step_um
 
         if 'XResolution' in tiff.pages[0].tags:

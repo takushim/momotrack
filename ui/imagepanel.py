@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import sys
 import numpy as np
 from PySide6.QtWidgets import QGraphicsScene, QSlider, QGraphicsPixmapItem
 from PySide6.QtGui import QImage, QPixmap

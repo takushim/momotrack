@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-import sys
 import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QPushButton, QLabel, QGraphicsEllipseItem
-from PySide6.QtGui import QPen, QColor
+from PySide6.QtGui import QPen
 from plugin.base import PluginBase
 
 plugin_name = 'Demo'

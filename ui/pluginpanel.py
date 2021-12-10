@@ -1,15 +1,20 @@
 #!/usr/bin/env python
 
-from PySide6.QtCore import Qt
+from pathlib import Path
 from PySide6.QtWidgets import QSizePolicy, QLayout
 
 class PluginPanel:
     def __init__ (self, ui):
         self.ui = ui
-        self.module = None
 
     def update_title (self, name):
         self.ui.label_plugin.setText("Plugin: {0}".format(name))
+
+    def update_filename (self, filename):
+        print("HI")
+        if filename is None:
+            filename = "(None)"
+        self.ui.label_records_filename.setText("Current file: {0}".format(Path(filename).name))
 
     def update_widgets (self, plugin_class):
         self.recurse_plugin_widgets(self.ui.vlayout_plugin, lambda x: x.deleteLater(), lambda x: x.deleteLater())

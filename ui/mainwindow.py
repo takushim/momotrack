@@ -6,7 +6,6 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
-import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -147,12 +146,8 @@ class MainWindow (QMainWindow):
 
     def open_images (self, image_filename_list):
         stack_exts = [item for values in stack.file_types.values() for item in values]
-
-        screen_size = self.screen().availableSize()
-        delta = int(screen_size.width() * 0.05)
-        window_x = self.x() + delta
-        window_y = self.y() + delta
-
+        window_x = self.x()
+        window_y = self.y()
         for image_filename in image_filename_list:
             if any([Path(image_filename).match(ext) for ext in stack_exts]):
                 if self.image_filename is None:
@@ -161,12 +156,29 @@ class MainWindow (QMainWindow):
                 else:
                     new_window = MainWindow(image_filename = image_filename)
                     new_window.resize_best()
+
+                    window_x, window_y = self.next_window_position(window_x, window_y)
                     new_window.move(window_x, window_y)
                     new_window.show()
                     new_window.zoom_best()
 
-                    window_x = (window_x + delta) % (screen_size.width() // 2)
-                    window_y = (window_y + delta) % (screen_size.height() // 2)
+    def next_window_position (self, x, y):
+        screen_size = self.screen().availableSize()
+        delta = int(screen_size.width() * 0.05)
+        next_x = (x + delta) % (screen_size.width() // 2)
+        next_y = (y + delta) % (screen_size.height() // 2)
+        return next_x, next_y
+
+    def resize_best (self):
+        screen_size = self.screen().availableSize()
+        width = int(screen_size.width() * 0.8)
+        height = int(screen_size.height() * 0.8)
+        self.resize(width, height)
+
+    def zoom_best (self):
+        self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
+                                  (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def load_image (self, image_filename):
         try:
@@ -174,19 +186,24 @@ class MainWindow (QMainWindow):
             self.image_filename = image_filename
             self.init_widgets()
             self.plugin_class.update_stack_info(self.image_stack)
-        except FileNotFoundError:
+        except OSError:
             self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(self.image_filename))
-            return False
-        
-        return True
 
     def load_records (self, records_filename):
-        if self.plugin_class.load_records(records_filename) == True:
+        try:
+            self.plugin_class.load_records(records_filename)
             self.records_filename = records_filename
+            self.plugin_panel.update_filename(records_filename)
+        except OSError:
+            self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
 
-    def save_records (self, records_filename, image_filename):
-        if self.plugin_class.save_records(records_filename, settings = self.archive_settings()) == True:
+    def save_records (self, records_filename):
+        try:
+            self.plugin_class.save_records(records_filename, settings = self.archive_settings())
             self.records_filename = records_filename
+            self.plugin_panel.update_filename(records_filename)
+        except OSError:
+            self.show_message(title = "Records saving error", message = "Failed to save records: {0}".format(records_filename))
 
     def clear_records (self):
         self.plugin_class.clear_records()
@@ -235,22 +252,11 @@ class MainWindow (QMainWindow):
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
         self.plugin_class.signal_move_by_tczindex.connect(self.slot_move_by_tczindex)
 
-    def zoom_best (self):
-        self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
-                                  (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
-
-    def resize_best (self):
-        screen_size = self.screen().availableSize()
-        width = int(screen_size.width() * 0.8)
-        height = int(screen_size.height() * 0.8)
-        self.resize(width, height)
-
     def update_window_title (self):
-        if self.image_filename is None:
-            self.setWindowTitle(self.app_name)
-        else:
-            self.setWindowTitle(self.app_name + " - " + Path(self.image_filename).name)
+        title = self.app_name
+        if self.image_filename is not None:
+            title = "{0} - {1}".format(title, Path(self.image_filename).name)
+        self.setWindowTitle(title)
 
     def update_image_view (self):
         self.image_panel.channel = self.lut_panel.current_channel()
