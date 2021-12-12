@@ -6,12 +6,11 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDi
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
-import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
 class MainWindow (QMainWindow):
-    signal_open_new_image = Signal(QMainWindow, str, str, str)
+    signal_open_new_image = Signal(list)
 
     def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
         super().__init__()
@@ -149,19 +148,17 @@ class MainWindow (QMainWindow):
 
     def open_images (self, image_filename_list):
         stack_exts = [item for values in stack.file_types.values() for item in values]
+
+        new_window_files = []
         for image_filename in image_filename_list:
             if any([Path(image_filename).match(ext) for ext in stack_exts]):
                 if self.image_filename is None:
                     self.load_image(image_filename)
                 else:
-                    self.signal_open_new_image.emit(self, image_filename, None, None)
+                    new_window_files.append(image_filename)
 
-    def next_window_position (self):
-        screen_size = self.screen().availableSize()
-        delta = int(screen_size.width() * 0.05)
-        next_x = (self.x() + delta) % (screen_size.width() // 2)
-        next_y = (self.y() + delta) % (screen_size.height() // 2)
-        return next_x, next_y
+        if len(new_window_files) > 0:
+            self.signal_open_new_image.emit(new_window_files)
 
     def resize_best (self):
         screen_size = self.screen().availableSize()
