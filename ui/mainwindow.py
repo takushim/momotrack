@@ -2,11 +2,11 @@
 
 from pathlib import Path
 from importlib import import_module
-from tqdm import tqdm
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt
 from PySide6.QtUiTools import QUiLoader
+import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -182,19 +182,25 @@ class MainWindow (QMainWindow):
 
     def load_image (self, image_filename):
         try:
-            self.image_stack = stack.Stack()
-            total_size = Path(image_filename).stat().st_size
-            print(total_size)
-            prefix = Path(image_filename).name
-            with tqdm(total = total_size, desc = prefix, unit = 'B') as progress_bar:
-                for count in self.image_stack.read_image_by_chunk(image_filename):
-                    progress_bar.n = count
-                    progress_bar.refresh()
+            file = Path(self.image_filename)
+            dialog = QProgressDialog("Loading: {0}".format(file.name), "Cencel", 0, file.stat().st_size)
+            dialog.setWindowModality(Qt.WindowModal)
+            dialog.show()
+
+            image_stack = stack.Stack()
+            for read_size in image_stack.read_image_by_chunk(image_filename):
+                dialog.setValue(read_size)
+                if dialog.wasCanceled():
+                    raise OSError()
+
+            self.image_stack = image_stack
             self.image_filename = image_filename
+
         except OSError:
             self.image_filename = None
             self.image_stack = stack.Stack()
-            self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(self.image_filename))
+            self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(image_filename))
+
         finally:
             self.init_widgets()
             self.plugin_class.update_stack_info(self.image_stack)
