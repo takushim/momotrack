@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import subprocess
 import sys, argparse
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QGuiApplication
@@ -50,31 +51,25 @@ app = QApplication(sys.argv[:1] + unparsed_args)
 # functions
 def next_window_position (x, y):
     screen_size = QGuiApplication.primaryScreen().size()
-    delta = int(screen_size.width() * 0.05)
+    delta = int(screen_size.width() * 0.02)
     next_x = (x + delta) % (screen_size.width() // 2)
     next_y = (y + delta) % (screen_size.height() // 2)
     return next_x, next_y
 
-def slot_open_mainwindow (image_list = None):
+def slot_open_mainwindow (image_list):
     if image_list is None:
         image_list = []
 
     window_x, window_y = next_window_position(0, 0)
+    window_x, window_y = next_window_position(window_x, window_y)
     program = __file__
     for index in range(max(1, len(image_list))):
-        image_filename = image_filenames[index] if len(image_filenames) > index else None
-
-        arguments = ["--window-position", window_x, window_y]
-        if image_filename is not None:
-            arguments.append(image_filename)
-
-        print(program, arguments)
-        result = QProcess.startDetached(program, arguments)
-        print(result)
-
-        QProcess.startDetached("dir")
-
-        window_x, window_y = next_window_position(0, 0)
+        filename = image_list[index] if len(image_list) > index else None
+        commands = ["py", program, "--window-position", str(window_x), str(window_y)]
+        if filename is not None:
+            commands.append(filename)
+        subprocess.run(commands)
+        window_x, window_y = next_window_position(window_x, window_y)
 
 # open the main window(s)
 if window_position is None:
@@ -99,9 +94,5 @@ for index in range(max(1, len(image_filenames))):
 
     window.show()
     window.zoom_best()
-
-process = QProcess()
-process.startCommand("dir .")
-print(process.processId())
 
 sys.exit(app.exec())
