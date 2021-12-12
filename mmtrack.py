@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 
-import subprocess
+import platform, shutil, subprocess
 import sys, argparse
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtCore import QProcess, QObject
-import image
 from ui import mainwindow
 
 # default parameters
@@ -65,7 +63,13 @@ def slot_open_mainwindow (image_list):
     program = __file__
     for index in range(max(1, len(image_list))):
         filename = image_list[index] if len(image_list) > index else None
-        commands = ["py", program, "--window-position", str(window_x), str(window_y)]
+        if platform.system() == "Windows":
+            if shutil.which('py'):
+                commands = ["py", program, "--window-position", str(window_x), str(window_y)]
+            else:
+                commands = ["python", program, "--window-position", str(window_x), str(window_y)]
+        else:
+            commands = [program, "--window-position", str(window_x), str(window_y)]
         if filename is not None:
             commands.append(filename)
         subprocess.Popen(commands, creationflags = subprocess.CREATE_NEW_PROCESS_GROUP)
