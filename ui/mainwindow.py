@@ -4,13 +4,15 @@ from pathlib import Path
 from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog
 from PySide6.QtGui import QAction, QActionGroup
-from PySide6.QtCore import QFile, QTimer, Qt
+from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
 import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
 class MainWindow (QMainWindow):
+    signal_open_new_image = Signal(QMainWindow, str, str, str)
+
     def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
         super().__init__()
         self.app_name = "PyTrace"
@@ -34,9 +36,9 @@ class MainWindow (QMainWindow):
         self.connect_menubar_to_slots()
         self.connect_signals_to_slots()
 
-        if image_filename is not None:
+        if image_filename is not None and len(image_filename) > 0:
             self.load_image(image_filename)
-        if records_filename is not None:
+        if records_filename is not None and len(records_filename) > 0:
             self.load_records(records_filename)
 
     def load_ui (self):
@@ -147,26 +149,18 @@ class MainWindow (QMainWindow):
 
     def open_images (self, image_filename_list):
         stack_exts = [item for values in stack.file_types.values() for item in values]
-        window_x = self.x()
-        window_y = self.y()
         for image_filename in image_filename_list:
             if any([Path(image_filename).match(ext) for ext in stack_exts]):
                 if self.image_filename is None:
                     self.load_image(image_filename)
                 else:
-                    new_window = MainWindow(image_filename = image_filename)
-                    new_window.resize_best()
+                    self.signal_open_new_image.emit(self, image_filename, None, None)
 
-                    window_x, window_y = self.next_window_position(window_x, window_y)
-                    new_window.move(window_x, window_y)
-                    new_window.show()
-                    new_window.zoom_best()
-
-    def next_window_position (self, x, y):
+    def next_window_position (self):
         screen_size = self.screen().availableSize()
         delta = int(screen_size.width() * 0.05)
-        next_x = (x + delta) % (screen_size.width() // 2)
-        next_y = (y + delta) % (screen_size.height() // 2)
+        next_x = (self.x() + delta) % (screen_size.width() // 2)
+        next_y = (self.y() + delta) % (screen_size.height() // 2)
         return next_x, next_y
 
     def resize_best (self):
@@ -212,6 +206,7 @@ class MainWindow (QMainWindow):
             self.records_filename = records_filename
             self.plugin_panel.update_filename(records_filename)
         except OSError:
+            print(records_filename)
             self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
 
     def save_records (self, records_filename):
