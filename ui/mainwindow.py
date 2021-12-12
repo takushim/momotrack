@@ -349,10 +349,11 @@ class MainWindow (QMainWindow):
         self.plugin_class.mouse_released(event, self.image_stack, self.image_panel.current_index())
 
     def slot_scene_wheel_moved (self, event):
-        if event.delta() > 0:
-            self.slot_zoomed_in()
-        elif event.delta() < 0:
-            self.slot_zoomed_out()
+        if event.modifiers() == Qt.SHIFT:
+            if event.delta() > 0:
+                self.slot_zoomed_in()
+            elif event.delta() < 0:
+                self.slot_zoomed_out()
 
     def slot_scene_key_pressed (self, event):
         if event.key() == Qt.Key_Right:
