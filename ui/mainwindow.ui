@@ -133,6 +133,9 @@
             <property name="tabletTracking">
              <bool>false</bool>
             </property>
+            <property name="focusPolicy">
+             <enum>Qt::NoFocus</enum>
+            </property>
             <property name="maximum">
              <number>0</number>
             </property>
@@ -177,6 +180,9 @@
             </property>
             <property name="tabletTracking">
              <bool>false</bool>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::NoFocus</enum>
             </property>
             <property name="maximum">
              <number>0</number>
