@@ -160,7 +160,7 @@ class MainWindow (QMainWindow):
                     window_x, window_y = self.next_window_position(window_x, window_y)
                     new_window.move(window_x, window_y)
                     new_window.show()
-                    new_window.load_image(image_filename)
+                    new_window.zoom_best()
 
     def next_window_position (self, x, y):
         screen_size = self.screen().availableSize()
