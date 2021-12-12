@@ -68,7 +68,7 @@ def slot_open_mainwindow (image_list):
         commands = ["py", program, "--window-position", str(window_x), str(window_y)]
         if filename is not None:
             commands.append(filename)
-        subprocess.run(commands)
+        subprocess.Popen(commands, creationflags = subprocess.CREATE_NEW_PROCESS_GROUP)
         window_x, window_y = next_window_position(window_x, window_y)
 
 # open the main window(s)
