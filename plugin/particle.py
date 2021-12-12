@@ -403,7 +403,7 @@ class SPT (PluginBase):
                 if len(spot_list) > 0:
                     self.current_spot = spot_list[-1]
                     self.track_start = tcz_index
-                else:
+                elif self.current_spot is not None:
                     self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
                     if self.check_auto_moving.isChecked():
                         self.move_time_forward(*tcz_index)
