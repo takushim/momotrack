@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import numpy as np
 from pathlib import Path
 from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog
@@ -174,13 +175,15 @@ class MainWindow (QMainWindow):
     def load_image (self, image_filename):
         try:
             file = Path(self.image_filename)
-            dialog = QProgressDialog("Loading: {0}".format(file.name), "Cencel", 0, file.stat().st_size)
+            total_size = file.stat().st_size
+
+            dialog = QProgressDialog("Loading: {0}".format(file.name), "Cancel", 0, 100)
             dialog.setWindowModality(Qt.WindowModal)
             dialog.show()
 
             image_stack = stack.Stack()
             for read_size in image_stack.read_image_by_chunk(image_filename):
-                dialog.setValue(read_size)
+                dialog.setValue(int(read_size / total_size * 100))
                 if dialog.wasCanceled():
                     raise OSError()
 
