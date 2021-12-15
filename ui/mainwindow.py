@@ -6,7 +6,6 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDi
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
-import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
