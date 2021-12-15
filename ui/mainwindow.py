@@ -184,6 +184,7 @@ class MainWindow (QMainWindow):
             image_stack = stack.Stack()
             for read_size in image_stack.read_image_by_chunk(image_filename):
                 dialog.setValue(int(read_size / total_size * 100))
+                QApplication.processEvents()
                 if dialog.wasCanceled():
                     raise OSError()
 
