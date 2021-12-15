@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-import numpy as np
 from pathlib import Path
 from importlib import import_module
-from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog
+from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog, QApplication
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
+import image
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -152,7 +152,7 @@ class MainWindow (QMainWindow):
 
         new_files = []
         for image_filename in image_filename_list:
-            if any([Path(image_filename).match(ext) for ext in stack_exts]):
+            if any([Path(str(image_filename).lower()).match(ext) for ext in stack_exts]):
                 if self.image_filename is None:
                     self.load_image(image_filename)
                 else:
@@ -174,12 +174,13 @@ class MainWindow (QMainWindow):
 
     def load_image (self, image_filename):
         try:
-            file = Path(self.image_filename)
+            file = Path(image_filename)
             total_size = file.stat().st_size
 
             dialog = QProgressDialog("Loading: {0}".format(file.name), "Cancel", 0, 100)
             dialog.setWindowModality(Qt.WindowModal)
             dialog.show()
+            QApplication.processEvents()
 
             image_stack = stack.Stack()
             for read_size in image_stack.read_image_by_chunk(image_filename):
@@ -473,8 +474,8 @@ class MainWindow (QMainWindow):
             record_exts = [item for values in self.plugin_class.file_types.values() for item in values]
 
             files = [Path(url.toLocalFile()) for url in event.mimeData().urls()]
-            stack_files = [file for file in files if any([file.match(ext) for ext in stack_exts])]
-            record_files = [file for file in files if any([file.match(ext) for ext in record_exts])]
+            stack_files = [file for file in files if any([Path(str(file).lower()).match(ext) for ext in stack_exts])]
+            record_files = [file for file in files if any([Path(str(file).lower()).match(ext) for ext in record_exts])]
             error_files = [file for file in files if (file not in stack_files) and (file not in record_files)]
 
             if len(stack_files) > 0:
