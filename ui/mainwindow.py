@@ -239,7 +239,7 @@ class MainWindow (QMainWindow):
                 self.plugin_class.clear_records()
                 return True
             else:
-                self.save_records(self.records_filename, self.image_filename)
+                self.save_records(self.records_filename)
                 if self.plugin_class.is_modified():
                     return False
         return True
@@ -298,6 +298,10 @@ class MainWindow (QMainWindow):
             self.open_images(dialog.selectedFiles())
 
     def slot_load_records (self):
+        if self.image_filename is None:
+            self.show_message(title = "Records loading error", message = "Open image before loading records.")
+            return
+
         if self.clear_modified_flag() == False:
             return
 
@@ -306,6 +310,10 @@ class MainWindow (QMainWindow):
         dialog.setFileMode(QFileDialog.ExistingFile)
         dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.plugin_class.file_types.items()])
         dialog.setViewMode(QFileDialog.List)
+
+        image_file = Path(self.image_filename)
+        if image_file.exists():
+            dialog.setDirectory(str(image_file.resolve().parent))
 
         if dialog.exec():
             self.load_records(dialog.selectedFiles()[0])
@@ -323,7 +331,13 @@ class MainWindow (QMainWindow):
         dialog.setFileMode(QFileDialog.AnyFile)
         dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.plugin_class.file_types.items()])
         dialog.setViewMode(QFileDialog.List)
-        dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+
+        if self.image_filename is not None:
+            image_file = Path(self.image_filename)
+            if image_file.exists():
+                dialog.setDirectory(str(image_file.resolve().parent))
+                dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
 
         if dialog.exec():
             self.save_records(dialog.selectedFiles()[0], self.image_filename)

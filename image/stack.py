@@ -7,7 +7,7 @@ import numpy as np
 file_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 pixels_um = [0.1625, 0.1625]
 z_step_um = 0.5
-chunk_size = 1024 * 1024 * 1024
+chunk_size = 1024 * 1024
 
 class Stack:
     def __init__ (self, fileio = None, keep_color = False):
