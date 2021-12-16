@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
-from PySide6.QtGui import QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
+from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
 from plugin.base import PluginBase
 
 plugin_name = 'Particle Tracking'
@@ -17,21 +17,15 @@ class SPT (PluginBase):
     def __init__ (self):
         super().__init__()
         self.spot_list = []
-        self.spot_radius = 4
-        self.update_marker_radii(self.spot_radius)
-        self.spot_penwidth = 1
-        self.ghost_z_range = 1
         self.current_spot = None
         self.adding_spot = False
-        self.color_first = Qt.magenta
-        self.color_cont = Qt.darkGreen
-        self.color_last = Qt.blue
         self.z_limits = [0, 0]
         self.t_limits = [0, 0]
         self.c_limits = [0, 0]
         self.records_modified = False
         self.record_suffix = '_track.json'
         self.track_start = None
+        self.update_settings()
 
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
@@ -122,14 +116,7 @@ class SPT (PluginBase):
             json_dict = json.load(f)
 
         self.spot_list = json_dict['spot_list']
-        if 'spot_radius' in json_dict['summary']:
-            self.dspin_marker_radius.setValue(json_dict['summary']['spot_radius'])
-
-        if 'spot_penwidth' in json_dict['summary']:
-            self.dspin_marker_penwidth.setValue(json_dict['summary']['spot_penwidth'])
-
-        if 'ghost_z_range' in json_dict['summary']:
-            self.spin_ghost_z_range.setValue(json_dict['summary']['ghost_z_range'])
+        self.load_settings(json_dict['plugin_settings'])
 
         self.current_spot = None
         self.records_modified = False
@@ -139,13 +126,13 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
         self.signal_update_scene.emit()
 
-    def save_records (self, records_filename, settings = {}):
-        output_dict = {'summary': {'plugin': plugin_name, \
-                                   'time_stamp': time.strftime("%a %d %b %H:%M:%S %Z %Y"), \
-                                   'spot_radius': self.spot_radius,
-                                   'spot_penwidth': self.spot_penwidth,
-                                   'ghost_z_range': self.ghost_z_range},
-                       'settings': settings, \
+    def save_records (self, records_filename, image_settings = {}):
+        summary = {'plugin': plugin_name, \
+                   'last_update': time.strftime("%a %d %b %H:%M:%S %Z %Y")}
+
+        output_dict = {'summary': summary,
+                       'image_settings': image_settings, \
+                       'plugin_settings': self.archive_settings(),
                        'spot_list': self.spot_list}
 
         with open(records_filename, 'w') as f:
@@ -153,6 +140,34 @@ class SPT (PluginBase):
                       separators = (',', ': '), cls = NumpyEncoder)
 
         self.records_modified = False
+
+    def load_settings (self, settings = {}):
+        self.update_settings(settings)
+        self.dspin_marker_radius.setValue(self.spot_radius)
+        self.dspin_marker_penwidth.setValue(self.spot_penwidth)
+        self.spin_ghost_z_range.setValue(self.ghost_z_range)
+        self.check_auto_moving.setChecked(settings.get('auto_move', False))
+        self.check_hide_tracks.setChecked(settings.get('hide_tracks', False))
+
+    def update_settings (self, settings = {}):
+        self.spot_radius = settings.get('spot_radius', 4)
+        self.spot_penwidth = settings.get('spot_penwidth', 1)
+        self.ghost_z_range = settings.get('ghost_z_range', 1)
+        self.color_first = settings.get('color_first', 'magenta')
+        self.color_cont = settings.get('color_cont', 'darkGreen')
+        self.color_last = settings.get('color_last', 'blue')
+        self.update_marker_radii(self.spot_radius)
+
+    def archive_settings (self):
+        settings = {'spot_radius': self.spot_radius,
+                    'spot_penwidth': self.spot_penwidth,
+                    'ghost_z_range': self.ghost_z_range,
+                    'color_first': self.color_first,
+                    'color_cont': self.color_cont,
+                    'color_last': self.color_last,
+                    'move_auto': self.check_auto_moving.isChecked(),
+                    'hide_tracks': self.check_hide_tracks.isChecked()}
+        return settings
 
     def clear_records (self):
         self.spot_list = []
@@ -258,7 +273,7 @@ class SPT (PluginBase):
     def create_spot_item (self, spot, radius, color):
         item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
 
-        pen = QPen(color)
+        pen = QPen(QColor(color))
         pen.setWidthF(self.spot_penwidth)
         item.setPen(pen)
 
@@ -294,7 +309,7 @@ class SPT (PluginBase):
 
         item = QGraphicsTextItem()
         item.setDocument(document)
-        item.setDefaultTextColor(color)
+        item.setDefaultTextColor(QColor(color))
         item.setFont(font)
         item.setPos(spot['x'] + radius, spot['y'] - radius - item.boundingRect().height())
 
@@ -315,12 +330,12 @@ class SPT (PluginBase):
         item = QGraphicsEllipseItem(spot['x'] - radius - self.marker_radius, spot['y'] - radius - self.marker_radius, \
                                     self.marker_radius * 2, self.marker_radius * 2)
 
-        pen = QPen(color)
+        pen = QPen(QColor(color))
         pen.setWidthF(self.spot_penwidth)
         item.setPen(pen)
 
         if (self.current_spot is not None) and (spot['index'] == self.current_spot['parent']):
-            item.setBrush(QBrush(color))
+            item.setBrush(QBrush(QColor(color)))
 
         return item
 
@@ -339,12 +354,12 @@ class SPT (PluginBase):
         item = QGraphicsEllipseItem(spot['x'] + radius - self.marker_radius, spot['y'] + radius - self.marker_radius, \
                                     self.marker_radius * 2, self.marker_radius * 2)
 
-        pen = QPen(color)
+        pen = QPen(QColor(color))
         pen.setWidthF(self.spot_penwidth)
         item.setPen(pen)
 
         if (self.current_spot is not None) and (spot['parent'] == self.current_spot['index']):
-            item.setBrush(QBrush(color))
+            item.setBrush(QBrush(QColor(color)))
 
         return item
 
