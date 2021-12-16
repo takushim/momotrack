@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
@@ -225,7 +226,7 @@ class SPT (PluginBase):
         scene_items = []
         candidate_spots = [spot for spot in self.spot_list \
                            if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                              (spot != self.current_spot)]
+                              (spot != self.current_spot) and (spot['delete'] == False)]
 
         existing_spots = [spot for spot in candidate_spots if (spot['z'] == tcz_index[2])]
         scene_items.extend(self.list_spot_items(existing_spots, self.spot_radius))
@@ -354,7 +355,8 @@ class SPT (PluginBase):
         return items_first + items_last + items_cont
 
     def create_descendant_item (self, spot, radius, color):
-        item = QGraphicsEllipseItem(spot['x'] + radius - self.marker_radius, spot['y'] + radius - self.marker_radius, \
+        item = QGraphicsEllipseItem(spot['x'] + radius - self.marker_radius, \
+                                    spot['y'] + radius - self.marker_radius, \
                                     self.marker_radius * 2, self.marker_radius * 2)
 
         pen = QPen(QColor(color))
@@ -438,21 +440,26 @@ class SPT (PluginBase):
             self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
             self.signal_update_scene.emit()
 
-    def move_spot (self, spot, x, y, time, channel, z_index):
+    def move_spot (self, spot, x, y, t_index, channel, z_index):
         spot['x'] = x
         spot['y'] = y
         spot['z'] = z_index
-        spot['time'] = time
+        spot['time'] = t_index
         spot['channel'] = channel
+        spot['update'] = time.ctime()
         self.records_modified = True
 
-    def add_spot (self, x, y, time, channel, z_index, parent = None):
+    def add_spot (self, x, y, t_index, channel, z_index, parent = None):
         if parent is None:
             parent_index = None
         else:
             parent_index = parent['index']
-        spot = {'index': len(self.spot_list), 'time': time, 'channel': channel, \
-                'x': x, 'y': y, 'z': z_index, 'parent': parent_index}
+
+        index = max([spot['index'] for spot in self.spot_list]) + 1
+
+        spot = {'index': index, 'time': t_index, 'channel': channel, \
+                'x': x, 'y': y, 'z': z_index, 'parent': parent_index, \
+                'delete': False, 'create': time.ctime(), 'update': time.ctime()}
         print("Adding spot", spot)
         self.spot_list.append(spot)
         self.current_spot = spot
@@ -473,7 +480,8 @@ class SPT (PluginBase):
         print("Removing spot", delete_spot)
         for child_spot in self.find_children(delete_spot):
             child_spot['parent'] = None
-        self.spot_list = [spot for spot in self.spot_list if spot['index'] != index]
+            child_spot['delete'] = True
+            child_spot['update'] = time.ctime()
         self.records_modified = True
 
     def find_root (self, index):
@@ -488,7 +496,8 @@ class SPT (PluginBase):
         if spot is None:
             spot_list = []
         else:
-            spot_list = [x for x in self.spot_list if (x['parent'] == spot['index'])]
+            spot_list = [x for x in self.spot_list \
+                         if (x['parent'] == spot['index']) and (x['delete'] == False)]
         
         return spot_list
 
@@ -509,7 +518,8 @@ class SPT (PluginBase):
         return spot_list
 
     def find_spot (self, index):
-        spot_list = [spot for spot in self.spot_list if spot['index'] == index]
+        spot_list = [spot for spot in self.spot_list \
+                     if (spot['index'] == index) and (spot['delete'] == False)]
         if len(spot_list) > 1:
             print("Multiple spots have the same index. Using the first spot.")
 
@@ -520,27 +530,28 @@ class SPT (PluginBase):
         
         return spot
 
-    def find_spots_by_position (self, x, y, time, channel, z_index):
+    def find_spots_by_position (self, x, y, t_index, channel, z_index):
         if len(self.spot_list) == 0:
             return []
 
         cand_spots = [spot for spot in self.spot_list \
-                      if (x - self.spot_radius <= spot['x']) and (spot['x'] <= x + self.spot_radius) and
+                      if (spot['delete'] == False) and
+                         (x - self.spot_radius <= spot['x']) and (spot['x'] <= x + self.spot_radius) and
                          (y - self.spot_radius <= spot['y']) and (spot['y'] <= y + self.spot_radius) and
-                         (spot['z'] == z_index) and (spot['time'] == time) and (spot['channel'] == channel)]
+                         (spot['z'] == z_index) and (spot['time'] == t_index) and (spot['channel'] == channel)]
 
         return sorted(cand_spots, key = lambda x: x['index'])
 
-    def select_spot (self, x, y, time, channel, z_index):
-        spot_list = self.find_spots_by_position(x, y, time, channel, z_index)
+    def select_spot (self, x, y, t_index, channel, z_index):
+        spot_list = self.find_spots_by_position(x, y, t_index, channel, z_index)
         if len(spot_list) == 0:
             self.current_spot = None
         else:
             self.current_spot = spot_list[-1]
 
-    def move_time_forward(self, time, channel, z_index):
-        time = min(time + 1, self.t_limits[1])
-        self.signal_move_by_tczindex.emit(time, channel, z_index)
+    def move_time_forward(self, t_index, channel, z_index):
+        t_index = min(t_index + 1, self.t_limits[1])
+        self.signal_move_by_tczindex.emit(t_index, channel, z_index)
 
     def update_stack_info (self, stack):
         self.z_limits = [0, stack.z_count - 1]
