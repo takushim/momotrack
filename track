@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source $HOME/.venv/gpu/bin/activate
+
+# find an image file if not specified
+if [ $# == 0 ]; then
+    files=("$(find . -maxdepth 1 -iname '*_crop_1_deconv.tif' | head -n 1)")
+else
+    files=("$@")
+fi
+
+# process!
+for file in "${files[@]}"
+do
+    if [[ "$file" =~ '.ome.tif' ]]; then
+        stem="$(echo ${file} | sed 's/\.ome\.tif$//')"
+    elif [[ "$file" =~ '.tif' ]]; then
+        stem="$(echo ${file} | sed 's/\.tif$//')"
+    else
+        echo "Not an image file: ${file}"
+        continue
+    fi
+
+	records="${stem}_track.json"
+
+    if [[ -f $records ]]; then
+        mmtrack.py -f $records $file
+    else
+        mmtrack.py $file
+    fi
+
+done
