@@ -100,6 +100,7 @@ for index in range(max(1, len(image_filenames))):
     window_x, window_y = next_window_position(window_x, window_y)
 
     window.show()
-    window.zoom_best()
+    if records_filename is None:
+        window.zoom_best()
 
 sys.exit(app.exec())

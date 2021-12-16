@@ -498,7 +498,6 @@ class MainWindow (QMainWindow):
             self.ui.combo_channel.setCurrentIndex(channel)
         self.ui.slider_time.setValue(time)
         self.ui.slider_zstack.setValue(z_index)
-        self.update_image_view()
 
     def slot_reset_panels (self):
         self.init_widgets()

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import json
-from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
@@ -16,6 +14,7 @@ priority = 10
 class SPT (PluginBase):
     def __init__ (self):
         super().__init__()
+        self.plugin_name = str(plugin_name)
         self.spot_list = []
         self.current_spot = None
         self.adding_spot = False
@@ -84,8 +83,8 @@ class SPT (PluginBase):
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
         self.dspin_marker_radius.valueChanged.connect(self.slot_marker_radius_changed)
-        self.spin_ghost_z_range.valueChanged.connect(self.slot_marker_penwidth_changed)
-        self.dspin_marker_penwidth.valueChanged.connect(self.slot_ghost_z_range_changed)
+        self.spin_ghost_z_range.valueChanged.connect(self.slot_ghost_z_range_changed)
+        self.dspin_marker_penwidth.valueChanged.connect(self.slot_marker_penwidth_changed)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -113,12 +112,11 @@ class SPT (PluginBase):
         self.context_menu.addAction(action)
 
     def load_records (self, records_filename):
-        with open(records_filename, 'r') as f:
-            json_dict = json.load(f)
+        super().load_records(records_filename)
 
-        self.spot_list = json_dict.get('spot_list', [])
-        self.load_settings(json_dict.get('plugin_settings', {}))
-        self.image_settings = json_dict.get('image_settings', {})
+        self.spot_list = self.json_dict.get('spot_list', [])
+        self.load_settings(self.json_dict.get('plugin_settings', {}))
+        self.json_dict = None
 
         self.current_spot = None
         self.records_modified = False
@@ -129,18 +127,11 @@ class SPT (PluginBase):
         self.signal_update_scene.emit()
 
     def save_records (self, records_filename, image_settings = {}):
-        summary = self.default_summary(plugin_name)
-
-        output_dict = {'summary': summary,
-                       'image_settings': image_settings, \
-                       'plugin_settings': self.archive_settings(),
-                       'spot_list': self.spot_list}
-
-        with open(records_filename, 'w') as f:
-            json.dump(output_dict, f, ensure_ascii = False, indent = 4, sort_keys = False, \
-                      separators = (',', ': '), cls = NumpyEncoder)
-
+        self.json_dict = {'plugin_settings': self.archive_settings(),
+                          'spot_list': self.spot_list}
+        super().save_records(records_filename, image_settings)
         self.records_modified = False
+        self.json_dict = None
 
     def load_settings (self, settings = {}):
         self.update_settings(settings)
@@ -236,7 +227,6 @@ class SPT (PluginBase):
                            if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
                               (spot != self.current_spot)]
 
-
         existing_spots = [spot for spot in candidate_spots if (spot['z'] == tcz_index[2])]
         scene_items.extend(self.list_spot_items(existing_spots, self.spot_radius))
         scene_items.extend(self.list_node_items(existing_spots, self.spot_radius))
@@ -247,9 +237,12 @@ class SPT (PluginBase):
         scene_items.extend(self.list_node_items(ghost_spots, self.ghost_radius))
 
         if self.current_spot is not None:
-            scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
-            scene_items.extend(self.list_spot_items([self.current_spot], self.selected_radius))
-            scene_items.extend(self.list_node_items([self.current_spot], self.selected_radius))
+            if (self.current_spot['time'] == tcz_index[0]) and \
+               (self.current_spot['channel'] == tcz_index[1]) and \
+               (self.current_spot['z'] == tcz_index[2]):
+                scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
+                scene_items.extend(self.list_spot_items([self.current_spot], self.selected_radius))
+                scene_items.extend(self.list_node_items([self.current_spot], self.selected_radius))
 
             existing_ancestors = [spot for spot in self.find_ancestors(self.current_spot) if spot in existing_spots]
             existing_descendants = [spot for spot in self.find_descendants(self.current_spot) if spot in existing_spots]
@@ -273,7 +266,7 @@ class SPT (PluginBase):
         items_cont = [self.create_spot_item(spot, radius, self.color_cont) for spot in spots_cont]
 
         spots_one = [spot for spot in spot_list if (spot['parent'] is None) and (len(self.find_children(spot)) == 0)]
-        items_one = [self.create_spot_item_one(spot, radius, QPen(self.color_last)) for spot in spots_one]
+        items_one = [self.create_spot_item_one(spot, radius, self.color_last) for spot in spots_one]
 
         return items_first + items_last + items_cont + items_one
 
@@ -286,13 +279,16 @@ class SPT (PluginBase):
 
         return item
 
-    def create_spot_item_one (self, spot, radius, pen):
+    def create_spot_item_one (self, spot, radius, color):
         path = QPainterPath()
         path.arcMoveTo(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2, 225.0)
         path.arcTo(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2, 225.0, 180)
 
+        pen = QPen(QColor(color))
+        pen.setWidthF(self.spot_penwidth)
         item = QGraphicsPathItem(path)
         item.setPen(pen)
+
         return item
 
     def list_node_items (self, spot_list, radius):

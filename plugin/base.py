@@ -2,6 +2,7 @@
 
 import re, time, json
 from pathlib import Path
+from numpyencoder import NumpyEncoder
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QCursor
 
@@ -23,11 +24,6 @@ class PluginBase (QObject):
         self.default_stem = 'default'
         self.file_types = {"JSON text": ["*.json"]}
 
-    def default_summary (self, plugin_name):
-        summary = {'plugin_name': plugin_name, \
-                   'last_update': time.strftime("%a %d %b %H:%M:%S %Z %Y")}
-        return summary
-
     def check_records (self, plugin_name, records_filename):
         with open(records_filename, 'r') as f:
             json_dict = json.load(f)
@@ -40,6 +36,42 @@ class PluginBase (QObject):
             return False
 
         return True
+
+    def load_records (self, records_filename):
+        with open(records_filename, 'r') as f:
+            self.json_dict = json.load(f)
+
+        self.image_settings = self.json_dict.get('image_settings', {})
+
+    def save_records (self, records_filename, image_settings = {}):
+        summary = {'plugin_name': self.plugin_name, \
+                   'last_update': time.strftime("%a %d %b %H:%M:%S %Z %Y")}
+
+        json_dict = {}
+        json_dict['summary'] = summary
+        json_dict['image_settings'] = image_settings
+        self.json_dict = json_dict | self.json_dict
+
+        with open(records_filename, 'w') as f:
+            json.dump(self.json_dict, f, ensure_ascii = False, indent = 4, sort_keys = False, \
+                      separators = (',', ': '), cls = NumpyEncoder)
+
+    def clear_records (self):
+        pass
+
+    def suggest_filename (self, image_filename):
+        if image_filename is None:
+            return self.default_filename + self.record_suffix
+
+        name = Path(image_filename).stem
+        name = re.sub('\.ome$', '', name, flags=re.IGNORECASE)
+        return name + self.record_suffix
+
+    def is_modified (self):
+        return self.records_modified
+
+    def help_message (self):
+        return "Base class to implement plugins. Do not use."
 
     def init_widgets (self, vlayout):
         pass
@@ -68,25 +100,3 @@ class PluginBase (QObject):
     def mouse_released (self, event, stack, tcz_index):
         pass
 
-    def load_records (self, records_filename):
-        pass
-
-    def save_records (self, records_filename, image_settings = {}):
-        pass
-
-    def clear_records (self):
-        pass
-
-    def suggest_filename (self, image_filename):
-        if image_filename is None:
-            return self.default_filename + self.record_suffix
-
-        name = Path(image_filename).stem
-        name = re.sub('\.ome$', '', name, flags=re.IGNORECASE)
-        return name + self.record_suffix
-
-    def is_modified (self):
-        return self.records_modified
-
-    def help_message (self):
-        return "Base class to implement plugins. Do not use."
