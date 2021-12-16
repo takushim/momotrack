@@ -139,8 +139,8 @@ class MainWindow (QMainWindow):
         self.ui.combo_bits.currentIndexChanged.connect(self.slot_bits_changed)
         self.ui.check_auto_lut.stateChanged.connect(self.slot_auto_lut_changed)
         self.ui.dspin_auto_cutoff.valueChanged.connect(self.slot_auto_lut_changed)
-        self.ui.slider_cutoff_lower.valueChanged.connect(self.slot_lut_lower_changed)
-        self.ui.slider_cutoff_upper.valueChanged.connect(self.slot_lut_upper_changed)
+        self.ui.slider_lut_lower.valueChanged.connect(self.slot_lut_lower_changed)
+        self.ui.slider_lut_upper.valueChanged.connect(self.slot_lut_upper_changed)
         self.ui.button_reset_lut.clicked.connect(self.slot_reset_lut)
 
         # plugin

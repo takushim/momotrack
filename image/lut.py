@@ -31,28 +31,43 @@ bit_dict["INT-8"]    = [np.iinfo(np.int8).min, np.iinfo(np.int8).max]
 bit_names = list(bit_dict.keys())
 
 class LUT:
-    def __init__ (self, lut_name = None, pixel_values = None, lut_invert = False, bit_auto = False):
-        if lut_name is None:
-            self.lut_name = "Gray"
-        else:
+    def __init__ (self, lut_name = None, pixel_values = None):
+        self.load_settings()
+
+        if lut_name is not None:
             self.lut_name = lut_name
         
-        if pixel_values is None:
-            self.bit_mode = "UINT-16"
-            self.pixel_lower = bit_dict[self.bit_mode][0]
-            self.pixel_upper = bit_dict[self.bit_mode][1]
-        else:
+        if pixel_values is not None:
             self.set_bit_mode(pixel_values)
             self.pixel_lower = np.min(pixel_values)
             self.pixel_upper = np.max(pixel_values)
-            self.cutoff_lower = self.pixel_lower
-            self.cutoff_upper = self.pixel_upper
+            self.lut_lower = self.pixel_lower
+            self.lut_upper = self.pixel_upper
 
-        self.init_bit_mode = self.bit_mode[:]
-        self.cutoff_lower = self.pixel_lower
-        self.cutoff_upper = self.pixel_upper
-        self.bit_auto = bit_auto
-        self.lut_invert = lut_invert
+        self.init_bit_mode = str(self.bit_mode)
+        self.lut_lower = self.pixel_lower
+        self.lut_upper = self.pixel_upper
+
+    def load_settings (self, settings = {}):
+        self.lut_name = settings.get('lut_name', 'Gray')
+        self.bit_mode = settings.get('bit_mode', 'UINT-16')
+        self.bit_auto = settings.get('bit_auto', False)
+        self.lut_lower = settings.get('lut_lower', 0)
+        self.lut_upper = settings.get('lut_upper', 0xffff)
+        self.auto_lut = settings.get('auto_lut', False)
+        self.auto_cutoff = settings.get('auto_cutoff', 0.0)
+        self.lut_invert = settings.get('lut_invert', False)
+
+    def archive_settings (self):
+        settings = {'lut_name': self.lut_name,
+                    'bit_mode': self.bit_mode,
+                    'bit_auto': self.bit_auto,
+                    'lut_lower': self.lut_lower,
+                    'lut_upper': self.lut_upper,
+                    'auto_lut': self.auto_lut,
+                    'auto_cutoff': self.auto_cutoff,
+                    'lut_invert': self.lut_invert}
+        return settings
 
     def set_bit_mode (self, pixel_values):
         max_value = pixel_values.max()
@@ -83,28 +98,30 @@ class LUT:
         return [lower_limit, upper_limit]
 
     def reset_bit_mode (self):
-        self.bit_mode = self.init_bit_mode[:]
+        self.bit_mode = str(self.init_bit_mode)
 
     def reset_cutoff (self):
-        self.cutoff_lower = self.pixel_lower
-        self.cutoff_upper= self.pixel_upper
+        self.lut_lower = self.pixel_lower
+        self.lut_upper= self.pixel_upper
 
     def set_auto_cutoff(self, pixel_value, percentile):
         self.bit_auto = True
+        self.auto_lut = True
+        self.auto_cutoff = percentile
         if self.bit_mode == "Float":
-            self.cutoff_lower = np.percentile(pixel_value, percentile)
-            self.cutoff_upper = np.percentile(pixel_value, 100 - percentile)
+            self.lut_lower = np.percentile(pixel_value, percentile)
+            self.lut_upper = np.percentile(pixel_value, 100 - percentile)
         else:
-            self.cutoff_lower = int(np.percentile(pixel_value, percentile))
-            self.cutoff_upper = int(np.percentile(pixel_value, 100 - percentile))
+            self.lut_lower = int(np.percentile(pixel_value, percentile))
+            self.lut_upper = int(np.percentile(pixel_value, 100 - percentile))
 
     def apply_lut_float (self, image):
         image = image.astype(float)
 
-        if np.isclose(self.cutoff_lower, self.cutoff_upper):
+        if np.isclose(self.lut_lower, self.lut_upper):
             image[:] = 0.0
         else:
-            image = (image - self.cutoff_lower) / (self.cutoff_upper - self.cutoff_lower)
+            image = (image - self.lut_lower) / (self.lut_upper - self.lut_lower)
             image = np.clip(image, 0.0, 1.0)
 
         if self.lut_invert:

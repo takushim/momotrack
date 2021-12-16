@@ -593,7 +593,7 @@
            <enum>QLayout::SetMinimumSize</enum>
           </property>
           <item>
-           <widget class="QLabel" name="label_cutoff_lower">
+           <widget class="QLabel" name="label_bitrange_lower">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
               <horstretch>0</horstretch>
@@ -606,7 +606,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_cutoff_upper">
+           <widget class="QLabel" name="label_bitrange_upper">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
               <horstretch>0</horstretch>
@@ -624,7 +624,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QLabel" name="label_slider_lower">
+         <widget class="QLabel" name="label_lut_lower">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -637,7 +637,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="slider_cutoff_lower">
+         <widget class="QSlider" name="slider_lut_lower">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -653,7 +653,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_slider_upper">
+         <widget class="QLabel" name="label_lut_upper">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -666,7 +666,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QSlider" name="slider_cutoff_upper">
+         <widget class="QSlider" name="slider_lut_upper">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
@@ -782,8 +782,8 @@
      <rect>
       <x>507</x>
       <y>107</y>
-      <width>147</width>
-      <height>194</height>
+      <width>145</width>
+      <height>191</height>
      </rect>
     </property>
     <property name="sizePolicy">

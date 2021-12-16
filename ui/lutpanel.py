@@ -12,20 +12,8 @@ class LutPanel:
         self.ui.combo_bits.addItems(["Auto"] + [item for item in lut.bit_dict])
 
     def init_widgets (self, stack):
-        self.ui.combo_channel.blockSignals(True)
-        self.ui.combo_channel.clear()
         self.init_luts(stack)
-        self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(len(self.lut_list))])
-        self.ui.combo_channel.blockSignals(False)
-
-        self.ui.combo_lut.setCurrentIndex(0)
-        self.ui.combo_lut.setEnabled(self.ui.check_color_always.isChecked())
-
-        if self.lut_list[0].bit_auto:
-            self.ui.combo_bits.setCurrentText("Auto")
-        else:
-            self.ui.combo_bits.setCurrentText(self.lut_list[0].bit_mode)
-
+        self.update_boxes()
         self.update_sliders()
         self.update_labels()
 
@@ -41,55 +29,69 @@ class LutPanel:
         else:
             for channel in range(stack.c_count):
                 lut_name = lut.lut_names[channel % len(lut.lut_names)]
-                image_lut = lut.LUT(lut_name = lut_name, pixel_values = stack.image_array[:, channel], lut_invert = False, bit_auto = True)
+                image_lut = lut.LUT(lut_name = lut_name, pixel_values = stack.image_array[:, channel])
                 self.lut_list.append(image_lut)
+
+    def update_boxes (self):
+        self.ui.combo_channel.blockSignals(True)
+        self.ui.combo_channel.clear()
+        self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(len(self.lut_list))])
+        self.ui.combo_channel.blockSignals(False)
+
+        self.ui.combo_lut.setCurrentIndex(0)
+        self.ui.combo_lut.setEnabled(self.ui.check_color_always.isChecked())
+
+        lut = self.lut_list[0]
+        self.ui.combo_bits.setCurrentText("Auto" if lut.bit_auto else lut.bit_mode)
+        self.ui.check_auto_lut.setChecked(lut.auto_lut)
+        self.ui.dspin_auto_cutoff.setValue(lut.auto_cutoff)
 
     def update_sliders (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         bit_range = current_lut.bit_range()
 
-        self.ui.slider_cutoff_upper.blockSignals(True)
-        self.ui.slider_cutoff_lower.blockSignals(True)
+        self.ui.slider_lut_upper.blockSignals(True)
+        self.ui.slider_lut_lower.blockSignals(True)
 
-        self.ui.slider_cutoff_upper.setMinimum(bit_range[0])
-        self.ui.slider_cutoff_upper.setMaximum(bit_range[1])
-        self.ui.slider_cutoff_lower.setMinimum(bit_range[0])
-        self.ui.slider_cutoff_lower.setMaximum(bit_range[1])
+        self.ui.slider_lut_upper.setMinimum(bit_range[0])
+        self.ui.slider_lut_upper.setMaximum(bit_range[1])
+        self.ui.slider_lut_lower.setMinimum(bit_range[0])
+        self.ui.slider_lut_lower.setMaximum(bit_range[1])
 
-        self.ui.slider_cutoff_upper.setValue(current_lut.cutoff_upper)
-        self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
+        self.ui.slider_lut_upper.setValue(current_lut.lut_upper)
+        self.ui.slider_lut_lower.setValue(current_lut.lut_lower)
 
-        self.ui.slider_cutoff_upper.blockSignals(False)
-        self.ui.slider_cutoff_lower.blockSignals(False)
+        self.ui.slider_lut_upper.blockSignals(False)
+        self.ui.slider_lut_lower.blockSignals(False)
 
     def update_labels (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         bit_range = current_lut.bit_range()
 
         if current_lut.bit_mode == "Float":
-            self.ui.label_cutoff_lower.setText("{0:.2e}".format(bit_range[0]))
-            self.ui.label_cutoff_upper.setText("{0:.2e}".format(bit_range[1]))
-            self.ui.label_slider_lower.setText("Lower limit: {0:.2e}".format(current_lut.cutoff_lower))
-            self.ui.label_slider_upper.setText("Upper limit: {0:.2e}".format(current_lut.cutoff_upper))
+            self.ui.label_bitrange_lower.setText("{0:.2e}".format(bit_range[0]))
+            self.ui.label_bitrange_upper.setText("{0:.2e}".format(bit_range[1]))
+            self.ui.label_lut_lower.setText("Lower limit: {0:.2e}".format(current_lut.lut_lower))
+            self.ui.label_lut_upper.setText("Upper limit: {0:.2e}".format(current_lut.lut_upper))
         else:
-            self.ui.label_cutoff_lower.setText("{0:d}".format(bit_range[0]))
-            self.ui.label_cutoff_upper.setText("{0:d}".format(bit_range[1]))
-            self.ui.label_slider_lower.setText("Lower limit: {0:d}".format(current_lut.cutoff_lower))
-            self.ui.label_slider_upper.setText("Upper limit: {0:d}".format(current_lut.cutoff_upper))
+            self.ui.label_bitrange_lower.setText("{0:d}".format(bit_range[0]))
+            self.ui.label_bitrange_upper.setText("{0:d}".format(bit_range[1]))
+            self.ui.label_lut_lower.setText("Lower limit: {0:d}".format(current_lut.lut_lower))
+            self.ui.label_lut_upper.setText("Upper limit: {0:d}".format(current_lut.lut_upper))
 
     def adjust_slider_lower (self):
-        self.ui.slider_cutoff_lower.setValue(min(self.ui.slider_cutoff_upper.value(), self.ui.slider_cutoff_lower.value()))
+        self.ui.slider_lut_lower.setValue(min(self.ui.slider_lut_upper.value(), self.ui.slider_lut_lower.value()))
         self.update_current_lut()
 
     def adjust_slider_upper (self):
-        self.ui.slider_cutoff_upper.setValue(max(self.ui.slider_cutoff_upper.value(), self.ui.slider_cutoff_lower.value()))
+        self.ui.slider_lut_upper.setValue(max(self.ui.slider_lut_upper.value(), self.ui.slider_lut_lower.value()))
         self.update_current_lut()
 
     def update_current_lut (self):
         self.ui.check_auto_lut.setChecked(False)
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
-        current_lut.cutoff_lower = self.ui.slider_cutoff_lower.value()
-        current_lut.cutoff_upper = self.ui.slider_cutoff_upper.value()
+        current_lut.lut_lower = self.ui.slider_lut_lower.value()
+        current_lut.lut_upper = self.ui.slider_lut_upper.value()
         current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
         current_lut.lut_name = self.ui.combo_lut.currentText()
         current_lut.bit_auto = (self.ui.combo_bits.currentText() == "Auto")
@@ -111,12 +113,12 @@ class LutPanel:
         current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
         current_lut.lut_name = self.ui.combo_lut.currentText()
 
-        self.ui.slider_cutoff_upper.blockSignals(True)
-        self.ui.slider_cutoff_lower.blockSignals(True)
-        self.ui.slider_cutoff_upper.setValue(current_lut.cutoff_upper)
-        self.ui.slider_cutoff_lower.setValue(current_lut.cutoff_lower)
-        self.ui.slider_cutoff_upper.blockSignals(False)
-        self.ui.slider_cutoff_lower.blockSignals(False)
+        self.ui.slider_lut_upper.blockSignals(True)
+        self.ui.slider_lut_lower.blockSignals(True)
+        self.ui.slider_lut_upper.setValue(current_lut.lut_upper)
+        self.ui.slider_lut_lower.setValue(current_lut.lut_lower)
+        self.ui.slider_lut_upper.blockSignals(False)
+        self.ui.slider_lut_lower.blockSignals(False)
 
         self.ui.check_auto_lut.setChecked(True)
         self.update_labels()
@@ -174,8 +176,8 @@ class LutPanel:
             self.scene_lut.addLine(x, y_bottom, x, y_top, QColor('gray'))
 
         if np.isclose(bit_range[0], bit_range[1]) == False:
-            x_lower = width * (current_lut.cutoff_lower - bit_range[0]) / (bit_range[1] - bit_range[0])
-            x_upper = width * (current_lut.cutoff_upper - bit_range[0]) / (bit_range[1] - bit_range[0])
+            x_lower = width * (current_lut.lut_lower - bit_range[0]) / (bit_range[1] - bit_range[0])
+            x_upper = width * (current_lut.lut_upper - bit_range[0]) / (bit_range[1] - bit_range[0])
             self.scene_lut.addLine(x_upper, 0, x_upper, height, QColor('black'))
             self.scene_lut.addLine(x_lower, height, x_upper, 0)
 
