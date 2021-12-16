@@ -731,6 +731,9 @@
           <property name="text">
            <string>Records file:</string>
           </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item>
@@ -768,7 +771,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>30</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -782,8 +785,8 @@
      <rect>
       <x>507</x>
       <y>107</y>
-      <width>145</width>
-      <height>191</height>
+      <width>198</width>
+      <height>266</height>
      </rect>
     </property>
     <property name="sizePolicy">

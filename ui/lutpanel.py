@@ -38,10 +38,11 @@ class LutPanel:
         self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(len(self.lut_list))])
         self.ui.combo_channel.blockSignals(False)
 
-        self.ui.combo_lut.setCurrentIndex(0)
+        lut = self.lut_list[0]
+        self.ui.combo_lut.setCurrentText(lut.lut_name)
         self.ui.combo_lut.setEnabled(self.ui.check_color_always.isChecked())
 
-        lut = self.lut_list[0]
+        self.ui.check_invert_lut.setChecked(lut.lut_invert)
         self.ui.combo_bits.setCurrentText("Auto" if lut.bit_auto else lut.bit_mode)
         self.ui.check_auto_lut.setChecked(lut.auto_lut)
         self.ui.dspin_auto_cutoff.setValue(lut.auto_cutoff)

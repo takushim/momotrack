@@ -13,8 +13,15 @@ class PluginPanel:
 
     def update_filename (self, filename):
         if filename is None:
-            filename = "(None)"
-        self.ui.label_records_filename.setText("Current file: {0}".format(Path(filename).name))
+            text = "File: (None)"
+        else:
+            text = "File: {0}".format(Path(filename).name)
+
+        max_length = 30
+        if len(text) > max_length:
+            text = text[:(max_length - 3)] + "..."
+
+        self.ui.label_records_filename.setText(text)
 
     def update_widgets (self, plugin_class):
         self.recurse_plugin_widgets(self.ui.vlayout_plugin, lambda x: x.deleteLater(), lambda x: x.deleteLater())

@@ -6,7 +6,6 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDi
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
-from numpy import False_
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -235,6 +234,7 @@ class MainWindow (QMainWindow):
         self.ui.slider_time.setValue(settings.get('t_index', 0))
 
         self.lut_panel.update_lut_settings(settings.get('luts', []))
+        self.lut_panel.update_boxes()
         self.ui.combo_channel.setCurrentIndex(settings.get('channel', 0))
         self.ui.check_composite.setChecked(settings.get('composite', False))
         self.ui.check_color_always.setChecked(settings.get('color_always', False))

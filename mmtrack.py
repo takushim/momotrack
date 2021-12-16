@@ -63,15 +63,18 @@ def slot_open_mainwindow (image_list):
     program = __file__
     for index in range(max(1, len(image_list))):
         filename = image_list[index] if len(image_list) > index else None
+        commands = []
         if platform.system() == "Windows":
             if shutil.which('py'):
-                commands = ["py", program, "--window-position", str(window_x), str(window_y)]
+                commands.append("py")
             else:
-                commands = ["python", program, "--window-position", str(window_x), str(window_y)]
-        else:
-            commands = [program, "--window-position", str(window_x), str(window_y)]
+                commands.append("python")
+
+        commands.extend([program, "--window-position", str(window_x), str(window_y)])
+
         if filename is not None:
             commands.append(filename)
+
         subprocess.Popen(commands, creationflags = subprocess.CREATE_NEW_PROCESS_GROUP)
         window_x, window_y = next_window_position(window_x, window_y)
 
