@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDi
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
+from numpy import False_
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
@@ -202,17 +203,24 @@ class MainWindow (QMainWindow):
             self.zoom_best()
 
     def load_records (self, records_filename):
+        if self.plugin_class.check_records(self.plugin_module.plugin_name, records_filename) == False:
+            self.show_message(title = "Records loading error", message = "Records are saved by different plugin.")
+            return
+
         try:
             self.plugin_class.load_records(records_filename)
             self.records_filename = records_filename
             self.plugin_panel.update_filename(records_filename)
+            self.restore_settings(self.plugin_class.image_settings)
         except OSError:
-            print(records_filename)
             self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
+        finally:
+            self.update_image_view()
+            self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def save_records (self, records_filename):
         try:
-            self.plugin_class.save_records(records_filename, settings = self.archive_settings())
+            self.plugin_class.save_records(records_filename, image_settings = self.archive_settings())
             self.records_filename = records_filename
             self.plugin_panel.update_filename(records_filename)
         except OSError:
@@ -222,8 +230,27 @@ class MainWindow (QMainWindow):
         self.plugin_class.clear_records()
         self.records_filename = None
 
+    def restore_settings(self, settings = {}):
+        self.ui.slider_zstack.setValue(settings.get('z_index', 0))
+        self.ui.slider_time.setValue(settings.get('t_index', 0))
+
+        self.lut_panel.update_lut_settings(settings.get('luts', []))
+        self.ui.combo_channel.setCurrentIndex(settings.get('channel', 0))
+        self.ui.check_composite.setChecked(settings.get('composite', False))
+        self.ui.check_color_always.setChecked(settings.get('color_always', False))
+
+        self.zoom_panel.set_zoom(settings.get('zoom_ratio', 100))
+
     def archive_settings (self):
-        return {'image_filename': self.image_filename}
+        settings = {'image_filename': self.image_filename,
+                    'z_index': self.ui.slider_zstack.value(),
+                    't_index': self.ui.slider_time.value(),
+                    'channel': self.ui.combo_channel.currentIndex(),
+                    'composite': self.ui.check_composite.isChecked(),
+                    'color_always': self.ui.check_color_always.isChecked(),
+                    'luts': [lut.archive_settings() for lut in self.lut_panel.lut_list],
+                    'zoom_ratio': self.zoom_panel.zoom_ratio}
+        return settings
 
     def clear_modified_flag (self):
         if self.plugin_class.is_modified():
@@ -323,7 +350,7 @@ class MainWindow (QMainWindow):
         if self.records_filename is None:
             self.slot_save_records_as()
         else:
-            self.save_records(self.records_filename, self.image_filename)
+            self.save_records(self.records_filename)
 
     def slot_save_records_as (self):
         dialog = QFileDialog(self)
@@ -340,7 +367,7 @@ class MainWindow (QMainWindow):
                 dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
 
         if dialog.exec():
-            self.save_records(dialog.selectedFiles()[0], self.image_filename)
+            self.save_records(dialog.selectedFiles()[0])
 
     def slot_clear_records (self):
         self.clear_records()

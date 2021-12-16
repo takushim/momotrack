@@ -79,6 +79,10 @@ class LutPanel:
             self.ui.label_lut_lower.setText("Lower limit: {0:d}".format(current_lut.lut_lower))
             self.ui.label_lut_upper.setText("Upper limit: {0:d}".format(current_lut.lut_upper))
 
+    def update_lut_settings (self, settings_list = []):
+        for index in range(min(len(self.lut_list), len(settings_list))):
+            self.lut_list[index].load_settings(settings_list[index])
+
     def adjust_slider_lower (self):
         self.ui.slider_lut_lower.setValue(min(self.ui.slider_lut_upper.value(), self.ui.slider_lut_lower.value()))
         self.update_current_lut()

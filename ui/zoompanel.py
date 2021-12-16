@@ -13,6 +13,11 @@ class ZoomPanel:
         status = "Current zoom: {0}%".format(self.zoom_ratio)
         self.ui.label_zoom_status.setText(status)
 
+    def set_zoom (self, ratio):
+        if ratio in range(self.zoom_limits[0], self.zoom_limits[1] + self.zoom_delta, self.zoom_delta):
+            self.zoom_ratio = ratio
+            self.update_zoom_label()
+
     def zoom_in (self):
         self.zoom_ratio = min(self.zoom_ratio + self.zoom_delta, self.zoom_limits[1])
         self.update_zoom_label()

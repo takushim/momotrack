@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import re
+import re, time, json
 from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QCursor
@@ -22,6 +22,24 @@ class PluginBase (QObject):
         self.record_suffix = '_record.json'
         self.default_stem = 'default'
         self.file_types = {"JSON text": ["*.json"]}
+
+    def default_summary (self, plugin_name):
+        summary = {'plugin_name': plugin_name, \
+                   'last_update': time.strftime("%a %d %b %H:%M:%S %Z %Y")}
+        return summary
+
+    def check_records (self, plugin_name, records_filename):
+        with open(records_filename, 'r') as f:
+            json_dict = json.load(f)
+
+        if 'summary' not in json_dict:
+            return False
+
+        summary = json_dict.get('summary', None)
+        if summary.get('plugin_name', '') != plugin_name:
+            return False
+
+        return True
 
     def init_widgets (self, vlayout):
         pass
@@ -53,7 +71,7 @@ class PluginBase (QObject):
     def load_records (self, records_filename):
         pass
 
-    def save_records (self, records_filename, settings = {}):
+    def save_records (self, records_filename, image_settings = {}):
         pass
 
     def clear_records (self):

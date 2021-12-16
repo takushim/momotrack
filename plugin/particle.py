@@ -25,6 +25,7 @@ class SPT (PluginBase):
         self.records_modified = False
         self.record_suffix = '_track.json'
         self.track_start = None
+        self.image_settings = {}
         self.update_settings()
 
     def init_widgets (self, vlayout):
@@ -115,8 +116,9 @@ class SPT (PluginBase):
         with open(records_filename, 'r') as f:
             json_dict = json.load(f)
 
-        self.spot_list = json_dict['spot_list']
-        self.load_settings(json_dict['plugin_settings'])
+        self.spot_list = json_dict.get('spot_list', [])
+        self.load_settings(json_dict.get('plugin_settings', {}))
+        self.image_settings = json_dict.get('image_settings', {})
 
         self.current_spot = None
         self.records_modified = False
@@ -127,8 +129,7 @@ class SPT (PluginBase):
         self.signal_update_scene.emit()
 
     def save_records (self, records_filename, image_settings = {}):
-        summary = {'plugin': plugin_name, \
-                   'last_update': time.strftime("%a %d %b %H:%M:%S %Z %Y")}
+        summary = self.default_summary(plugin_name)
 
         output_dict = {'summary': summary,
                        'image_settings': image_settings, \
