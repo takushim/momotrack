@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import time, json
+import json
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
@@ -83,9 +83,9 @@ class SPT (PluginBase):
 
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
-        self.dspin_marker_radius.valueChanged.connect(self.slot_marker_changed)
-        self.spin_ghost_z_range.valueChanged.connect(self.slot_marker_changed)
-        self.dspin_marker_penwidth.valueChanged.connect(self.slot_marker_changed)
+        self.dspin_marker_radius.valueChanged.connect(self.slot_marker_radius_changed)
+        self.spin_ghost_z_range.valueChanged.connect(self.slot_marker_penwidth_changed)
+        self.dspin_marker_penwidth.valueChanged.connect(self.slot_ghost_z_range_changed)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -147,7 +147,7 @@ class SPT (PluginBase):
         self.dspin_marker_radius.setValue(self.spot_radius)
         self.dspin_marker_penwidth.setValue(self.spot_penwidth)
         self.spin_ghost_z_range.setValue(self.ghost_z_range)
-        self.check_auto_moving.setChecked(settings.get('auto_move', False))
+        self.check_auto_moving.setChecked(settings.get('move_auto', False))
         self.check_hide_tracks.setChecked(settings.get('hide_tracks', False))
 
     def update_settings (self, settings = {}):
@@ -186,10 +186,16 @@ class SPT (PluginBase):
         self.update_status()
         self.update_mouse_cursor()
 
-    def slot_marker_changed (self):
+    def slot_marker_radius_changed (self):
         self.update_marker_radii(self.dspin_marker_radius.value())
-        self.ghost_z_range = self.spin_ghost_z_range.value()
+        self.signal_update_scene.emit()
+
+    def slot_marker_penwidth_changed (self):
         self.spot_penwidth = self.dspin_marker_penwidth.value()
+        self.signal_update_scene.emit()
+
+    def slot_ghost_z_range_changed (self):
+        self.ghost_z_range = self.spin_ghost_z_range.value()
         self.signal_update_scene.emit()
 
     def slot_z_increment (self):
