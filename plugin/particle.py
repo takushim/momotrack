@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import time
+import time, textwrap
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
@@ -570,14 +570,9 @@ class SPT (PluginBase):
         if self.check_hide_tracks.isChecked():
             self.text_message.setText("Spots not shown.")
         elif self.current_spot is None:
-            self.text_message.setText("No spots selected\n" +
-                                      "* Ctrl + click to start tracking.\n" +
-                                      "* Click to select.")
+            self.text_message.setText("No spots selected")
         else:
-            self.text_message.setText("Spot {0} selected.\n".format(self.current_spot['index']) +
-                                      "* Click to add track.\n" +
-                                      "* Shift + click: move.\n" +
-                                      "* ESC to quit.")
+            self.text_message.setText("Spot {0} selected.\n".format(self.current_spot['index']))
 
     def update_marker_radii (self, radius):
         self.spot_radius = radius
@@ -596,4 +591,21 @@ class SPT (PluginBase):
         return self.records_modified
 
     def help_message (self):
-        return "Single-particle tracking."
+        message = textwrap.dedent('''
+        <b>Single-particle tracking plugin</b>
+        <ul>
+        <li> Ctrl + click to start new tracking.</li>
+        <li> Click to select an existing spot and:</li>
+            <ul>
+            <li> Click to proceed tracking.</li>
+            <li> Drag moves the spot within the view.</li>
+            <li> Shift + click can move the spot to a different view.</li>
+            <li> Adjacent dots indicate ancestors and discendants.</li>
+            <li> Filled dots show direct ancestors and discendants.</li>
+            </ul>
+        <li> Right click on a spot to show a context menu.</li>
+        <li> Check "move automatically" to proceed the time when a new spot is added.</li>
+        <li> A number appears when a spot has multiple children.</li>
+        </ul>
+        ''')
+        return message

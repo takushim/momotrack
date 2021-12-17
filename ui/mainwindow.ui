@@ -860,6 +860,7 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
+    <addaction name="action_viewer_help"/>
     <addaction name="action_plugin_help"/>
     <addaction name="action_about_this"/>
     <addaction name="separator"/>
@@ -947,7 +948,7 @@
     <string>&amp;Plugin Help</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+H</string>
+    <string>Ctrl+Shift+H</string>
    </property>
   </action>
   <action name="action_about_this">
@@ -963,6 +964,14 @@
   <action name="action_about_qt">
    <property name="text">
     <string>About &amp;Qt</string>
+   </property>
+  </action>
+  <action name="action_viewer_help">
+   <property name="text">
+    <string>&amp;Viewer Help</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
    </property>
   </action>
  </widget>

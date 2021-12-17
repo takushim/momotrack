@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import re, time, json
+import re, time, json, textwrap
 from pathlib import Path
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import QObject, Signal
@@ -71,7 +71,12 @@ class PluginBase (QObject):
         return self.records_modified
 
     def help_message (self):
-        return "Base class to implement plugins. Do not use."
+        message = textwrap.dedent('''
+        <b>Base class for plugins</b><br><br>
+        Loaded when no plugins are working.
+        Make a new class inheriting this class and
+        do not use this class directly.
+        ''')
 
     def init_widgets (self, vlayout):
         pass

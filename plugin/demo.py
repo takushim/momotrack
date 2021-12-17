@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import textwrap
 import numpy as np
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QPushButton, QLabel, QGraphicsEllipseItem
@@ -61,4 +62,10 @@ class Demo (PluginBase):
             self.item_list.append(item)
 
     def help_message (self):
-        return "Demo class for plugin."
+        message = textwrap.dedent('''
+        <b>Demonstration of the plugin system</b><br><br>
+        This plugin draws multiple spots on the image.
+        Click or press "Demo Button" to update spots.
+        Press Ctrl to see the mouse cursor change.
+        ''')
+        return message

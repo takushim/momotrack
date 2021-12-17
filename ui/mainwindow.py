@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from importlib import import_module
+import textwrap
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog, QApplication
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt, Signal
@@ -109,6 +110,7 @@ class MainWindow (QMainWindow):
         self.ui.action_about_this.triggered.connect(self.slot_about_this)
         self.ui.action_about_qt.triggered.connect(self.slot_about_qt)
         self.ui.action_plugin_help.triggered.connect(self.slot_plugin_help)
+        self.ui.action_viewer_help.triggered.connect(self.slot_viewer_help)
 
     def connect_signals_to_slots (self):
         # scene
@@ -377,10 +379,28 @@ class MainWindow (QMainWindow):
     def slot_plugin_help (self):
         self.show_message(title = "Quick help", message = self.plugin_class.help_message())
 
+    def slot_viewer_help (self):
+        message = textwrap.dedent('''
+        <b>Keys and mouse gestures:</b>
+        <ul>
+        <li> Left/Right keys to move the time forward or backward.</li>
+        <li> Up/Down keys to increase or decrease the z-index.</li>
+        <li> Shift + wheel to zoom in or zoom out.</li>
+        </ul>
+        <b>Note:</b> the settings of this viewer is saved in the record file
+        created by the current plugin. See also the plugin help.
+        ''')
+        self.show_message(title = "Viewer help", message = message)
+
     def slot_about_this (self):
-        self.show_message(title = "About This",
-                          message = "Object tracking system for time-lapse 2D/3D images.\n" +
-                                    "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
+        message = textwrap.dedent('''
+        <b>{0}</b><br><br>
+        Object tracking system for time-lapse 2D/3D images.<br>
+        Distributed under the BSD 3-clause license.<br>
+        Copyright 2021-2022 by Takushi Miyoshi (NIH/NIDCD).
+        '''.format(self.app_name))
+        self.show_message(title = "About This", message = message)
+
     def slot_about_qt (self):
         QApplication.aboutQt()
 
