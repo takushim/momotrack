@@ -212,7 +212,7 @@ class MainWindow (QMainWindow):
         try:
             self.plugin_class.load_records(records_filename)
             self.records_filename = records_filename
-            self.plugin_panel.update_filename(records_filename)
+            self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
             self.restore_settings(self.plugin_class.image_settings)
         except OSError:
             self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
@@ -224,13 +224,14 @@ class MainWindow (QMainWindow):
         try:
             self.plugin_class.save_records(records_filename, image_settings = self.archive_settings())
             self.records_filename = records_filename
-            self.plugin_panel.update_filename(records_filename)
+            self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
         except OSError:
             self.show_message(title = "Records saving error", message = "Failed to save records: {0}".format(records_filename))
 
     def clear_records (self):
         self.plugin_class.clear_records()
         self.records_filename = None
+        self.plugin_panel.update_filename(None, self.plugin_class.is_modified())
 
     def restore_settings(self, settings = {}):
         self.ui.slider_zstack.setValue(settings.get('z_index', 0))
@@ -272,6 +273,8 @@ class MainWindow (QMainWindow):
                 self.save_records(self.records_filename)
                 if self.plugin_class.is_modified():
                     return False
+
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
         return True
 
     def switch_plugin (self, name):
@@ -406,12 +409,15 @@ class MainWindow (QMainWindow):
 
     def slot_scene_mouse_clicked (self, event):
         self.plugin_class.mouse_clicked(event, self.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_mouse_moved (self, event):
         self.plugin_class.mouse_moved(event, self.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_mouse_released (self, event):
         self.plugin_class.mouse_released(event, self.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_wheel_moved (self, event):
         if event.modifiers() == Qt.SHIFT:
@@ -419,6 +425,7 @@ class MainWindow (QMainWindow):
                 self.slot_zoomed_in()
             elif event.delta() < 0:
                 self.slot_zoomed_out()
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_key_pressed (self, event):
         if event.key() == Qt.Key_Right:
@@ -432,8 +439,11 @@ class MainWindow (QMainWindow):
         else:
             self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
 
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+
     def slot_scene_key_released (self, event):
         self.plugin_class.key_released(event, self.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_image_index_changed (self):
         if self.lut_panel.is_auto_lut():
@@ -524,6 +534,7 @@ class MainWindow (QMainWindow):
 
     def slot_reset_panels (self):
         self.init_widgets()
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_update_mouse_cursor (self, cursor):
         self.ui.setCursor(cursor)

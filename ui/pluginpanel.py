@@ -6,16 +6,17 @@ from PySide6.QtWidgets import QSizePolicy, QLayout
 class PluginPanel:
     def __init__ (self, ui):
         self.ui = ui
-        self.update_filename(filename = None)
+        self.update_filename(filename = None, modified = False)
 
     def update_title (self, name):
         self.ui.label_plugin.setText("Plugin: {0}".format(name))
 
-    def update_filename (self, filename):
+    def update_filename (self, filename, modified):
+        flag = '*' if modified else ''
         if filename is None:
-            text = "File: (None)"
+            text = "File: {0}(None)".format(flag)
         else:
-            text = "File: {0}".format(Path(filename).name)
+            text = "File: {0}{1}".format(flag, Path(filename).name)
 
         max_length = 30
         if len(text) > max_length:
