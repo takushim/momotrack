@@ -226,27 +226,33 @@ class SPT (PluginBase):
         scene_items = []
         candidate_spots = [spot for spot in self.spot_list \
                            if (spot['time'] == tcz_index[0]) and (spot['channel'] == tcz_index[1]) and
-                              (spot != self.current_spot) and (spot['delete'] == False)]
+                              (spot['delete'] == False)]
 
-        existing_spots = [spot for spot in candidate_spots if (spot['z'] == tcz_index[2])]
-        scene_items.extend(self.list_spot_items(existing_spots, self.spot_radius))
-        scene_items.extend(self.list_node_items(existing_spots, self.spot_radius))
+        deselected_spots = [spot for spot in candidate_spots \
+                            if (spot['z'] == tcz_index[2]) and (spot != self.current_spot)]
+        scene_items.extend(self.list_spot_items(deselected_spots, self.spot_radius))
+        scene_items.extend(self.list_node_items(deselected_spots, self.spot_radius))
 
         ghost_spots = [spot for spot in candidate_spots \
-                       if (abs(spot['z'] - tcz_index[2]) <= self.ghost_z_range) and (spot['z'] != tcz_index[2])]
+                       if (abs(spot['z'] - tcz_index[2]) <= self.ghost_z_range) and \
+                          (spot['z'] != tcz_index[2])]
         scene_items.extend(self.list_spot_items(ghost_spots, self.ghost_radius))
         scene_items.extend(self.list_node_items(ghost_spots, self.ghost_radius))
 
         if self.current_spot is not None:
             if (self.current_spot['time'] == tcz_index[0]) and \
-               (self.current_spot['channel'] == tcz_index[1]) and \
-               (self.current_spot['z'] == tcz_index[2]):
-                scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
-                scene_items.extend(self.list_spot_items([self.current_spot], self.selected_radius))
-                scene_items.extend(self.list_node_items([self.current_spot], self.selected_radius))
+               (self.current_spot['channel'] == tcz_index[1]):
+                if self.current_spot['z'] == tcz_index[2]:
+                    scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
+                    scene_items.extend(self.list_spot_items([self.current_spot], self.selected_radius))
+                    scene_items.extend(self.list_node_items([self.current_spot], self.selected_radius))
+                elif abs(self.current_spot['z'] - tcz_index[2]) < self.ghost_z_range:
+                    scene_items.extend(self.list_spot_items([self.current_spot], self.ghost_radius))
+                    scene_items.extend(self.list_spot_items([self.current_spot], self.selected_ghost_radius))
+                    scene_items.extend(self.list_node_items([self.current_spot], self.selected_ghost_radius))
 
-            existing_ancestors = [spot for spot in self.find_ancestors(self.current_spot) if spot in existing_spots]
-            existing_descendants = [spot for spot in self.find_descendants(self.current_spot) if spot in existing_spots]
+            existing_ancestors = [spot for spot in self.find_ancestors(self.current_spot) if spot in deselected_spots]
+            existing_descendants = [spot for spot in self.find_descendants(self.current_spot) if spot in deselected_spots]
             scene_items.extend(self.list_ancestor_items(existing_ancestors, self.spot_radius))
             scene_items.extend(self.list_descendant_items(existing_descendants, self.spot_radius))
 
@@ -466,7 +472,7 @@ class SPT (PluginBase):
         self.records_modified = True
 
     def remove_tree (self, index):
-        delete_spot = self.find_spot(index)
+        delete_spot = self.find_spot_by_index(index)
         child_list = self.find_children(delete_spot)
 
         for child_spot in child_list:
@@ -476,20 +482,22 @@ class SPT (PluginBase):
         self.records_modified = True
 
     def remove_spot (self, index):
-        delete_spot = self.find_spot(index)
+        delete_spot = self.find_spot_by_index(index)
         print("Removing spot", delete_spot)
         for child_spot in self.find_children(delete_spot):
             child_spot['parent'] = None
-            child_spot['delete'] = True
             child_spot['update'] = time.ctime()
+
+        delete_spot['delete'] = True
+        delete_spot['update'] = time.ctime()
         self.records_modified = True
 
     def find_root (self, index):
-        current_spot = self.find_spot(index)
-        parent_spot = self.find_spot(current_spot['parent'])
+        current_spot = self.find_spot_by_index(index)
+        parent_spot = self.find_spot_by_index(current_spot['parent'])
         while current_spot['parent'] is not None:
             current_spot = parent_spot
-            parent_spot = self.find_spot(current_spot['parent'])
+            parent_spot = self.find_spot_by_index(current_spot['parent'])
         return current_spot
 
     def find_children (self, spot):
@@ -503,10 +511,10 @@ class SPT (PluginBase):
 
     def find_ancestors(self, spot):
         spot_list = []
-        current_spot = self.find_spot(spot['parent'])
+        current_spot = self.find_spot_by_index(spot['parent'])
         while current_spot is not None:
             spot_list.append(current_spot)
-            current_spot = self.find_spot(current_spot['parent'])
+            current_spot = self.find_spot_by_index(current_spot['parent'])
         return spot_list
 
     def find_descendants(self, spot):
@@ -517,7 +525,7 @@ class SPT (PluginBase):
             spot_list.extend(self.find_descendants(child))
         return spot_list
 
-    def find_spot (self, index):
+    def find_spot_by_index (self, index):
         spot_list = [spot for spot in self.spot_list \
                      if (spot['index'] == index) and (spot['delete'] == False)]
         if len(spot_list) > 1:
@@ -575,7 +583,8 @@ class SPT (PluginBase):
         self.spot_radius = radius
         self.ghost_radius = self.spot_radius / 2
         self.marker_radius = self.spot_radius / 2
-        self.selected_radius = self.spot_radius * 2
+        self.selected_radius = self.spot_radius * 1.5
+        self.selected_ghost_radius = self.ghost_radius * 1.5
 
     def update_mouse_cursor(self):
         if self.adding_spot or self.current_spot is not None:

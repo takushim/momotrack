@@ -45,7 +45,7 @@ class PluginBase (QObject):
 
     def save_records (self, records_filename, image_settings = {}):
         summary = {'plugin_name': self.plugin_name, \
-                   'last_update': time.ctime()}
+                   'last_update': time.strftime("%a %d %b %H:%M:%S %Z %Y")}
 
         json_dict = {}
         json_dict['summary'] = summary
