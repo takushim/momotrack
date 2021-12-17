@@ -107,7 +107,8 @@ class MainWindow (QMainWindow):
         self.ui.action_zoom_out.triggered.connect(self.slot_zoomed_out)
         self.ui.action_zoom_reset.triggered.connect(self.slot_zoom_reset)
         self.ui.action_about_this.triggered.connect(self.slot_about_this)
-        self.ui.action_quick_help.triggered.connect(self.slot_quick_help)
+        self.ui.action_about_qt.triggered.connect(self.slot_about_qt)
+        self.ui.action_plugin_help.triggered.connect(self.slot_plugin_help)
 
     def connect_signals_to_slots (self):
         # scene
@@ -373,13 +374,15 @@ class MainWindow (QMainWindow):
         self.clear_records()
         self.update_image_view()
 
-    def slot_quick_help (self):
+    def slot_plugin_help (self):
         self.show_message(title = "Quick help", message = self.plugin_class.help_message())
 
     def slot_about_this (self):
         self.show_message(title = "About This",
                           message = "Object tracking system for time-lapse 2D/3D images.\n" +
                                     "Copyright 2021 by Takushi Miyoshi (NIH/NIDCD).")
+    def slot_about_qt (self):
+        QApplication.aboutQt()
 
     def slot_scene_mouse_clicked (self, event):
         self.plugin_class.mouse_clicked(event, self.image_stack, self.image_panel.current_index())

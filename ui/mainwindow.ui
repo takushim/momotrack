@@ -860,8 +860,10 @@
     <property name="title">
      <string>&amp;Help</string>
     </property>
-    <addaction name="action_quick_help"/>
+    <addaction name="action_plugin_help"/>
     <addaction name="action_about_this"/>
+    <addaction name="separator"/>
+    <addaction name="action_about_qt"/>
    </widget>
    <widget class="QMenu" name="menu_plugin">
     <property name="title">
@@ -940,19 +942,27 @@
     <string>Ctrl+0</string>
    </property>
   </action>
-  <action name="action_quick_help">
+  <action name="action_plugin_help">
    <property name="text">
-    <string>&amp;Quick Help</string>
+    <string>&amp;Plugin Help</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
    </property>
   </action>
   <action name="action_about_this">
    <property name="text">
-    <string>&amp;About This Script</string>
+    <string>&amp;About This</string>
    </property>
   </action>
   <action name="action_clear_records">
    <property name="text">
     <string>&amp;Clear Records</string>
+   </property>
+  </action>
+  <action name="action_about_qt">
+   <property name="text">
+    <string>About &amp;Qt</string>
    </property>
   </action>
  </widget>
