@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
+import textwrap
 from pathlib import Path
 from importlib import import_module
-import textwrap
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog, QApplication
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
+from plugin.base import PluginException
 
 class MainWindow (QMainWindow):
     signal_open_new_image = Signal(list)
@@ -205,24 +206,24 @@ class MainWindow (QMainWindow):
             self.zoom_best()
 
     def load_records (self, records_filename):
-        if self.plugin_class.check_records(self.plugin_module.plugin_name, records_filename) == False:
-            self.show_message(title = "Records loading error", message = "Records are saved by different plugin.")
-            return
-
         try:
             self.plugin_class.load_records(records_filename)
             self.records_filename = records_filename
             self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
-            self.restore_settings(self.plugin_class.image_settings)
+            self.restore_settings(self.plugin_class.records_dict.get('viewer_settings', {}))
         except OSError:
             self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
+        except PluginException as exception:
+            self.show_message(title = "Records loading error", message = str(exception))
         finally:
             self.update_image_view()
             self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def save_records (self, records_filename):
         try:
-            self.plugin_class.save_records(records_filename, image_settings = self.archive_settings())
+            settings = {'image_properties': self.archive_image_properties(), 
+                        'viewer_settings': self.archive_viewer_settings()}
+            self.plugin_class.save_records(records_filename, settings = settings)
             self.records_filename = records_filename
             self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
         except OSError:
@@ -245,15 +246,19 @@ class MainWindow (QMainWindow):
 
         self.zoom_panel.set_zoom(settings.get('zoom_ratio', 100))
 
-    def archive_settings (self):
-        settings = {'image_filename': self.image_filename,
-                    'z_index': self.ui.slider_zstack.value(),
+    def archive_viewer_settings (self):
+        settings = {'z_index': self.ui.slider_zstack.value(),
                     't_index': self.ui.slider_time.value(),
                     'channel': self.ui.combo_channel.currentIndex(),
                     'composite': self.ui.check_composite.isChecked(),
                     'color_always': self.ui.check_color_always.isChecked(),
                     'luts': [lut.archive_settings() for lut in self.lut_panel.lut_list],
                     'zoom_ratio': self.zoom_panel.zoom_ratio}
+        return settings
+
+    def archive_image_properties (self):
+        settings = {'image_filename': self.image_filename}
+        settings = settings | self.image_stack.archive_properties()
         return settings
 
     def clear_modified_flag (self):

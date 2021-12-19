@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
 from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
-from plugin.base import PluginBase
+from plugin.base import PluginBase, PluginException
 
 plugin_name = 'Particle Tracking'
 class_name = 'SPT'
@@ -24,6 +24,7 @@ class SPT (PluginBase):
         self.c_limits = [0, 0]
         self.records_modified = False
         self.record_suffix = '_track.json'
+        self.records_dict = {}
         self.track_start = None
         self.image_settings = {}
         self.update_settings()
@@ -113,26 +114,28 @@ class SPT (PluginBase):
         self.context_menu.addAction(action)
 
     def load_records (self, records_filename):
-        super().load_records(records_filename)
+        try:
+            super().load_records(records_filename)
 
-        self.spot_list = self.json_dict.get('spot_list', [])
-        self.load_settings(self.json_dict.get('plugin_settings', {}))
-        self.json_dict = None
+            self.spot_list = self.records_dict.get('spot_list', [])
+            self.load_settings(self.records_dict.get('plugin_settings', {}))
 
-        self.current_spot = None
+            self.current_spot = None
+            self.records_modified = False
+            self.track_start = None
+
+            self.update_status()
+            self.update_mouse_cursor()
+            self.signal_update_scene.emit()
+
+        except PluginException:
+            raise
+
+    def save_records (self, records_filename, settings = {}):
+        self.records_dict = {'plugin_settings': self.archive_settings(),
+                             'spot_list': self.spot_list}
+        super().save_records(records_filename, settings)
         self.records_modified = False
-        self.track_start = None
-
-        self.update_status()
-        self.update_mouse_cursor()
-        self.signal_update_scene.emit()
-
-    def save_records (self, records_filename, image_settings = {}):
-        self.json_dict = {'plugin_settings': self.archive_settings(),
-                          'spot_list': self.spot_list}
-        super().save_records(records_filename, image_settings)
-        self.records_modified = False
-        self.json_dict = None
 
     def load_settings (self, settings = {}):
         self.update_settings(settings)
@@ -163,6 +166,7 @@ class SPT (PluginBase):
         return settings
 
     def clear_records (self):
+        super().clear_records()
         self.spot_list = []
         self.current_spot = None
         self.signal_update_scene.emit()
