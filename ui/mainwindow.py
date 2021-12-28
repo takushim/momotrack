@@ -115,7 +115,7 @@ class MainWindow (QMainWindow):
 
     def connect_signals_to_slots (self):
         # scene
-        self.image_panel.scene.mousePressEvent = self.slot_scene_mouse_clicked
+        self.image_panel.scene.mousePressEvent = self.slot_scene_mouse_pressed
         self.image_panel.scene.mouseMoveEvent = self.slot_scene_mouse_moved
         self.image_panel.scene.mouseReleaseEvent = self.slot_scene_mouse_released
         self.image_panel.scene.keyPressEvent = self.slot_scene_key_pressed
@@ -412,8 +412,8 @@ class MainWindow (QMainWindow):
     def slot_about_qt (self):
         QApplication.aboutQt()
 
-    def slot_scene_mouse_clicked (self, event):
-        self.plugin_class.mouse_clicked(event, self.image_stack, self.image_panel.current_index())
+    def slot_scene_mouse_pressed (self, event):
+        self.plugin_class.mouse_pressed(event, self.image_stack, self.image_panel.current_index())
         self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_mouse_moved (self, event):

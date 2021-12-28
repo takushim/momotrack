@@ -90,7 +90,7 @@ class PluginBase (QObject):
     def key_released (self, event, stack, tcz_index):
         pass
 
-    def mouse_clicked (self, event, stack, tcz_index):
+    def mouse_pressed (self, event, stack, tcz_index):
         pass
 
     def mouse_moved (self, event, stack, tcz_index):

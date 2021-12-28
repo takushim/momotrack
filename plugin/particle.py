@@ -19,6 +19,7 @@ class SPT (PluginBase):
         self.spot_list = []
         self.current_spot = None
         self.adding_spot = False
+        self.is_tracking = False
         self.z_limits = [0, 0]
         self.t_limits = [0, 0]
         self.c_limits = [0, 0]
@@ -120,9 +121,12 @@ class SPT (PluginBase):
             self.spot_list = self.records_dict.get('spot_list', [])
             self.load_settings(self.records_dict.get('plugin_settings', {}))
 
-            self.current_spot = None
+            for spot in self.spot_list:
+                if 'delete' not in spot:
+                    spot['delete'] = False
+
+            self.clear_tracking()
             self.records_modified = False
-            self.track_start = None
 
             self.update_status()
             self.update_mouse_cursor()
@@ -168,7 +172,7 @@ class SPT (PluginBase):
     def clear_records (self):
         super().clear_records()
         self.spot_list = []
-        self.current_spot = None
+        self.clear_tracking()
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
@@ -207,20 +211,20 @@ class SPT (PluginBase):
     def slot_remove_spot (self):
         if self.current_spot is not None:
             self.remove_spot(self.current_spot['index'])
-            self.current_spot = None
+            self.clear_tracking()
             self.signal_update_scene.emit()
 
     def slot_remove_tree (self):
         if self.current_spot is not None:
             self.remove_tree(self.current_spot['index'])
-            self.current_spot = None
+            self.clear_tracking()
             self.signal_update_scene.emit()
 
     def slot_remove_track (self):
         if self.current_spot is not None:
             root_spot = self.find_root(self.current_spot['index'])
             self.remove_tree(root_spot['index'])
-            self.current_spot = None
+            self.clear_tracking()
             self.signal_update_scene.emit()
 
     def list_scene_items (self, stack, tcz_index):
@@ -385,12 +389,9 @@ class SPT (PluginBase):
         if event.key() == Qt.Key_Control:
             self.adding_spot = True
         elif event.key() == Qt.Key_Escape:
-            if self.check_auto_moving.isChecked():
+            if self.is_tracking and self.check_auto_moving.isChecked():
                 self.signal_move_by_tczindex.emit(*self.track_start)
-
-            self.current_spot = None
-            self.adding_spot = False
-            self.track_start = None
+            self.clear_tracking()
             self.signal_update_scene.emit()
 
         self.update_status()
@@ -406,7 +407,7 @@ class SPT (PluginBase):
         self.update_status()
         self.update_mouse_cursor()
 
-    def mouse_clicked (self, event, stack, tcz_index):
+    def mouse_pressed (self, event, stack, tcz_index):
         if self.check_hide_tracks.isChecked():
             self.current_spot = None
             self.update_status()
@@ -419,36 +420,52 @@ class SPT (PluginBase):
             if self.current_spot is not None:
                 self.signal_update_scene.emit()
                 self.context_menu.exec(event.screenPos())
+            else:
+                self.clear_tracking()
         elif event.button() == Qt.LeftButton:
             if event.modifiers() == Qt.CTRL:
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
+                self.is_tracking = True
                 self.track_start = tcz_index
-                if self.check_auto_moving.isChecked():
-                    self.move_time_forward(*tcz_index)
             elif event.modifiers() == Qt.SHIFT:
                 if self.current_spot is not None:
                     self.move_spot(self.current_spot, pos.x(), pos.y(), *tcz_index)
+                else:
+                    self.clear_tracking()
             else:
                 spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
                 if len(spot_list) > 0:
+                    self.clear_tracking()
                     self.current_spot = spot_list[-1]
                     self.track_start = tcz_index
                 elif self.current_spot is not None:
                     self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
-                    if self.check_auto_moving.isChecked():
-                        self.move_time_forward(*tcz_index)
+                    self.is_tracking = True
                 
         self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
 
     def mouse_moved (self, event, stack, tcz_index):
-        if self.current_spot is None:
-            return
-        
-        if event.buttons() == Qt.LeftButton and event.modifiers() == Qt.NoModifier:
+        if self.current_spot is not None and event.buttons() == Qt.LeftButton:
             self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
             self.signal_update_scene.emit()
+
+    def mouse_released (self, event, stack, tcz_index):
+        if event.button() == Qt.LeftButton:
+            if self.is_tracking:
+                if self.check_auto_moving.isChecked():
+                    self.move_time_forward(*tcz_index)
+                
+        self.signal_update_scene.emit()
+        self.update_status()
+        self.update_mouse_cursor()
+
+    def clear_tracking (self):
+        self.current_spot = None
+        self.adding_spot = False
+        self.is_tracking = False
+        self.track_start = None
 
     def move_spot (self, spot, x, y, t_index, channel, z_index):
         spot['x'] = x
@@ -576,10 +593,19 @@ class SPT (PluginBase):
     def update_status (self):
         if self.check_hide_tracks.isChecked():
             self.text_message.setText("Spots not shown.")
-        elif self.current_spot is None:
-            self.text_message.setText("No spots selected")
+            return
+
+        if self.adding_spot:
+            self.text_message.setText("Click to add a spot.")
+            return
+
+        if self.current_spot is None:
+            self.text_message.setText("No spot selected.")
         else:
-            self.text_message.setText("Spot {0} selected.\n".format(self.current_spot['index']))
+            if self.is_tracking:
+                self.text_message.setText("Tracking from t = {0}".format(self.track_start[0]))
+            else:
+                self.text_message.setText("Spot {0} selected.".format(self.current_spot['index']))
 
     def update_marker_radii (self, radius):
         self.spot_radius = radius

@@ -46,8 +46,8 @@ class Demo (PluginBase):
         if event.key() == Qt.Key_Control:
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
 
-    def mouse_clicked (self, event, stack, tcz_index):
-        self.text_message.setText("Mouse clicked: ({0:.2f}, {1:.2f})".format(event.scenePos().x(), event.scenePos().y()))
+    def mouse_pressed (self, event, stack, tcz_index):
+        self.text_message.setText("Mouse pressed: ({0:.2f}, {1:.2f})".format(event.scenePos().x(), event.scenePos().y()))
         self.update_spots(stack.width, stack.height)
         self.signal_update_scene.emit()
 
