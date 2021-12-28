@@ -465,7 +465,10 @@ class SPT (PluginBase):
         else:
             parent_index = parent['index']
 
-        index = max([spot['index'] for spot in self.spot_list]) + 1
+        if len(self.spot_list) == 0:
+            index = 0
+        else:
+            index = max([spot['index'] for spot in self.spot_list]) + 1
 
         spot = {'index': index, 'time': t_index, 'channel': channel, \
                 'x': x, 'y': y, 'z': z_index, 'parent': parent_index, \
