@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import time, textwrap
+import textwrap
+from datetime import datetime
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
@@ -473,7 +474,7 @@ class SPT (PluginBase):
         spot['z'] = z_index
         spot['time'] = t_index
         spot['channel'] = channel
-        spot['update'] = time.ctime()
+        spot['update'] = datetime.now().astimezone().isoformat()
         self.records_modified = True
 
     def add_spot (self, x, y, t_index, channel, z_index, parent = None):
@@ -488,8 +489,9 @@ class SPT (PluginBase):
             index = max([spot['index'] for spot in self.spot_list]) + 1
 
         spot = {'index': index, 'time': t_index, 'channel': channel, \
-                'x': x, 'y': y, 'z': z_index, 'parent': parent_index, \
-                'delete': False, 'create': time.ctime(), 'update': time.ctime()}
+                'x': x, 'y': y, 'z': z_index, 'parent': parent_index, 'delete': False, \
+                'create': datetime.now().astimezone().isoformat(), \
+                'update': datetime.now().astimezone().isoformat()}
         print("Adding spot", spot)
         self.spot_list.append(spot)
         self.current_spot = spot
@@ -510,10 +512,10 @@ class SPT (PluginBase):
         print("Removing spot", delete_spot)
         for child_spot in self.find_children(delete_spot):
             child_spot['parent'] = None
-            child_spot['update'] = time.ctime()
+            child_spot['update'] = datetime.now().astimezone().isoformat()
 
         delete_spot['delete'] = True
-        delete_spot['update'] = time.ctime()
+        delete_spot['update'] = datetime.now().astimezone().isoformat()
         self.records_modified = True
 
     def find_root (self, index):

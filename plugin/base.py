@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import re, time, json, textwrap
+import re, json, textwrap
+from datetime import datetime
 from pathlib import Path
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import QObject, Signal
@@ -42,7 +43,7 @@ class PluginBase (QObject):
 
     def save_records (self, records_filename, settings = {}):
         summary = {'plugin_name': self.plugin_name, \
-                   'last_update': time.strftime("%a %d %b %H:%M:%S %Z %Y")}
+                   'last_update': datetime.now().astimezone().isoformat()}
 
         self.records_dict = {'summary': summary} | settings | self.records_dict
 
