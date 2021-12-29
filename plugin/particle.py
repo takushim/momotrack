@@ -428,6 +428,7 @@ class SPT (PluginBase):
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
                 self.is_tracking = True
                 self.track_start = tcz_index
+                self.last_tczindex = tcz_index
             elif event.modifiers() == Qt.SHIFT:
                 if self.current_spot is not None:
                     self.move_spot(self.current_spot, pos.x(), pos.y(), *tcz_index)
@@ -442,6 +443,7 @@ class SPT (PluginBase):
                 elif self.current_spot is not None:
                     self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
                     self.is_tracking = True
+                    self.last_tczindex = tcz_index
                 
         self.signal_update_scene.emit()
         self.update_status()
@@ -454,9 +456,11 @@ class SPT (PluginBase):
 
     def mouse_released (self, event, stack, tcz_index):
         if event.button() == Qt.LeftButton:
-            if self.is_tracking:
-                if self.check_auto_moving.isChecked():
-                    self.move_time_forward(*tcz_index)
+            if self.check_auto_moving.isChecked():
+                if self.is_tracking and self.last_tczindex is not None:
+                    # avoid moving forward twice (fast click breaks the pair of press and release??)
+                    self.move_time_forward(*self.last_tczindex)
+                    self.last_tczindex = None
                 
         self.signal_update_scene.emit()
         self.update_status()
@@ -467,6 +471,7 @@ class SPT (PluginBase):
         self.adding_spot = False
         self.is_tracking = False
         self.track_start = None
+        self.last_tczindex = None
 
     def move_spot (self, spot, x, y, t_index, channel, z_index):
         spot['x'] = x
