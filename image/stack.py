@@ -94,7 +94,7 @@ class Stack:
                 self.s_count = self.image_array.shape[5]
             else:
                 image_list = [self.image_array[..., index] for index in range(self.image_array.shape[-1])]
-                self.image_array = np.stack(image_list, axis = 1)
+                self.image_array = np.concatenate(image_list, axis = 1)
                 self.c_count = self.image_array.shape[1]
                 self.colored = False
         else:
