@@ -124,5 +124,5 @@ class Stack:
                 if 'spacing' in tiff.ome_metadata:
                     self.z_step_um = tiff.ome_metadata['spacing']
                 if 'finterval' in tiff.ome_metadata:
-                    self.finterval_sec = tiff.imagej_metadata['finterval']
+                    self.finterval_sec = tiff.ome_metadata['finterval']
 
