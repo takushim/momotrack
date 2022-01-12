@@ -123,6 +123,6 @@ class Stack:
             elif tiff.ome_metadata is not None:
                 if 'spacing' in tiff.ome_metadata:
                     self.z_step_um = tiff.ome_metadata['spacing']
-                if 'finterval' in tiff.imagej_metadata:
+                if 'finterval' in tiff.ome_metadata:
                     self.finterval_sec = tiff.imagej_metadata['finterval']
 
