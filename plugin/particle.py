@@ -192,14 +192,17 @@ class SPT (PluginBase):
 
     def slot_marker_radius_changed (self):
         self.update_marker_radii(self.dspin_marker_radius.value())
+        self.dspin_marker_radius.clearFocus()
         self.signal_update_scene.emit()
 
     def slot_marker_penwidth_changed (self):
         self.spot_penwidth = self.dspin_marker_penwidth.value()
+        self.dspin_marker_penwidth.clearFocus()
         self.signal_update_scene.emit()
 
     def slot_ghost_z_range_changed (self):
         self.ghost_z_range = self.spin_ghost_z_range.value()
+        self.spin_ghost_z_range.clearFocus()
         self.signal_update_scene.emit()
 
     def slot_z_increment (self):

@@ -493,6 +493,7 @@ class MainWindow (QMainWindow):
         if self.lut_panel.is_auto_lut():
             self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
             self.update_image_view()
+        self.ui.dspin_auto_cutoff.clearFocus()
 
     def slot_reset_lut (self):
         self.lut_panel.reset_current_lut()
