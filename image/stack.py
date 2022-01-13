@@ -327,7 +327,6 @@ class Stack:
             values = tiff.pages[series].tags['XResolution'].value
             metadata['x_pixel_um'] = float(values[1]) / float(values[0]) * ratio
         else:
-<<<<<<< HEAD
             metadata['x_pixel_um'] = default_pixel_um
 
         if 'YResolution' in tiff.pages[series].tags:
@@ -433,35 +432,6 @@ class Stack:
         def affine_func (image, t_index, c_index):
             return gpuimage.affine_transform(image, matrix, gpu_id = gpu_id)
         self.apply_all(affine_func)
-=======
-            self.axes = 'TCZYX'
-            self.colored = False
-
-    def read_metadata (self, tiff):
-        self.pixels_um = pixels_um.copy()
-        self.z_step_um = z_step_um
-        self.finterval_sec = finterval_sec
-
-        if 'XResolution' in tiff.pages[0].tags:
-            values = tiff.pages[0].tags['XResolution'].value
-            self.pixels_um[0] = float(values[1]) / float(values[0])
-
-        if 'YResolution' in tiff.pages[0].tags:
-            values = tiff.pages[0].tags['YResolution'].value
-            self.pixels_um[1] = float(values[1]) / float(values[0])
-
-        if 'ImageDescription' in tiff.pages[0].tags:
-            if tiff.imagej_metadata is not None:
-                if 'spacing' in tiff.imagej_metadata:
-                    self.z_step_um = tiff.imagej_metadata['spacing']
-                if 'finterval' in tiff.imagej_metadata:
-                    self.finterval_sec = tiff.imagej_metadata['finterval']
-            elif tiff.ome_metadata is not None:
-                if 'spacing' in tiff.ome_metadata:
-                    self.z_step_um = tiff.ome_metadata['spacing']
-                if 'finterval' in tiff.ome_metadata:
-                    self.finterval_sec = tiff.ome_metadata['finterval']
->>>>>>> 0934a08106ffb13e49e89ca7875bd4b6a59410ea
 
     def shift (self, offset, gpu_id = None):
         def shift_func (image, t_index, c_index):
