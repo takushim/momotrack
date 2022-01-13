@@ -5,6 +5,7 @@ import sys, argparse
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QGuiApplication
 from ui import mainwindow
+from image import log
 
 # default parameters
 image_filenames = None
@@ -12,6 +13,7 @@ records_filenames = None
 plugin_names = None
 window_position = None
 window_size = None
+log_level = 'INFO'
 
 # parse arguments
 parser = argparse.ArgumentParser(description='Object tracking system for 3D images.', \
@@ -23,18 +25,22 @@ parser.add_argument('-p', '--plugin-name', default = plugin_names, action = 'app
 parser.add_argument('-f', '--records-file', default = records_filenames, action = 'append', \
                     help='JSON file recording data. Can be used multiple times.')
 
-parser.add_argument('--window-position', nargs = 2, type = int, default = window_position, \
-                    metavar = ('X', 'Y'), \
-                    help='Position of the first window')
+parser.add_argument('-P', '--window-position', nargs = 2, type = int, default = window_position, \
+                    metavar = ('X', 'Y'), help='Position of the first window')
 
-parser.add_argument('--window-size', nargs = 2, type = int, default = window_size, \
-                    metavar = ('W', 'H'), \
-                    help='Size of windows')
+parser.add_argument('-S', '--window-size', nargs = 2, type = int, default = window_size, \
+                    metavar = ('W', 'H'), help='Size of window(s)')
+
+parser.add_argument('-L', '--log-level', default = log_level, \
+                    help='Log level: DEBUG, INFO, WARNING, ERROR or CRITICAL')
 
 parser.add_argument('image_file', nargs = '*', default = image_filenames, \
                     help='TIFF files to analyze')
 
 args, unparsed_args = parser.parse_known_args()
+
+# logging
+logger = log.get_logger(__file__, level = args.log_level)
 
 # set values
 image_filenames = args.image_file

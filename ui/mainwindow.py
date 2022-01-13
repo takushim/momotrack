@@ -17,9 +17,12 @@ class MainWindow (QMainWindow):
     def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
         super().__init__()
         self.app_name = "PyTrace"
+        self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
+
         self.setWindowTitle(self.app_name)
 
         self.image_stack = stack.Stack()
+        self.image_stack.alloc_zero_image()
         self.image_filename = image_filename
         self.records_filename = records_filename
 
@@ -151,7 +154,7 @@ class MainWindow (QMainWindow):
         self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
 
     def open_images (self, image_filename_list):
-        stack_exts = [item for values in stack.file_types.values() for item in values]
+        stack_exts = [item for values in self.image_types.values() for item in values]
 
         new_files = []
         for image_filename in image_filename_list:
@@ -198,6 +201,7 @@ class MainWindow (QMainWindow):
         except OSError:
             self.image_filename = None
             self.image_stack = stack.Stack()
+            self.image_stack.alloc_zero_image()
             self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(image_filename))
 
         finally:
@@ -329,7 +333,7 @@ class MainWindow (QMainWindow):
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select images to open.")
         dialog.setFileMode(QFileDialog.ExistingFiles)
-        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in stack.file_types.items()])
+        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.image_types.items()])
         dialog.setViewMode(QFileDialog.List)
 
         if dialog.exec():
@@ -553,7 +557,7 @@ class MainWindow (QMainWindow):
 
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
-            stack_exts = [item for values in stack.file_types.values() for item in values]
+            stack_exts = [item for values in self.image_types.values() for item in values]
             record_exts = [item for values in self.plugin_class.file_types.values() for item in values]
 
             files = [Path(url.toLocalFile()) for url in event.mimeData().urls()]

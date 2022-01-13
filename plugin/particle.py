@@ -2,12 +2,15 @@
 
 import textwrap
 from datetime import datetime
+from logging import getLogger
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
 from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
 from plugin.base import PluginBase, PluginException
+
+logger = getLogger(__name__)
 
 plugin_name = 'Particle Tracking'
 class_name = 'SPT'
@@ -151,9 +154,9 @@ class SPT (PluginBase):
         self.check_hide_tracks.setChecked(settings.get('hide_tracks', False))
 
     def update_settings (self, settings = {}):
-        self.spot_radius = settings.get('spot_radius', 4)
-        self.spot_penwidth = settings.get('spot_penwidth', 1)
-        self.ghost_z_range = settings.get('ghost_z_range', 1)
+        self.spot_radius = settings.get('spot_radius', 2)
+        self.spot_penwidth = settings.get('spot_penwidth', 0.2)
+        self.ghost_z_range = settings.get('ghost_z_range', 5)
         self.color_first = settings.get('color_first', 'magenta')
         self.color_cont = settings.get('color_cont', 'darkGreen')
         self.color_last = settings.get('color_last', 'blue')
@@ -497,7 +500,7 @@ class SPT (PluginBase):
                 'x': x, 'y': y, 'z': z_index, 'parent': parent_index, 'delete': False, \
                 'create': datetime.now().astimezone().isoformat(), \
                 'update': datetime.now().astimezone().isoformat()}
-        print("Adding spot", spot)
+        logger.info("Adding spot: {0}".format(spot))
         self.spot_list.append(spot)
         self.current_spot = spot
         self.records_modified = True
@@ -514,7 +517,7 @@ class SPT (PluginBase):
 
     def remove_spot (self, index):
         delete_spot = self.find_spot_by_index(index)
-        print("Removing spot", delete_spot)
+        logger.info("Removing spot: {0}".format(delete_spot))
         for child_spot in self.find_children(delete_spot):
             child_spot['parent'] = None
             child_spot['update'] = datetime.now().astimezone().isoformat()
@@ -560,7 +563,7 @@ class SPT (PluginBase):
         spot_list = [spot for spot in self.spot_list \
                      if (spot['index'] == index) and (spot['delete'] == False)]
         if len(spot_list) > 1:
-            print("Multiple spots have the same index. Using the first spot.")
+            logger.error("Multiple spots have the same index. This is a bug.")
 
         if len(spot_list) == 0:
             spot = None

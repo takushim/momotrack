@@ -2,10 +2,13 @@
 
 import textwrap
 import numpy as np
+from logging import getLogger
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QPushButton, QLabel, QGraphicsEllipseItem
 from PySide6.QtGui import QPen
 from plugin.base import PluginBase
+
+logger = getLogger(__name__)
 
 plugin_name = 'Demo'
 class_name = 'Demo'
@@ -31,7 +34,9 @@ class Demo (PluginBase):
         self.button_demo.clicked.connect(self.slot_demo_button)
 
     def slot_demo_button (self):
-        self.text_message.setText("Button clicked.")
+        text = "Button clicked."
+        logger.info(text)
+        self.text_message.setText(text)
         self.signal_update_scene.emit()
 
     def list_scene_items (self, stack, tcz_index):
@@ -47,7 +52,9 @@ class Demo (PluginBase):
             self.signal_update_mouse_cursor.emit(Qt.ArrowCursor)
 
     def mouse_pressed (self, event, stack, tcz_index):
-        self.text_message.setText("Mouse pressed: ({0:.2f}, {1:.2f})".format(event.scenePos().x(), event.scenePos().y()))
+        text = "Mouse pressed: ({0:.2f}, {1:.2f})".format(event.scenePos().x(), event.scenePos().y())
+        logger.info(text)
+        self.text_message.setText(text)
         self.update_spots(stack.width, stack.height)
         self.signal_update_scene.emit()
 
