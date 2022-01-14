@@ -239,6 +239,9 @@
             <property name="focusPolicy">
              <enum>Qt::ClickFocus</enum>
             </property>
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="minimum">
              <number>5</number>
             </property>
@@ -521,11 +524,14 @@
             <property name="focusPolicy">
              <enum>Qt::ClickFocus</enum>
             </property>
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
             <property name="decimals">
              <number>3</number>
             </property>
             <property name="singleStep">
-             <double>0.00500000000000</double>
+             <double>0.005000000000000</double>
             </property>
             <property name="value">
              <double>0.050000000000000</double>
@@ -774,7 +780,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>30</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -788,8 +794,8 @@
      <rect>
       <x>507</x>
       <y>107</y>
-      <width>198</width>
-      <height>266</height>
+      <width>147</width>
+      <height>194</height>
      </rect>
     </property>
     <property name="sizePolicy">
