@@ -5,7 +5,7 @@ from datetime import datetime
 from logging import getLogger
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
-from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox
+from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox, QLineEdit
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
 from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
 from plugin.base import PluginBase, PluginException
@@ -50,7 +50,6 @@ class SPT (PluginBase):
         self.dspin_marker_radius.setRange(1, 40)
         self.dspin_marker_radius.setFocusPolicy(Qt.ClickFocus)
         self.dspin_marker_radius.setSingleStep(0.1)
-        self.dspin_marker_radius.setKeyboardTracking(False)
         self.dspin_marker_radius.setValue(self.spot_radius)
         hlayout.addWidget(self.dspin_marker_radius)
         self.vlayout.addLayout(hlayout)
@@ -62,7 +61,6 @@ class SPT (PluginBase):
         self.dspin_marker_penwidth.setRange(0.1, 10)
         self.dspin_marker_penwidth.setFocusPolicy(Qt.ClickFocus)
         self.dspin_marker_penwidth.setSingleStep(0.1)
-        self.dspin_marker_penwidth.setKeyboardTracking(False)
         self.dspin_marker_penwidth.setValue(self.spot_penwidth)
         hlayout.addWidget(self.dspin_marker_penwidth)
         self.vlayout.addLayout(hlayout)
@@ -74,7 +72,6 @@ class SPT (PluginBase):
         self.spin_ghost_z_range.setRange(1, 100)
         self.spin_ghost_z_range.setFocusPolicy(Qt.ClickFocus)
         self.spin_ghost_z_range.setSingleStep(1)
-        self.spin_ghost_z_range.setKeyboardTracking(False)
         self.spin_ghost_z_range.setValue(self.ghost_z_range)
         hlayout.addWidget(self.spin_ghost_z_range)
         self.vlayout.addLayout(hlayout)
@@ -90,8 +87,11 @@ class SPT (PluginBase):
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
         self.dspin_marker_radius.valueChanged.connect(self.slot_marker_radius_changed)
-        self.spin_ghost_z_range.valueChanged.connect(self.slot_ghost_z_range_changed)
+        self.dspin_marker_radius.editingFinished.connect(self.slot_return_focus)
         self.dspin_marker_penwidth.valueChanged.connect(self.slot_marker_penwidth_changed)
+        self.dspin_marker_penwidth.editingFinished.connect(self.slot_return_focus)
+        self.spin_ghost_z_range.valueChanged.connect(self.slot_ghost_z_range_changed)
+        self.spin_ghost_z_range.editingFinished.connect(self.slot_return_focus)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -233,6 +233,12 @@ class SPT (PluginBase):
             self.remove_tree(root_spot['index'])
             self.clear_tracking()
             self.signal_update_scene.emit()
+
+    def slot_return_focus (self):
+        self.dspin_marker_penwidth.findChild(QLineEdit).deselect()
+        self.dspin_marker_radius.findChild(QLineEdit).deselect()
+        self.spin_ghost_z_range.findChild(QLineEdit).deselect()
+        self.signal_focus_graphics_view.emit()
 
     def list_scene_items (self, stack, tcz_index):
         if self.check_hide_tracks.isChecked():

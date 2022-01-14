@@ -30,13 +30,9 @@ class MainWindow (QMainWindow):
 
         self.plugin_package = 'plugin'
         self.default_plugin = 'base'
-        self.load_plugins()
+        self.load_plugins(plugin_name)
 
         self.init_widgets()
-        if plugin_name is None:
-            self.switch_plugin(self.plugin_list[0].plugin_name)
-        elif plugin_name != self.plugin_module.plugin_name:
-            self.switch_plugin(plugin_name)
         self.connect_menubar_to_slots()
         self.connect_signals_to_slots()
 
@@ -70,7 +66,7 @@ class MainWindow (QMainWindow):
         self.update_image_view()
         self.update_window_title()
 
-    def load_plugins (self):
+    def load_plugins (self, plugin_name):
         plugin_folder = str(Path(__file__).parent.parent.joinpath(self.plugin_package))
         self.plugin_list = []
         load_failed = []
@@ -96,7 +92,11 @@ class MainWindow (QMainWindow):
             self.actgroup_plugin.addAction(action)
         self.actgroup_plugin.setExclusive(True)
 
-        self.init_plugin(self.plugin_list[0])    
+        module = next((x for x in self.plugin_list if x.plugin_name == plugin_name), None)
+        if module is None:
+            self.init_plugin(self.plugin_list[0])
+        else:
+            self.init_plugin(module)    
 
         if len(load_failed) > 0:
             self.show_message("Plugin error", "Failed to load: {0}".format(', '.join(load_failed)))
@@ -130,6 +130,7 @@ class MainWindow (QMainWindow):
         self.ui.slider_zstack.valueChanged.connect(self.slot_image_index_changed)
         self.ui.button_play.clicked.connect(self.slot_slideshow_switched)
         self.ui.spin_fps.valueChanged.connect(self.slot_slideshow_changed)
+        self.ui.spin_fps.editingFinished.connect(self.slot_focus_graphics_view)
         self.play_timer.timeout.connect(self.slot_slideshow_timeout)
 
         # zooming
@@ -146,6 +147,7 @@ class MainWindow (QMainWindow):
         self.ui.combo_bits.currentIndexChanged.connect(self.slot_bits_changed)
         self.ui.check_auto_lut.stateChanged.connect(self.slot_auto_lut_changed)
         self.ui.dspin_auto_cutoff.valueChanged.connect(self.slot_auto_lut_changed)
+        self.ui.dspin_auto_cutoff.editingFinished.connect(self.slot_focus_graphics_view)
         self.ui.slider_lut_lower.valueChanged.connect(self.slot_lut_lower_changed)
         self.ui.slider_lut_upper.valueChanged.connect(self.slot_lut_upper_changed)
         self.ui.button_reset_lut.clicked.connect(self.slot_reset_lut)
@@ -306,6 +308,7 @@ class MainWindow (QMainWindow):
         self.plugin_class.signal_reset_panels.connect(self.slot_reset_panels)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
         self.plugin_class.signal_move_by_tczindex.connect(self.slot_move_by_tczindex)
+        self.plugin_class.signal_focus_graphics_view.connect(self.slot_focus_graphics_view)
 
     def update_window_title (self):
         title = self.app_name
@@ -387,6 +390,9 @@ class MainWindow (QMainWindow):
     def slot_clear_records (self):
         self.clear_records()
         self.update_image_view()
+
+    def slot_focus_graphics_view (self):
+        self.ui.gview_image.setFocus()
 
     def slot_plugin_help (self):
         self.show_message(title = "Quick help", message = self.plugin_class.help_message())
@@ -493,7 +499,6 @@ class MainWindow (QMainWindow):
         if self.lut_panel.is_auto_lut():
             self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
             self.update_image_view()
-        self.ui.dspin_auto_cutoff.clearFocus()
 
     def slot_reset_lut (self):
         self.lut_panel.reset_current_lut()
