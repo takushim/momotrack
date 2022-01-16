@@ -31,8 +31,7 @@ parser.add_argument('-P', '--window-position', nargs = 2, type = int, default = 
 parser.add_argument('-S', '--window-size', nargs = 2, type = int, default = window_size, \
                     metavar = ('W', 'H'), help='Size of window(s)')
 
-parser.add_argument('-L', '--log-level', default = log_level, \
-                    help='Log level: DEBUG, INFO, WARNING, ERROR or CRITICAL')
+log.add_argument(parser)
 
 parser.add_argument('image_file', nargs = '*', default = image_filenames, \
                     help='TIFF files to analyze')
