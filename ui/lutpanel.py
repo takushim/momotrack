@@ -75,10 +75,10 @@ class LutPanel:
             self.ui.label_lut_lower.setText("Lower limit: {0:.2e}".format(current_lut.lut_lower))
             self.ui.label_lut_upper.setText("Upper limit: {0:.2e}".format(current_lut.lut_upper))
         else:
-            self.ui.label_bitrange_lower.setText("{0:d}".format(bit_range[0]))
-            self.ui.label_bitrange_upper.setText("{0:d}".format(bit_range[1]))
-            self.ui.label_lut_lower.setText("Lower limit: {0:d}".format(current_lut.lut_lower))
-            self.ui.label_lut_upper.setText("Upper limit: {0:d}".format(current_lut.lut_upper))
+            self.ui.label_bitrange_lower.setText("{0:.2f}".format(bit_range[0]))
+            self.ui.label_bitrange_upper.setText("{0:.2f}".format(bit_range[1]))
+            self.ui.label_lut_lower.setText("Lower limit: {0:.2f}".format(current_lut.lut_lower))
+            self.ui.label_lut_upper.setText("Upper limit: {0:.2f}".format(current_lut.lut_upper))
 
     def update_lut_settings (self, settings_list = []):
         for index in range(min(len(self.lut_list), len(settings_list))):
