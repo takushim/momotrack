@@ -439,6 +439,12 @@ class SPT (PluginBase):
                 self.signal_move_by_tczindex.emit(*self.track_start)
             self.clear_tracking()
             self.signal_update_scene.emit()
+        elif event.key() == Qt.Key_Space:
+            if self.spot_to_add is not None:
+                self.add_spot(self.spot_to_add['x'], self.spot_to_add['y'], *tcz_index, parent = self.current_spot)
+                self.is_tracking = True
+                self.last_tczindex = tcz_index
+                self.set_spot_to_add(self.current_spot)
 
         self.update_status()
         self.update_mouse_cursor()
@@ -449,6 +455,12 @@ class SPT (PluginBase):
 
         if event.key() == Qt.Key_Control:
             self.adding_spot = False
+        elif event.key() == Qt.Key_Space:
+            if self.check_auto_moving.isChecked():
+                if self.is_tracking and self.last_tczindex is not None:
+                    # avoid moving forward twice (since press and release events are sometimes not paired)
+                    self.move_time_forward(*self.last_tczindex)
+                    self.last_tczindex = None
 
         self.update_status()
         self.update_mouse_cursor()
@@ -507,7 +519,7 @@ class SPT (PluginBase):
     def mouse_released (self, event, stack, tcz_index):
         if event.button() == Qt.LeftButton:
             if self.check_auto_moving.isChecked():
-                if self.is_tracking and self.last_tczindex is not None:
+                if self.is_tracking and (self.last_tczindex is not None):
                     # avoid moving forward twice (since press and release events are sometimes not paired)
                     self.move_time_forward(*self.last_tczindex)
                     self.last_tczindex = None
