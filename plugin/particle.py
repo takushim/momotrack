@@ -83,6 +83,7 @@ class SPT (PluginBase):
         self.text_message.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.vlayout.addWidget(self.text_message)
 
+        self.load_settings()
         self.update_status()
         self.update_mouse_cursor()
         self.init_context_menu()
@@ -152,7 +153,7 @@ class SPT (PluginBase):
         self.dspin_marker_radius.setValue(self.spot_radius)
         self.dspin_marker_penwidth.setValue(self.spot_penwidth)
         self.spin_ghost_z_range.setValue(self.ghost_z_range)
-        self.check_auto_moving.setChecked(settings.get('move_auto', False))
+        self.check_auto_moving.setChecked(settings.get('move_auto', True))
         self.check_hide_tracks.setChecked(settings.get('hide_tracks', False))
 
     def update_settings (self, settings = {}):
