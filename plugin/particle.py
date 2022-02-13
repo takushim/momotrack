@@ -129,8 +129,7 @@ class SPT (PluginBase):
             self.load_settings(self.records_dict.get('plugin_settings', {}))
 
             for spot in self.spot_list:
-                if 'delete' not in spot:
-                    spot['delete'] = False
+                self.update_old_spot(spot)
 
             self.clear_tracking()
             self.records_modified = False
@@ -508,14 +507,30 @@ class SPT (PluginBase):
         else:
             index = max([spot['index'] for spot in self.spot_list]) + 1
 
-        spot = {'index': index, 'time': t_index, 'channel': channel, \
-                'x': x, 'y': y, 'z': z_index, 'parent': parent_index, 'delete': False, \
-                'create': datetime.now().astimezone().isoformat(), \
-                'update': datetime.now().astimezone().isoformat()}
+        spot = self.create_spot(index = index, time = t_index, channel = channel, \
+                                x = x, y = y, z = z_index, parent = parent_index)
+
         logger.info("Adding spot: {0}".format(spot))
         self.spot_list.append(spot)
         self.current_spot = spot
         self.records_modified = True
+
+    def create_spot (self, index = None, time = None, channel = None, x = None, y = None, z = None, parent = None):
+        spot = {'index': index, 'time': time, 'channel': channel, \
+                'x': x, 'y': y, 'z': z, 'parent': parent, 'label': None, \
+                'delete': False, \
+                'create': datetime.now().astimezone().isoformat(), \
+                'update': datetime.now().astimezone().isoformat()}
+        return spot
+
+    def update_old_spot (self, spot):
+        empty_spot = self.create_spot()
+        keys = empty_spot.keys().remove('index')
+        if 'index' not in spot:
+            logger.error("Index not in the spot: {0}. This is critical.".format(spot))
+        for key in keys:
+            if key not in spot:
+                spot[key] = empty_spot[key]
 
     def remove_tree (self, index):
         delete_spot = self.find_spot_by_index(index)
