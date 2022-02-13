@@ -438,7 +438,6 @@ class SPT (PluginBase):
             if self.is_tracking and self.check_auto_moving.isChecked():
                 self.signal_move_by_tczindex.emit(*self.track_start)
             self.clear_tracking()
-            self.signal_update_scene.emit()
         elif event.key() == Qt.Key_Space:
             if self.spot_to_add is not None:
                 self.add_spot(self.spot_to_add['x'], self.spot_to_add['y'], *tcz_index, parent = self.current_spot)
@@ -446,6 +445,7 @@ class SPT (PluginBase):
                 self.last_tczindex = tcz_index
                 self.set_spot_to_add(self.current_spot)
 
+        self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
 
@@ -462,6 +462,7 @@ class SPT (PluginBase):
                     self.move_time_forward(*self.last_tczindex)
                     self.last_tczindex = None
 
+        self.signal_update_scene.emit()
         self.update_status()
         self.update_mouse_cursor()
 
