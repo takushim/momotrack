@@ -443,7 +443,7 @@ class MainWindow (QMainWindow):
         self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_key_pressed (self, event):
-        if event.key() == Qt.Key_Right or event.key() == Qt.Key_Space:
+        if event.key() == Qt.Key_Right:
             self.ui.slider_time.setValue(min(self.ui.slider_time.value() + 1,  self.image_stack.t_count - 1))
         elif event.key() == Qt.Key_Left:
             self.ui.slider_time.setValue(max(self.ui.slider_time.value() - 1, 0))
