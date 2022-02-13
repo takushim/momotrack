@@ -6,7 +6,8 @@ from logging import getLogger
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox, QLineEdit
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsTextItem, QGraphicsPathItem
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem
+from PySide6.QtWidgets import QGraphicsTextItem, QGraphicsPathItem
 from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
 from plugin.base import PluginBase, PluginException
 
@@ -22,6 +23,7 @@ class SPT (PluginBase):
         self.plugin_name = str(plugin_name)
         self.spot_list = []
         self.current_spot = None
+        self.spot_to_add = None
         self.adding_spot = False
         self.is_tracking = False
         self.z_limits = [0, 0]
@@ -163,6 +165,7 @@ class SPT (PluginBase):
         self.color_first = settings.get('color_first', 'magenta')
         self.color_cont = settings.get('color_cont', 'darkGreen')
         self.color_last = settings.get('color_last', 'blue')
+        self.color_reticle = settings.get('color_reticle', 'magenta')
         self.update_marker_radii(self.spot_radius)
 
     def archive_settings (self):
@@ -172,6 +175,7 @@ class SPT (PluginBase):
                     'color_first': self.color_first,
                     'color_cont': self.color_cont,
                     'color_last': self.color_last,
+                    'color_reticle': self.color_reticle,
                     'move_auto': self.check_auto_moving.isChecked(),
                     'hide_tracks': self.check_hide_tracks.isChecked()}
         return settings
@@ -285,6 +289,9 @@ class SPT (PluginBase):
             scene_items.extend(self.list_ancestor_items(ghost_ancestors, self.ghost_radius))
             scene_items.extend(self.list_descendant_items(ghots_descendants, self.ghost_radius))
 
+        if self.spot_to_add is not None:
+            scene_items.extend(self.list_reticle_items(self.spot_to_add, self.spot_radius))
+
         return scene_items
 
     def list_spot_items (self, spot_list, radius):
@@ -303,12 +310,35 @@ class SPT (PluginBase):
 
     def create_spot_item (self, spot, radius, color):
         item = QGraphicsEllipseItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
-
         pen = QPen(QColor(color))
         pen.setWidthF(self.spot_penwidth)
         item.setPen(pen)
-
         return item
+
+    def list_reticle_items (self, spot, radius):
+        item_list = []
+        item = QGraphicsRectItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
+        item_list.append(item)
+
+        ratio = 0.25
+        item = QGraphicsLineItem(spot['x'], spot['y'] - radius * (1 + ratio), spot['x'], spot['y'] - radius * (1 - ratio))
+        item_list.append(item)
+
+        item = QGraphicsLineItem(spot['x'], spot['y'] + radius * (1 + ratio), spot['x'], spot['y'] + radius * (1 - ratio))
+        item_list.append(item)
+
+        item = QGraphicsLineItem(spot['x'] - radius * (1 + ratio), spot['y'], spot['x'] - radius * (1 - ratio), spot['y'])
+        item_list.append(item)
+
+        item = QGraphicsLineItem(spot['x'] + radius * (1 + ratio), spot['y'], spot['x'] + radius * (1 - ratio), spot['y'])
+        item_list.append(item)
+
+        pen = QPen(QColor(self.color_reticle))
+        pen.setWidthF(self.spot_penwidth)
+        for item in item_list:
+            item.setPen(pen)
+
+        return item_list
 
     def create_spot_item_one (self, spot, radius, color):
         path = QPainterPath()
@@ -444,9 +474,11 @@ class SPT (PluginBase):
                 self.is_tracking = True
                 self.track_start = tcz_index
                 self.last_tczindex = tcz_index
+                self.set_spot_to_add(self.current_spot)
             elif event.modifiers() == Qt.SHIFT:
                 if self.current_spot is not None:
                     self.move_spot(self.current_spot, pos.x(), pos.y(), *tcz_index)
+                    self.set_spot_to_add(self.current_spot)
                 else:
                     self.clear_tracking()
             else:
@@ -456,10 +488,12 @@ class SPT (PluginBase):
                         self.clear_tracking()
                         self.current_spot = spot_list[-1]
                         self.track_start = tcz_index
+                        self.set_spot_to_add(self.current_spot)
                 else:
                     self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
                     self.is_tracking = True
                     self.last_tczindex = tcz_index
+                    self.set_spot_to_add(self.current_spot)
                 
         self.signal_update_scene.emit()
         self.update_status()
@@ -474,7 +508,7 @@ class SPT (PluginBase):
         if event.button() == Qt.LeftButton:
             if self.check_auto_moving.isChecked():
                 if self.is_tracking and self.last_tczindex is not None:
-                    # avoid moving forward twice (fast click breaks the pair of press and release??)
+                    # avoid moving forward twice (since press and release events are sometimes not paired)
                     self.move_time_forward(*self.last_tczindex)
                     self.last_tczindex = None
                 
@@ -484,6 +518,7 @@ class SPT (PluginBase):
 
     def clear_tracking (self):
         self.current_spot = None
+        self.spot_to_add = None
         self.adding_spot = False
         self.is_tracking = False
         self.track_start = None
@@ -533,6 +568,13 @@ class SPT (PluginBase):
         for key in keys:
             if key not in spot:
                 spot[key] = empty_spot[key]
+
+    def set_spot_to_add (self, spot):
+        if spot is None:
+            logger.warning("Clearing the spot to add. This is unusual.")
+            self.spot_to_add = None
+        else:
+            self.spot_to_add = self.create_spot(x = spot['x'], y = spot['y'])
 
     def remove_tree (self, index):
         delete_spot = self.find_spot_by_index(index)
