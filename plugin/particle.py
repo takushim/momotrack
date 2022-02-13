@@ -450,12 +450,13 @@ class SPT (PluginBase):
                 else:
                     self.clear_tracking()
             else:
-                spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
-                if len(spot_list) > 0:
-                    self.clear_tracking()
-                    self.current_spot = spot_list[-1]
-                    self.track_start = tcz_index
-                elif self.current_spot is not None:
+                if self.current_spot is None:
+                    spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
+                    if len(spot_list) > 0:
+                        self.clear_tracking()
+                        self.current_spot = spot_list[-1]
+                        self.track_start = tcz_index
+                else:
                     self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
                     self.is_tracking = True
                     self.last_tczindex = tcz_index
