@@ -398,7 +398,7 @@ class MainWindow (QMainWindow):
         self.show_message(title = "Quick help", message = self.plugin_class.help_message())
 
     def slot_viewer_help (self):
-        message = textwrap.dedent('''
+        message = textwrap.dedent('''\
         <b>Keys and mouse gestures:</b>
         <ul>
         <li> Left/Right keys to move the time forward or backward.</li>
@@ -411,7 +411,7 @@ class MainWindow (QMainWindow):
         self.show_message(title = "Viewer help", message = message)
 
     def slot_about_this (self):
-        message = textwrap.dedent('''
+        message = textwrap.dedent('''\
         <b>{0}</b><br><br>
         Object tracking system for time-lapse 2D/3D images.<br>
         Distributed under the BSD 3-clause license.<br>

@@ -69,7 +69,7 @@ class Demo (PluginBase):
             self.item_list.append(item)
 
     def help_message (self):
-        message = textwrap.dedent('''
+        message = textwrap.dedent('''\
         <b>Demonstration of the plugin system</b><br><br>
         This plugin draws multiple spots on the image.
         Click or press "Demo Button" to update spots.

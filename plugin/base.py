@@ -67,7 +67,7 @@ class PluginBase (QObject):
         return self.records_modified
 
     def help_message (self):
-        message = textwrap.dedent('''
+        message = textwrap.dedent('''\
         <b>Base class for plugins</b><br><br>
         Loaded when no plugins are working.
         Make a new class inheriting this class and
