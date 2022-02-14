@@ -534,14 +534,13 @@ class SPT (PluginBase):
                 else:
                     self.clear_tracking()
             else:
-                if self.current_spot is None:
-                    spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
-                    if len(spot_list) > 0:
-                        self.clear_tracking()
-                        self.current_spot = spot_list[-1]
-                        self.track_start = tcz_index
-                        self.set_spot_to_add(self.current_spot)
-                else:
+                spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
+                if len(spot_list) > 0:
+                    self.clear_tracking()
+                    self.current_spot = spot_list[-1]
+                    self.track_start = tcz_index
+                    self.set_spot_to_add(self.current_spot)
+                elif self.current_spot is not None:
                     self.add_spot(pos.x(), pos.y(), *tcz_index, parent = self.current_spot)
                     self.is_tracking = True
                     self.last_tczindex = tcz_index
@@ -554,6 +553,7 @@ class SPT (PluginBase):
     def mouse_moved (self, event, stack, tcz_index):
         if self.current_spot is not None and event.buttons() == Qt.LeftButton:
             self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
+            self.set_spot_to_add(self.current_spot)
             self.signal_update_scene.emit()
 
     def mouse_released (self, event, stack, tcz_index):
