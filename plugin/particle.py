@@ -52,7 +52,7 @@ class SPT (PluginBase):
         self.color_cont = settings.get('color_cont', 'darkGreen')
         self.color_last = settings.get('color_last', 'blue')
         self.color_reticle = settings.get('color_reticle', 'magenta')
-        self.reticle_move = settings.get('reticle_move', 0.1)
+        self.shift_by_key = settings.get('shift_by_key', 0.1)
         self.update_marker_radii(self.spot_radius)
 
     def archive_settings (self):
@@ -63,7 +63,7 @@ class SPT (PluginBase):
                     'color_cont': self.color_cont,
                     'color_last': self.color_last,
                     'color_reticle': self.color_reticle,
-                    'reticle_move': self.reticle_move,
+                    'shift_by_key': self.shift_by_key,
                     'move_auto': self.check_auto_moving.isChecked(),
                     'hide_tracks': self.check_hide_tracks.isChecked()}
         return settings
@@ -114,15 +114,15 @@ class SPT (PluginBase):
         self.vlayout.addLayout(hlayout)
 
         hlayout = QHBoxLayout()
-        label = QLabel("Reticle move:")
+        label = QLabel("Shift by key:")
         hlayout.addWidget(label)
-        self.dspin_reticle_move = QDoubleSpinBox()
-        self.dspin_reticle_move.setRange(0.1, 100)
-        self.dspin_reticle_move.setFocusPolicy(Qt.ClickFocus)
-        self.dspin_reticle_move.setSingleStep(0.1)
-        self.dspin_reticle_move.setKeyboardTracking(False)
-        self.dspin_reticle_move.setValue(self.reticle_move)
-        hlayout.addWidget(self.dspin_reticle_move)
+        self.dspin_shift_by_key = QDoubleSpinBox()
+        self.dspin_shift_by_key.setRange(0.1, 100)
+        self.dspin_shift_by_key.setFocusPolicy(Qt.ClickFocus)
+        self.dspin_shift_by_key.setSingleStep(0.1)
+        self.dspin_shift_by_key.setKeyboardTracking(False)
+        self.dspin_shift_by_key.setValue(self.shift_by_key)
+        hlayout.addWidget(self.dspin_shift_by_key)
         self.vlayout.addLayout(hlayout)
 
         self.text_message = QLabel()
@@ -142,8 +142,8 @@ class SPT (PluginBase):
         self.dspin_marker_penwidth.editingFinished.connect(self.slot_return_focus)
         self.spin_ghost_z_range.valueChanged.connect(self.slot_ghost_z_range_changed)
         self.spin_ghost_z_range.editingFinished.connect(self.slot_return_focus)
-        self.dspin_reticle_move.valueChanged.connect(self.slot_reticle_move_changed)
-        self.dspin_reticle_move.editingFinished.connect(self.slot_return_focus)
+        self.dspin_shift_by_key.valueChanged.connect(self.slot_shift_by_key_changed)
+        self.dspin_shift_by_key.editingFinished.connect(self.slot_return_focus)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -228,8 +228,8 @@ class SPT (PluginBase):
         self.spin_ghost_z_range.clearFocus()
         self.signal_update_scene.emit()
 
-    def slot_reticle_move_changed (self):
-        self.reticle_move = self.dspin_reticle_move.value()
+    def slot_shift_by_key_changed (self):
+        self.shift_by_key = self.dspin_shift_by_key.value()
 
     def slot_z_increment (self):
         if self.current_spot is not None:
@@ -465,24 +465,40 @@ class SPT (PluginBase):
                 self.set_spot_to_add(self.current_spot)
         elif event.key() == Qt.Key_Left:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(-10 * self.reticle_move, 0)
+                self.shift_spot_to_add(-10 * self.shift_by_key, 0)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(-self.reticle_move, 0)
+                self.shift_spot_to_add(-self.shift_by_key, 0)
+            elif event.modifiers() == Qt.ALT + Qt.SHIFT:
+                self.shift_selected_spot(-10 * self.shift_by_key, 0)
+            elif event.modifiers() == Qt.ALT:
+                self.shift_selected_spot(-self.shift_by_key, 0)
         elif event.key() == Qt.Key_Right:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(10 * self.reticle_move, 0)
+                self.shift_spot_to_add(10 * self.shift_by_key, 0)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(self.reticle_move, 0)
+                self.shift_spot_to_add(self.shift_by_key, 0)
+            elif event.modifiers() == Qt.ALT + Qt.SHIFT:
+                self.shift_selected_spot(10 * self.shift_by_key, 0)
+            elif event.modifiers() == Qt.ALT:
+                self.shift_selected_spot(self.shift_by_key, 0)
         elif event.key() == Qt.Key_Up:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(0, -10 * self.reticle_move)
+                self.shift_spot_to_add(0, -10 * self.shift_by_key)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(0, -self.reticle_move, )
+                self.shift_spot_to_add(0, -self.shift_by_key, )
+            elif event.modifiers() == Qt.ALT + Qt.SHIFT:
+                self.shift_selected_spot(0, -10 * self.shift_by_key)
+            elif event.modifiers() == Qt.ALT:
+                self.shift_selected_spot(0, -self.shift_by_key)
         elif event.key() == Qt.Key_Down:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(0, 10 * self.reticle_move)
+                self.shift_spot_to_add(0, 10 * self.shift_by_key)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(0, self.reticle_move, )
+                self.shift_spot_to_add(0, self.shift_by_key)
+            elif event.modifiers() == Qt.ALT + Qt.SHIFT:
+                self.shift_selected_spot(0, 10 * self.shift_by_key)
+            elif event.modifiers() == Qt.ALT:
+                self.shift_selected_spot(0, self.shift_by_key)
 
         self.signal_update_scene.emit()
         self.update_status()
@@ -528,11 +544,7 @@ class SPT (PluginBase):
                 self.last_tczindex = tcz_index
                 self.set_spot_to_add(self.current_spot)
             elif event.modifiers() == Qt.SHIFT:
-                if self.current_spot is not None:
-                    self.move_spot(self.current_spot, pos.x(), pos.y(), *tcz_index)
-                    self.set_spot_to_add(self.current_spot)
-                else:
-                    self.clear_tracking()
+                self.move_selected_spot(pos.x(), pos.y(), tcz_index)
             else:
                 spot_list = self.find_spots_by_position(pos.x(), pos.y(), *tcz_index)
                 if len(spot_list) > 0:
@@ -551,9 +563,8 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
 
     def mouse_moved (self, event, stack, tcz_index):
-        if self.current_spot is not None and event.buttons() == Qt.LeftButton:
-            self.move_spot(self.current_spot, event.scenePos().x(), event.scenePos().y(), *tcz_index)
-            self.set_spot_to_add(self.current_spot)
+        if event.buttons() == Qt.LeftButton:
+            self.move_selected_spot(x = event.scenePos().x(), y = event.scenePos().y())
             self.signal_update_scene.emit()
 
     def mouse_released (self, event, stack, tcz_index):
@@ -575,6 +586,21 @@ class SPT (PluginBase):
         self.is_tracking = False
         self.track_start = None
         self.last_tczindex = None
+
+    def move_selected_spot (self, x, y, tcz_index = None):
+        if self.current_spot is None:
+            return
+        if tcz_index is None:
+            tcz_index = [self.current_spot['time'], self.current_spot['channel'], self.current_spot['z']]
+        self.move_spot(self.current_spot, x, y, *tcz_index)
+        self.set_spot_to_add(self.current_spot)
+
+    def shift_selected_spot (self, dx = 0.0, dy = 0.0):
+        if self.current_spot is None:
+            return
+        self.move_spot(self.current_spot, self.current_spot['x'] + dx, self.current_spot['y'] + dy, \
+                       self.current_spot['time'], self.current_spot['channel'], self.current_spot['z'])
+        self.set_spot_to_add(self.current_spot)
 
     def move_spot (self, spot, x, y, t_index, channel, z_index):
         spot['x'] = x
@@ -628,7 +654,7 @@ class SPT (PluginBase):
         else:
             self.spot_to_add = self.create_spot(x = spot['x'], y = spot['y'])
 
-    def move_spot_to_add (self, dx, dy):
+    def shift_spot_to_add (self, dx, dy):
         if self.spot_to_add is not None:
             self.spot_to_add['x'] = self.spot_to_add['x'] + dx
             self.spot_to_add['y'] = self.spot_to_add['y'] + dy
