@@ -764,18 +764,19 @@ class SPT (PluginBase):
 
         if self.current_spot is None:
             text += "Click to select a spot.\n"
-            text += "Ctrl + click to add a spot.\n"
+            text += "Ctrl + Click to add a spot.\n"
         else:
             if self.is_tracking:
                 text += "Tracking from t = {0}.\n".format(self.track_start[0])
             text += "Spot {0} selected.\n".format(self.current_spot['index'])
             text += "Click to add a child spot.\n"
-            text += "Shift + click to move the selected spot.\n"
+            text += "Shift + Click to move the spot.\n"
+            text += "Alt + Arrow to shift the spot.\n"
 
         if self.spot_to_add is not None:
             text += "\n"
-            text += "Press space to add a child spot.\n"
-            text += "Press Ctrl + Arrow to move the reticle.\n"
+            text += "Space to add a child spot.\n"
+            text += "Ctrl + Arrow to move the reticle.\n"
 
         self.text_message.setText(text)
 
@@ -804,7 +805,9 @@ class SPT (PluginBase):
             <ul>
             <li> Click to proceed tracking.</li>
             <li> Drag moves the spot within the view.</li>
-            <li> Shift + click can move the spot to a different view.</li>
+            <li> Shift + click moves the spot to a different view.</li>
+            <li> Alt + Arrow shifts the spot within the view.</li>
+            <li> Alt + Shift + Arrow shifts the spot faster.</li>
             <li> Adjacent dots indicate ancestors and discendants.</li>
             <li> Filled dots show direct ancestors and discendants.</li>
             </ul>
@@ -812,8 +815,8 @@ class SPT (PluginBase):
         <li> A reticle is shown when a spot is selected and:</li>
             <ul>
             <li> Press space to add a child spot at the reticle.</li>
-            <li> Ctrl + Arrow to move the reticle.</li>
-            <li> Shift + Ctrl + Arrow to move the reticle fast.</li>
+            <li> Ctrl + Arrow to shift the reticle.</li>
+            <li> Ctrl + Shift + Arrow to shift the reticle faster.</li>
             </ul>
         <li> Check "move automatically" to proceed the time when a new spot is added.</li>
         <li> A number appears when a spot has multiple children.</li>
