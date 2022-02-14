@@ -166,6 +166,7 @@ class SPT (PluginBase):
         self.color_cont = settings.get('color_cont', 'darkGreen')
         self.color_last = settings.get('color_last', 'blue')
         self.color_reticle = settings.get('color_reticle', 'magenta')
+        self.move_by_key = settings.get('move_by_key', 0.1)
         self.update_marker_radii(self.spot_radius)
 
     def archive_settings (self):
@@ -176,6 +177,7 @@ class SPT (PluginBase):
                     'color_cont': self.color_cont,
                     'color_last': self.color_last,
                     'color_reticle': self.color_reticle,
+                    'move_by_key': self.move_by_key,
                     'move_auto': self.check_auto_moving.isChecked(),
                     'hide_tracks': self.check_hide_tracks.isChecked()}
         return settings
@@ -444,6 +446,26 @@ class SPT (PluginBase):
                 self.is_tracking = True
                 self.last_tczindex = tcz_index
                 self.set_spot_to_add(self.current_spot)
+        elif event.key() == Qt.Key_Left:
+            if event.modifiers() == Qt.CTRL + Qt.SHIFT:
+                self.move_spot_to_add(-10 * self.move_by_key, 0)
+            elif event.modifiers() == Qt.CTRL:
+                self.move_spot_to_add(-self.move_by_key, 0)
+        elif event.key() == Qt.Key_Right:
+            if event.modifiers() == Qt.CTRL + Qt.SHIFT:
+                self.move_spot_to_add(10 * self.move_by_key, 0)
+            elif event.modifiers() == Qt.CTRL:
+                self.move_spot_to_add(self.move_by_key, 0)
+        elif event.key() == Qt.Key_Up:
+            if event.modifiers() == Qt.CTRL + Qt.SHIFT:
+                self.move_spot_to_add(0, -10 * self.move_by_key)
+            elif event.modifiers() == Qt.CTRL:
+                self.move_spot_to_add(0, -self.move_by_key, )
+        elif event.key() == Qt.Key_Down:
+            if event.modifiers() == Qt.CTRL + Qt.SHIFT:
+                self.move_spot_to_add(0, 10 * self.move_by_key)
+            elif event.modifiers() == Qt.CTRL:
+                self.move_spot_to_add(0, self.move_by_key, )
 
         self.signal_update_scene.emit()
         self.update_status()
@@ -589,6 +611,11 @@ class SPT (PluginBase):
         else:
             self.spot_to_add = self.create_spot(x = spot['x'], y = spot['y'])
 
+    def move_spot_to_add (self, dx, dy):
+        if self.spot_to_add is not None:
+            self.spot_to_add['x'] = self.spot_to_add['x'] + dx
+            self.spot_to_add['y'] = self.spot_to_add['y'] + dy
+
     def remove_tree (self, index):
         delete_spot = self.find_spot_by_index(index)
         child_list = self.find_children(delete_spot)
@@ -731,6 +758,12 @@ class SPT (PluginBase):
             <li> Filled dots show direct ancestors and discendants.</li>
             </ul>
         <li> Right click on a spot to show a context menu.</li>
+        <li> A reticle is shown when a spot is selected and:</li>
+            <ul>
+            <li> Press space to add a child spot at the reticle.</li>
+            <li> Ctrl + Arrow to move the reticle.</li>
+            <li> Shift + Ctrl + Arrow to move the reticle fast.</li>
+            </ul>
         <li> Check "move automatically" to proceed the time when a new spot is added.</li>
         <li> A number appears when a spot has multiple children.</li>
         </ul>

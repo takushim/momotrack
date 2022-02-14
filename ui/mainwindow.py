@@ -443,18 +443,19 @@ class MainWindow (QMainWindow):
         self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_key_pressed (self, event):
-        if event.key() == Qt.Key_Right:
-            self.ui.slider_time.setValue(min(self.ui.slider_time.value() + 1,  self.image_stack.t_count - 1))
-        elif event.key() == Qt.Key_Left:
-            self.ui.slider_time.setValue(max(self.ui.slider_time.value() - 1, 0))
-        elif event.key() == Qt.Key_Home:
-            self.ui.slider_time.setValue(0)
-        elif event.key() == Qt.Key_End:
-            self.ui.slider_time.setValue(self.ui.slider_time.value())
-        elif event.key() == Qt.Key_Up:
-            self.ui.slider_zstack.setValue(min(self.ui.slider_zstack.value() + 1,  self.image_stack.z_count - 1))
-        elif event.key() == Qt.Key_Down:
-            self.ui.slider_zstack.setValue(max(self.ui.slider_zstack.value() - 1, 0))
+        if event.modifiers() == Qt.NoModifier:
+            if event.key() == Qt.Key_Right:
+                self.ui.slider_time.setValue(min(self.ui.slider_time.value() + 1,  self.image_stack.t_count - 1))
+            elif event.key() == Qt.Key_Left:
+                self.ui.slider_time.setValue(max(self.ui.slider_time.value() - 1, 0))
+            elif event.key() == Qt.Key_Home:
+                self.ui.slider_time.setValue(0)
+            elif event.key() == Qt.Key_End:
+                self.ui.slider_time.setValue(self.ui.slider_time.value())
+            elif event.key() == Qt.Key_Up:
+                self.ui.slider_zstack.setValue(min(self.ui.slider_zstack.value() + 1,  self.image_stack.z_count - 1))
+            elif event.key() == Qt.Key_Down:
+                self.ui.slider_zstack.setValue(max(self.ui.slider_zstack.value() - 1, 0))
 
         self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
         self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
