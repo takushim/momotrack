@@ -36,6 +36,38 @@ class SPT (PluginBase):
         self.image_settings = {}
         self.update_settings()
 
+    def load_settings (self, settings = {}):
+        self.update_settings(settings)
+        self.dspin_marker_radius.setValue(self.spot_radius)
+        self.dspin_marker_penwidth.setValue(self.spot_penwidth)
+        self.spin_ghost_z_range.setValue(self.ghost_z_range)
+        self.check_auto_moving.setChecked(settings.get('move_auto', True))
+        self.check_hide_tracks.setChecked(settings.get('hide_tracks', False))
+
+    def update_settings (self, settings = {}):
+        self.spot_radius = settings.get('spot_radius', 2)
+        self.spot_penwidth = settings.get('spot_penwidth', 0.2)
+        self.ghost_z_range = settings.get('ghost_z_range', 5)
+        self.color_first = settings.get('color_first', 'magenta')
+        self.color_cont = settings.get('color_cont', 'darkGreen')
+        self.color_last = settings.get('color_last', 'blue')
+        self.color_reticle = settings.get('color_reticle', 'magenta')
+        self.reticle_move = settings.get('reticle_move', 0.1)
+        self.update_marker_radii(self.spot_radius)
+
+    def archive_settings (self):
+        settings = {'spot_radius': self.spot_radius,
+                    'spot_penwidth': self.spot_penwidth,
+                    'ghost_z_range': self.ghost_z_range,
+                    'color_first': self.color_first,
+                    'color_cont': self.color_cont,
+                    'color_last': self.color_last,
+                    'color_reticle': self.color_reticle,
+                    'reticle_move': self.reticle_move,
+                    'move_auto': self.check_auto_moving.isChecked(),
+                    'hide_tracks': self.check_hide_tracks.isChecked()}
+        return settings
+
     def init_widgets (self, vlayout):
         self.vlayout = vlayout
 
@@ -81,6 +113,18 @@ class SPT (PluginBase):
         hlayout.addWidget(self.spin_ghost_z_range)
         self.vlayout.addLayout(hlayout)
 
+        hlayout = QHBoxLayout()
+        label = QLabel("Reticle move:")
+        hlayout.addWidget(label)
+        self.dspin_reticle_move = QDoubleSpinBox()
+        self.dspin_reticle_move.setRange(0.1, 100)
+        self.dspin_reticle_move.setFocusPolicy(Qt.ClickFocus)
+        self.dspin_reticle_move.setSingleStep(0.1)
+        self.dspin_reticle_move.setKeyboardTracking(False)
+        self.dspin_reticle_move.setValue(self.reticle_move)
+        hlayout.addWidget(self.dspin_reticle_move)
+        self.vlayout.addLayout(hlayout)
+
         self.text_message = QLabel()
         self.text_message.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.vlayout.addWidget(self.text_message)
@@ -98,6 +142,8 @@ class SPT (PluginBase):
         self.dspin_marker_penwidth.editingFinished.connect(self.slot_return_focus)
         self.spin_ghost_z_range.valueChanged.connect(self.slot_ghost_z_range_changed)
         self.spin_ghost_z_range.editingFinished.connect(self.slot_return_focus)
+        self.dspin_reticle_move.valueChanged.connect(self.slot_reticle_move_changed)
+        self.dspin_reticle_move.editingFinished.connect(self.slot_return_focus)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -150,38 +196,6 @@ class SPT (PluginBase):
         super().save_records(records_filename, settings)
         self.records_modified = False
 
-    def load_settings (self, settings = {}):
-        self.update_settings(settings)
-        self.dspin_marker_radius.setValue(self.spot_radius)
-        self.dspin_marker_penwidth.setValue(self.spot_penwidth)
-        self.spin_ghost_z_range.setValue(self.ghost_z_range)
-        self.check_auto_moving.setChecked(settings.get('move_auto', True))
-        self.check_hide_tracks.setChecked(settings.get('hide_tracks', False))
-
-    def update_settings (self, settings = {}):
-        self.spot_radius = settings.get('spot_radius', 2)
-        self.spot_penwidth = settings.get('spot_penwidth', 0.2)
-        self.ghost_z_range = settings.get('ghost_z_range', 5)
-        self.color_first = settings.get('color_first', 'magenta')
-        self.color_cont = settings.get('color_cont', 'darkGreen')
-        self.color_last = settings.get('color_last', 'blue')
-        self.color_reticle = settings.get('color_reticle', 'magenta')
-        self.move_by_key = settings.get('move_by_key', 0.1)
-        self.update_marker_radii(self.spot_radius)
-
-    def archive_settings (self):
-        settings = {'spot_radius': self.spot_radius,
-                    'spot_penwidth': self.spot_penwidth,
-                    'ghost_z_range': self.ghost_z_range,
-                    'color_first': self.color_first,
-                    'color_cont': self.color_cont,
-                    'color_last': self.color_last,
-                    'color_reticle': self.color_reticle,
-                    'move_by_key': self.move_by_key,
-                    'move_auto': self.check_auto_moving.isChecked(),
-                    'hide_tracks': self.check_hide_tracks.isChecked()}
-        return settings
-
     def clear_records (self):
         super().clear_records()
         self.spot_list = []
@@ -213,6 +227,9 @@ class SPT (PluginBase):
         self.ghost_z_range = self.spin_ghost_z_range.value()
         self.spin_ghost_z_range.clearFocus()
         self.signal_update_scene.emit()
+
+    def slot_reticle_move_changed (self):
+        self.reticle_move = self.dspin_reticle_move.value()
 
     def slot_z_increment (self):
         if self.current_spot is not None:
@@ -292,7 +309,7 @@ class SPT (PluginBase):
             scene_items.extend(self.list_descendant_items(ghots_descendants, self.ghost_radius))
 
         if self.spot_to_add is not None:
-            scene_items.extend(self.list_reticle_items(self.spot_to_add, self.spot_radius))
+            scene_items.extend(self.list_reticle_items(self.spot_to_add, self.selected_radius))
 
         return scene_items
 
@@ -448,24 +465,24 @@ class SPT (PluginBase):
                 self.set_spot_to_add(self.current_spot)
         elif event.key() == Qt.Key_Left:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(-10 * self.move_by_key, 0)
+                self.move_spot_to_add(-10 * self.reticle_move, 0)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(-self.move_by_key, 0)
+                self.move_spot_to_add(-self.reticle_move, 0)
         elif event.key() == Qt.Key_Right:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(10 * self.move_by_key, 0)
+                self.move_spot_to_add(10 * self.reticle_move, 0)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(self.move_by_key, 0)
+                self.move_spot_to_add(self.reticle_move, 0)
         elif event.key() == Qt.Key_Up:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(0, -10 * self.move_by_key)
+                self.move_spot_to_add(0, -10 * self.reticle_move)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(0, -self.move_by_key, )
+                self.move_spot_to_add(0, -self.reticle_move, )
         elif event.key() == Qt.Key_Down:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
-                self.move_spot_to_add(0, 10 * self.move_by_key)
+                self.move_spot_to_add(0, 10 * self.reticle_move)
             elif event.modifiers() == Qt.CTRL:
-                self.move_spot_to_add(0, self.move_by_key, )
+                self.move_spot_to_add(0, self.reticle_move, )
 
         self.signal_update_scene.emit()
         self.update_status()
@@ -712,21 +729,29 @@ class SPT (PluginBase):
         self.t_limits = [0, stack.t_count - 1]
 
     def update_status (self):
-        if self.check_hide_tracks.isChecked():
-            self.text_message.setText("Spots not shown.")
-            return
+        text = "\n"
 
-        if self.adding_spot:
-            self.text_message.setText("Click to add a spot.")
+        if self.check_hide_tracks.isChecked():
+            text += "Spots not shown.\n"
+            self.text_message.setText(text)
             return
 
         if self.current_spot is None:
-            self.text_message.setText("No spot selected.")
+            text += "Click to select a spot.\n"
+            text += "Ctrl + click to add a spot.\n"
         else:
             if self.is_tracking:
-                self.text_message.setText("Tracking from t = {0}".format(self.track_start[0]))
-            else:
-                self.text_message.setText("Spot {0} selected.".format(self.current_spot['index']))
+                text += "Tracking from t = {0}.\n".format(self.track_start[0])
+            text += "Spot {0} selected.\n".format(self.current_spot['index'])
+            text += "Click to add a child spot.\n"
+            text += "Shift + click to move the selected spot.\n"
+
+        if self.spot_to_add is not None:
+            text += "\n"
+            text += "Press space to add a child spot.\n"
+            text += "Press Ctrl + Arrow to move the reticle.\n"
+
+        self.text_message.setText(text)
 
     def update_marker_radii (self, radius):
         self.spot_radius = radius
@@ -745,7 +770,7 @@ class SPT (PluginBase):
         return self.records_modified
 
     def help_message (self):
-        message = textwrap.dedent('''
+        message = textwrap.dedent('''\
         <b>Single-particle tracking plugin</b>
         <ul>
         <li> Ctrl + click to start new tracking.</li>
