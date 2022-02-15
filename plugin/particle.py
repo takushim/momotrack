@@ -6,7 +6,7 @@ from logging import getLogger
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox, QLineEdit
-from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsRectItem, QGraphicsLineItem
+from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
 from PySide6.QtWidgets import QGraphicsTextItem, QGraphicsPathItem
 from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
 from plugin.base import PluginBase, PluginException
@@ -52,7 +52,7 @@ class SPT (PluginBase):
         self.color_cont = settings.get('color_cont', 'darkGreen')
         self.color_last = settings.get('color_last', 'blue')
         self.color_reticle = settings.get('color_reticle', 'magenta')
-        self.shift_by_key = settings.get('shift_by_key', 0.1)
+        self.shift_by_key = settings.get('shift_by_key', 0.5)
         self.update_marker_radii(self.spot_radius)
 
     def archive_settings (self):
@@ -336,9 +336,6 @@ class SPT (PluginBase):
 
     def list_reticle_items (self, spot, radius):
         item_list = []
-        item = QGraphicsRectItem(spot['x'] - radius, spot['y'] - radius, radius * 2, radius * 2)
-        item_list.append(item)
-
         ratio = 0.25
         item = QGraphicsLineItem(spot['x'], spot['y'] - radius * (1 + ratio), spot['x'], spot['y'] - radius * (1 - ratio))
         item_list.append(item)
@@ -469,36 +466,36 @@ class SPT (PluginBase):
             elif event.modifiers() == Qt.CTRL:
                 self.shift_spot_to_add(-self.shift_by_key, 0)
             elif event.modifiers() == Qt.ALT + Qt.SHIFT:
-                self.shift_selected_spot(-10 * self.shift_by_key, 0)
+                self.shift_selected_spot(-10 * self.shift_by_key, 0, tcz_index)
             elif event.modifiers() == Qt.ALT:
-                self.shift_selected_spot(-self.shift_by_key, 0)
+                self.shift_selected_spot(-self.shift_by_key, 0, tcz_index)
         elif event.key() == Qt.Key_Right:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
                 self.shift_spot_to_add(10 * self.shift_by_key, 0)
             elif event.modifiers() == Qt.CTRL:
                 self.shift_spot_to_add(self.shift_by_key, 0)
             elif event.modifiers() == Qt.ALT + Qt.SHIFT:
-                self.shift_selected_spot(10 * self.shift_by_key, 0)
+                self.shift_selected_spot(10 * self.shift_by_key, 0, tcz_index)
             elif event.modifiers() == Qt.ALT:
-                self.shift_selected_spot(self.shift_by_key, 0)
+                self.shift_selected_spot(self.shift_by_key, 0, tcz_index)
         elif event.key() == Qt.Key_Up:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
                 self.shift_spot_to_add(0, -10 * self.shift_by_key)
             elif event.modifiers() == Qt.CTRL:
                 self.shift_spot_to_add(0, -self.shift_by_key, )
             elif event.modifiers() == Qt.ALT + Qt.SHIFT:
-                self.shift_selected_spot(0, -10 * self.shift_by_key)
+                self.shift_selected_spot(0, -10 * self.shift_by_key, tcz_index)
             elif event.modifiers() == Qt.ALT:
-                self.shift_selected_spot(0, -self.shift_by_key)
+                self.shift_selected_spot(0, -self.shift_by_key, tcz_index)
         elif event.key() == Qt.Key_Down:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
                 self.shift_spot_to_add(0, 10 * self.shift_by_key)
             elif event.modifiers() == Qt.CTRL:
                 self.shift_spot_to_add(0, self.shift_by_key)
             elif event.modifiers() == Qt.ALT + Qt.SHIFT:
-                self.shift_selected_spot(0, 10 * self.shift_by_key)
+                self.shift_selected_spot(0, 10 * self.shift_by_key, tcz_index)
             elif event.modifiers() == Qt.ALT:
-                self.shift_selected_spot(0, self.shift_by_key)
+                self.shift_selected_spot(0, self.shift_by_key, tcz_index)
 
         self.signal_update_scene.emit()
         self.update_status()
@@ -595,9 +592,17 @@ class SPT (PluginBase):
         self.move_spot(self.current_spot, x, y, *tcz_index)
         self.set_spot_to_add(self.current_spot)
 
-    def shift_selected_spot (self, dx = 0.0, dy = 0.0):
+    def shift_selected_spot (self, dx = 0.0, dy = 0.0, tcz_index = None):
         if self.current_spot is None:
             return
+
+        # shift the spot only when it is displayed
+        if tcz_index is not None:
+            if (self.current_spot['time'] != tcz_index[0]) or \
+               (self.current_spot['channel'] != tcz_index[1]) or \
+               (self.current_spot['z'] != tcz_index[2]):
+               return
+
         self.move_spot(self.current_spot, self.current_spot['x'] + dx, self.current_spot['y'] + dy, \
                        self.current_spot['time'], self.current_spot['channel'], self.current_spot['z'])
         self.set_spot_to_add(self.current_spot)
@@ -640,7 +645,8 @@ class SPT (PluginBase):
 
     def update_old_spot (self, spot):
         empty_spot = self.create_spot()
-        keys = empty_spot.keys().remove('index')
+        keys = list(empty_spot.keys())
+        keys.remove('index')
         if 'index' not in spot:
             logger.error("Index not in the spot: {0}. This is critical.".format(spot))
         for key in keys:
