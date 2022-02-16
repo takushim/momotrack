@@ -158,15 +158,15 @@ class SPT (PluginBase):
 
         self.context_menu.addSeparator()
 
-        action = QAction("Remove this spot", self.context_menu)
+        action = QAction("Remove this spot\tDelete", self.context_menu)
         action.triggered.connect(self.slot_remove_spot)
         self.context_menu.addAction(action)
 
-        action = QAction("Remove this tree", self.context_menu)
+        action = QAction("Remove this tree\tShift + Delete", self.context_menu)
         action.triggered.connect(self.slot_remove_tree)
         self.context_menu.addAction(action)
 
-        action = QAction("Remove from the root", self.context_menu)
+        action = QAction("Remove from the root\tCtrl + Shift + Delete", self.context_menu)
         action.triggered.connect(self.slot_remove_track)
         self.context_menu.addAction(action)
 
@@ -496,6 +496,13 @@ class SPT (PluginBase):
                 self.shift_selected_spot(0, 10 * self.shift_by_key, tcz_index)
             elif event.modifiers() == Qt.ALT:
                 self.shift_selected_spot(0, self.shift_by_key, tcz_index)
+        elif event.key() == Qt.Key_Delete:
+            if event.modifiers() == Qt.CTRL + Qt.SHIFT:
+                self.slot_remove_track()
+            elif event.modifiers() == Qt.CTRL:
+                self.slot_remove_tree()
+            elif event.modifiers() == Qt.NoModifier:
+                self.slot_remove_spot()
 
         self.signal_update_scene.emit()
         self.update_status()
