@@ -43,6 +43,7 @@ class SPT (PluginBase):
         self.spin_ghost_z_range.setValue(self.ghost_z_range)
         self.check_auto_moving.setChecked(settings.get('move_auto', True))
         self.check_hide_tracks.setChecked(settings.get('hide_tracks', False))
+        self.check_show_labels.setChecked(settings.get('show_labels', True))
 
     def update_settings (self, settings = {}):
         self.spot_radius = settings.get('spot_radius', 2)
@@ -65,7 +66,8 @@ class SPT (PluginBase):
                     'color_reticle': self.color_reticle,
                     'shift_by_key': self.shift_by_key,
                     'move_auto': self.check_auto_moving.isChecked(),
-                    'hide_tracks': self.check_hide_tracks.isChecked()}
+                    'hide_tracks': self.check_hide_tracks.isChecked(),
+                    'show_labels': self.check_show_labels.isChecked()}
         return settings
 
     def init_widgets (self, vlayout):
@@ -74,8 +76,11 @@ class SPT (PluginBase):
         self.check_auto_moving = QCheckBox("Move automatically")
         self.vlayout.addWidget(self.check_auto_moving)
 
-        self.check_hide_tracks = QCheckBox("Hide All Tracks")
+        self.check_hide_tracks = QCheckBox("Hide all tracks")
         self.vlayout.addWidget(self.check_hide_tracks)
+
+        self.check_show_labels = QCheckBox("Show labels of spots")
+        self.vlayout.addWidget(self.check_show_labels)
 
         hlayout = QHBoxLayout()
         label = QLabel("Marker radius:")
@@ -136,6 +141,7 @@ class SPT (PluginBase):
 
     def connect_signals (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
+        self.check_show_labels.stateChanged.connect(self.slot_onoff_labels)
         self.dspin_marker_radius.valueChanged.connect(self.slot_marker_radius_changed)
         self.dspin_marker_radius.editingFinished.connect(self.slot_return_focus)
         self.dspin_marker_penwidth.valueChanged.connect(self.slot_marker_penwidth_changed)
@@ -213,6 +219,10 @@ class SPT (PluginBase):
         self.update_status()
         self.update_mouse_cursor()
 
+    def slot_onoff_labels (self):
+        self.signal_update_scene.emit()
+        self.update_status()
+
     def slot_marker_radius_changed (self):
         self.update_marker_radii(self.dspin_marker_radius.value())
         self.dspin_marker_radius.clearFocus()
@@ -279,6 +289,8 @@ class SPT (PluginBase):
                             if (spot['z'] == tcz_index[2]) and (spot != self.current_spot)]
         scene_items.extend(self.list_spot_items(deselected_spots, self.spot_radius))
         scene_items.extend(self.list_node_items(deselected_spots, self.spot_radius))
+        if self.check_show_labels.isChecked():
+            scene_items.extend(self.list_label_items(deselected_spots, self.spot_radius))
 
         ghost_spots = [spot for spot in candidate_spots \
                        if (abs(spot['z'] - tcz_index[2]) <= self.ghost_z_range) and \
@@ -293,6 +305,8 @@ class SPT (PluginBase):
                     scene_items.extend(self.list_spot_items([self.current_spot], self.spot_radius))
                     scene_items.extend(self.list_spot_items([self.current_spot], self.selected_radius))
                     scene_items.extend(self.list_node_items([self.current_spot], self.selected_radius))
+                    if self.check_show_labels.isChecked():
+                        scene_items.extend(self.list_label_items([self.current_spot], self.selected_radius))
                 elif abs(self.current_spot['z'] - tcz_index[2]) < self.ghost_z_range:
                     scene_items.extend(self.list_spot_items([self.current_spot], self.ghost_radius))
                     scene_items.extend(self.list_spot_items([self.current_spot], self.selected_ghost_radius))
@@ -392,6 +406,38 @@ class SPT (PluginBase):
         item.setDefaultTextColor(QColor(color))
         item.setFont(font)
         item.setPos(spot['x'] + radius, spot['y'] - radius - item.boundingRect().height())
+
+        return item
+
+    def list_label_items (self, spot_list, radius):
+        spots_first = [spot for spot in spot_list if spot['parent'] is None]
+        spots_last = [spot for spot in spot_list if (len(self.find_children(spot)) == 0) and (spot not in spots_first)]
+        spots_cont = [spot for spot in spot_list if (spot not in spots_first) and (spot not in spots_last)]
+
+        items_first = [self.create_label_item(spot, radius, self.color_first) for spot in spots_first]
+        items_last = [self.create_label_item(spot, radius, self.color_last) for spot in spots_last]
+        items_cont = [self.create_label_item(spot, radius, self.color_cont) for spot in spots_cont]
+
+        item_list = items_first + items_last + items_cont
+        item_list = [item for item in item_list if item is not None]
+
+        return item_list
+
+    def create_label_item (self, spot, radius, color):
+        label = spot.get('label', None)
+        if (label is None) or (len(label) == 0):
+            return None
+
+        document = QTextDocument(spot['label'])
+        document.setDocumentMargin(0)
+        font = QFont()
+        font.setPixelSize(self.spot_radius * 2)
+
+        item = QGraphicsTextItem()
+        item.setDocument(document)
+        item.setDefaultTextColor(QColor(color))
+        item.setFont(font)
+        item.setPos(spot['x'] - radius - item.boundingRect().width(), spot['y'] + radius)
 
         return item
 
@@ -503,6 +549,15 @@ class SPT (PluginBase):
                 self.slot_remove_tree()
             elif event.modifiers() == Qt.NoModifier:
                 self.slot_remove_spot()
+        elif (Qt.Key_0 <= event.key() ) and (event.key() <= Qt.Key_9):
+            self.update_label(chr(event.key()))
+        elif (Qt.Key_A <= event.key() ) and (event.key() <= Qt.Key_Z):
+            if event.modifiers() == Qt.SHIFT:
+                self.update_label(chr(event.key()).upper())
+            elif event.modifiers() == Qt.NoModifier:
+                self.update_label(chr(event.key()).lower())
+        elif event.key() == Qt.Key_Backspace:
+            self.update_label()
 
         self.signal_update_scene.emit()
         self.update_status()
@@ -637,7 +692,7 @@ class SPT (PluginBase):
         spot = self.create_spot(index = index, time = t_index, channel = channel, \
                                 x = x, y = y, z = z_index, parent = parent_index)
 
-        logger.info("Adding spot: {0}".format(spot))
+        logger.info("Adding a spot: {0}".format(spot))
         self.spot_list.append(spot)
         self.current_spot = spot
         self.records_modified = True
@@ -659,6 +714,7 @@ class SPT (PluginBase):
         for key in keys:
             if key not in spot:
                 spot[key] = empty_spot[key]
+                logger.info("Updated the old spot: {0}".format(spot))
 
     def set_spot_to_add (self, spot):
         if spot is None:
@@ -671,6 +727,12 @@ class SPT (PluginBase):
         if self.spot_to_add is not None:
             self.spot_to_add['x'] = self.spot_to_add['x'] + dx
             self.spot_to_add['y'] = self.spot_to_add['y'] + dy
+
+    def update_label (self, label = None):
+        if self.current_spot is not None:
+            self.current_spot['label'] = label
+            self.current_spot['update'] = datetime.now().astimezone().isoformat()
+            logger.info("Updated the label: {0}".format(self.current_spot))
 
     def remove_tree (self, index):
         delete_spot = self.find_spot_by_index(index)
@@ -782,6 +844,12 @@ class SPT (PluginBase):
             if self.is_tracking:
                 text += "Tracking from t = {0}.\n".format(self.track_start[0])
             text += "Spot {0} selected.\n".format(self.current_spot['index'])
+
+            spot_label = self.current_spot.get('label', None)
+            spot_label = "(None)" if spot_label is None else spot_label
+            text += "Label: {0}\n".format(spot_label)
+
+            text += "\n"
             text += "Click to add a child spot.\n"
             text += "Shift + Click to move the spot.\n"
             text += "Alt + Arrow to shift the spot.\n"
