@@ -89,6 +89,7 @@ if window_position is None:
 else:
     window_x, window_y = window_position
 
+window = None
 for index in range(max(1, len(image_filenames))):
     image_filename = image_filenames[index] if len(image_filenames) > index else None
     plugin_name = plugin_names[index] if len(plugin_names) > index else None
@@ -111,6 +112,6 @@ for index in range(max(1, len(image_filenames))):
 
     except Exception:
         logger.error("Failed or canceled to load file(s): {0}, {1}".format(image_filename, records_filename))
-        sys.exit()
 
-sys.exit(app.exec())
+if window is not None:
+    sys.exit(app.exec())
