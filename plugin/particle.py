@@ -4,6 +4,7 @@ import textwrap
 from datetime import datetime
 from logging import getLogger
 from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
 from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox, QLineEdit
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
@@ -639,6 +640,13 @@ class SPT (PluginBase):
                 
         self.signal_update_scene.emit()
         self.update_status()
+        self.update_mouse_cursor()
+
+    def focus_recovered (self):
+        if QApplication.queryKeyboardModifiers() == Qt.ControlModifier:
+            self.adding_spot = True
+        else:
+            self.adding_spot = False
         self.update_mouse_cursor()
 
     def clear_tracking (self):

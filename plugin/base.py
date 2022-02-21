@@ -101,3 +101,5 @@ class PluginBase (QObject):
     def mouse_released (self, event, stack, tcz_index):
         pass
 
+    def focus_recovered (self):
+        pass

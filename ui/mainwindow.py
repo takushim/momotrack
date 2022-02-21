@@ -342,6 +342,9 @@ class MainWindow (QMainWindow):
         if dialog.exec():
             self.open_images(dialog.selectedFiles())
 
+        self.plugin_class.focus_recovered()
+        self.activateWindow()
+
     def slot_load_records (self):
         if self.image_filename is None:
             self.show_message(title = "Records loading error", message = "Open image before loading records.")
@@ -363,6 +366,9 @@ class MainWindow (QMainWindow):
         if dialog.exec():
             self.load_records(dialog.selectedFiles()[0])
             self.update_image_view()
+
+        self.plugin_class.focus_recovered()
+        self.activateWindow()
 
     def slot_save_records (self):
         if self.records_filename is None:
@@ -387,15 +393,21 @@ class MainWindow (QMainWindow):
         if dialog.exec():
             self.save_records(dialog.selectedFiles()[0])
 
+        self.plugin_class.focus_recovered()
+        self.activateWindow()
+
     def slot_clear_records (self):
         self.clear_records()
         self.update_image_view()
 
     def slot_focus_graphics_view (self):
         self.ui.gview_image.setFocus()
+        self.activateWindow()
 
     def slot_plugin_help (self):
         self.show_message(title = "Quick help", message = self.plugin_class.help_message())
+        self.plugin_class.focus_recovered()
+        self.activateWindow()
 
     def slot_viewer_help (self):
         message = textwrap.dedent('''\
@@ -409,6 +421,7 @@ class MainWindow (QMainWindow):
         created by the current plugin. See also the plugin help.
         ''')
         self.show_message(title = "Viewer help", message = message)
+        self.plugin_class.focus_recovered()
 
     def slot_about_this (self):
         message = textwrap.dedent('''\
@@ -418,9 +431,11 @@ class MainWindow (QMainWindow):
         Copyright 2021-2022 by Takushi Miyoshi (NIH/NIDCD).
         '''.format(self.app_name))
         self.show_message(title = "About This", message = message)
+        self.plugin_class.focus_recovered()
 
     def slot_about_qt (self):
         QApplication.aboutQt()
+        self.plugin_class.focus_recovered()
 
     def slot_scene_mouse_pressed (self, event):
         self.plugin_class.mouse_pressed(event, self.image_stack, self.image_panel.current_index())
