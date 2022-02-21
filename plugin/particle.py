@@ -545,7 +545,7 @@ class SPT (PluginBase):
         elif event.key() == Qt.Key_Delete:
             if event.modifiers() == Qt.CTRL + Qt.SHIFT:
                 self.slot_remove_track()
-            elif event.modifiers() == Qt.CTRL:
+            elif event.modifiers() == Qt.SHIFT:
                 self.slot_remove_tree()
             elif event.modifiers() == Qt.NoModifier:
                 self.slot_remove_spot()
