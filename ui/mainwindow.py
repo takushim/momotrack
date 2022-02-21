@@ -200,16 +200,16 @@ class MainWindow (QMainWindow):
             self.image_stack = image_stack
             self.image_filename = image_filename
 
+            self.init_widgets()
+            self.plugin_class.update_stack_info(self.image_stack)
+            self.zoom_best()
+
         except OSError:
             self.image_filename = None
             self.image_stack = stack.Stack()
             self.image_stack.alloc_zero_image()
             self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(image_filename))
-
-        finally:
-            self.init_widgets()
-            self.plugin_class.update_stack_info(self.image_stack)
-            self.zoom_best()
+            raise
 
     def load_records (self, records_filename):
         try:
@@ -217,13 +217,14 @@ class MainWindow (QMainWindow):
             self.records_filename = records_filename
             self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
             self.restore_settings(self.plugin_class.records_dict.get('viewer_settings', {}))
-        except OSError:
-            self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
-        except PluginException as exception:
-            self.show_message(title = "Records loading error", message = str(exception))
-        finally:
             self.update_image_view()
             self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
+        except OSError:
+            self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
+            raise
+        except PluginException as exception:
+            self.show_message(title = "Records loading error", message = str(exception))
+            raise
 
     def save_records (self, records_filename):
         try:
