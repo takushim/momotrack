@@ -572,6 +572,9 @@ class SPT (PluginBase):
         elif event.key() == Qt.Key_Space:
             if self.check_auto_moving.isChecked():
                 if self.is_tracking and self.last_tczindex is not None:
+                    if self.last_tczindex[0] >= self.t_limits[1]:
+                        # end tracking at the end of the time-lapse
+                        self.spot_to_add = None
                     # avoid moving forward twice (since press and release events are sometimes not paired)
                     self.move_time_forward(*self.last_tczindex)
                     self.last_tczindex = None
