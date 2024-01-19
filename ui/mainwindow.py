@@ -16,7 +16,7 @@ class MainWindow (QMainWindow):
 
     def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
         super().__init__()
-        self.app_name = "PyTrace"
+        self.app_name = "MomoTrack"
         self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 
         self.setWindowTitle(self.app_name)
