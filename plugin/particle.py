@@ -508,52 +508,52 @@ class SPT (PluginBase):
                 self.last_tczindex = tcz_index
                 self.set_spot_to_add(self.current_spot)
         elif event.key() == Qt.Key_Left:
-            if event.modifiers() == Qt.CTRL | Qt.SHIFT:
+            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
                 self.shift_spot_to_add(-10 * self.shift_by_key, 0)
-            elif event.modifiers() == Qt.CTRL:
+            elif event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(-self.shift_by_key, 0)
-            elif event.modifiers() == Qt.ALT | Qt.SHIFT:
+            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
                 self.shift_selected_spot(-10 * self.shift_by_key, 0, tcz_index)
-            elif event.modifiers() == Qt.ALT:
+            elif event.modifiers() == Qt.AltModifier:
                 self.shift_selected_spot(-self.shift_by_key, 0, tcz_index)
         elif event.key() == Qt.Key_Right:
-            if event.modifiers() == Qt.CTRL | Qt.SHIFT:
+            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
                 self.shift_spot_to_add(10 * self.shift_by_key, 0)
-            elif event.modifiers() == Qt.CTRL:
+            elif event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(self.shift_by_key, 0)
-            elif event.modifiers() == Qt.ALT | Qt.SHIFT:
+            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
                 self.shift_selected_spot(10 * self.shift_by_key, 0, tcz_index)
-            elif event.modifiers() == Qt.ALT:
+            elif event.modifiers() == Qt.AltModifier:
                 self.shift_selected_spot(self.shift_by_key, 0, tcz_index)
         elif event.key() == Qt.Key_Up:
-            if event.modifiers() == Qt.CTRL | Qt.SHIFT:
+            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
                 self.shift_spot_to_add(0, -10 * self.shift_by_key)
-            elif event.modifiers() == Qt.CTRL:
+            elif event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(0, -self.shift_by_key, )
-            elif event.modifiers() == Qt.ALT | Qt.SHIFT:
+            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
                 self.shift_selected_spot(0, -10 * self.shift_by_key, tcz_index)
-            elif event.modifiers() == Qt.ALT:
+            elif event.modifiers() == Qt.AltModifier:
                 self.shift_selected_spot(0, -self.shift_by_key, tcz_index)
         elif event.key() == Qt.Key_Down:
-            if event.modifiers() == Qt.CTRL | Qt.SHIFT:
+            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
                 self.shift_spot_to_add(0, 10 * self.shift_by_key)
-            elif event.modifiers() == Qt.CTRL:
+            elif event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(0, self.shift_by_key)
-            elif event.modifiers() == Qt.ALT | Qt.SHIFT:
+            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
                 self.shift_selected_spot(0, 10 * self.shift_by_key, tcz_index)
-            elif event.modifiers() == Qt.ALT:
+            elif event.modifiers() == Qt.AltModifier:
                 self.shift_selected_spot(0, self.shift_by_key, tcz_index)
         elif event.key() == Qt.Key_Delete:
-            if event.modifiers() == Qt.CTRL | Qt.SHIFT:
+            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
                 self.slot_remove_track()
-            elif event.modifiers() == Qt.SHIFT:
+            elif event.modifiers() == Qt.ShiftModifier:
                 self.slot_remove_tree()
             elif event.modifiers() == Qt.NoModifier:
                 self.slot_remove_spot()
         elif (Qt.Key_0 <= event.key() ) and (event.key() <= Qt.Key_9):
             self.update_label(chr(event.key()))
         elif (Qt.Key_A <= event.key() ) and (event.key() <= Qt.Key_Z):
-            if event.modifiers() == Qt.SHIFT:
+            if event.modifiers() == Qt.ShiftModifier:
                 self.update_label(chr(event.key()).upper())
             elif event.modifiers() == Qt.NoModifier:
                 self.update_label(chr(event.key()).lower())
