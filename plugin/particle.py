@@ -508,40 +508,24 @@ class SPT (PluginBase):
                 self.last_tczindex = tcz_index
                 self.set_spot_to_add(self.current_spot)
         elif event.key() == Qt.Key_Left:
-            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
-                self.shift_spot_to_add(-10 * self.shift_by_key, 0)
-            elif event.modifiers() == Qt.ControlModifier:
+            if event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(-self.shift_by_key, 0)
-            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
-                self.shift_selected_spot(-10 * self.shift_by_key, 0, tcz_index)
-            elif event.modifiers() == Qt.AltModifier:
+            elif event.modifiers() == Qt.ShiftModifier:
                 self.shift_selected_spot(-self.shift_by_key, 0, tcz_index)
         elif event.key() == Qt.Key_Right:
-            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
-                self.shift_spot_to_add(10 * self.shift_by_key, 0)
-            elif event.modifiers() == Qt.ControlModifier:
+            if event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(self.shift_by_key, 0)
-            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
-                self.shift_selected_spot(10 * self.shift_by_key, 0, tcz_index)
-            elif event.modifiers() == Qt.AltModifier:
+            elif event.modifiers() == Qt.ShiftModifier:
                 self.shift_selected_spot(self.shift_by_key, 0, tcz_index)
         elif event.key() == Qt.Key_Up:
-            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
-                self.shift_spot_to_add(0, -10 * self.shift_by_key)
-            elif event.modifiers() == Qt.ControlModifier:
+            if event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(0, -self.shift_by_key, )
-            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
-                self.shift_selected_spot(0, -10 * self.shift_by_key, tcz_index)
-            elif event.modifiers() == Qt.AltModifier:
+            elif event.modifiers() == Qt.ShiftModifier:
                 self.shift_selected_spot(0, -self.shift_by_key, tcz_index)
         elif event.key() == Qt.Key_Down:
-            if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
-                self.shift_spot_to_add(0, 10 * self.shift_by_key)
-            elif event.modifiers() == Qt.ControlModifier:
+            if event.modifiers() == Qt.ControlModifier:
                 self.shift_spot_to_add(0, self.shift_by_key)
-            elif event.modifiers() == Qt.AltModifier | Qt.ShiftModifier:
-                self.shift_selected_spot(0, 10 * self.shift_by_key, tcz_index)
-            elif event.modifiers() == Qt.AltModifier:
+            elif event.modifiers() == Qt.ShiftModifier:
                 self.shift_selected_spot(0, self.shift_by_key, tcz_index)
         elif event.key() == Qt.Key_Delete:
             if event.modifiers() == Qt.ControlModifier | Qt.ShiftModifier:
@@ -864,7 +848,7 @@ class SPT (PluginBase):
             text += "\n"
             text += "Click to add a child spot.\n"
             text += "Shift + Click to move the spot.\n"
-            text += "Alt + Arrow to shift the spot.\n"
+            text += "Shift + Arrow to shift the spot.\n"
 
         if self.spot_to_add is not None:
             text += "\n"
@@ -899,8 +883,7 @@ class SPT (PluginBase):
             <li> Click to proceed tracking.</li>
             <li> Drag moves the spot within the view.</li>
             <li> Shift + click moves the spot to a different view.</li>
-            <li> Alt + Arrow shifts the spot within the view.</li>
-            <li> Alt + Shift + Arrow shifts the spot faster.</li>
+            <li> Shift + Arrow shifts the spot within the view.</li>
             <li> Adjacent dots indicate ancestors and discendants.</li>
             <li> Filled dots show direct ancestors and discendants.</li>
             </ul>
@@ -909,7 +892,6 @@ class SPT (PluginBase):
             <ul>
             <li> Press space to add a child spot at the reticle.</li>
             <li> Ctrl + Arrow to shift the reticle.</li>
-            <li> Ctrl + Shift + Arrow to shift the reticle faster.</li>
             </ul>
         <li> Check "move automatically" to proceed the time when a new spot is added.</li>
         <li> A number appears when a spot has multiple children.</li>
