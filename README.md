@@ -4,13 +4,13 @@ This is a GUI application to help object tracking in 2D/3D images written using 
 
 **momotrack** was named after [Micro-Manager](https://micro-manager.org/), the famous software for controlling microscope hardware, and also after my tiny friend, **Momo**, who survived the COVID-19 pandemic with our family.
 
-![Momo (hamster)](https://github.com/takushim/momoassist/raw/main/samples/momo.jpg)
+![Momo (hamster)](https://github.com/takushim/momotrack/raw/main/samples/momo.jpg)
 
 Momo (2019-2020, RIP)
 
 ## Introduction
 
-**momotrack** is a GUI application available on major operating systems including Windows, MacOSX and Linux. X Window System is necessaary to run on Linux. In this document, the basic usage is described using [FakeTracks.tif](https://samples.fiji.sc/FakeTracks.tif), which is a sample file for TrackMate storing 2D time-lapse images. Object tracking in 3D time-lapse images is also available with this application.
+**momotrack** is a GUI application available on major operating systems including Windows, MacOSX and Linux. X Window System is necessaary to run on Linux. In this document, the basic usage is described using [FakeTracks.tif](https://samples.fiji.sc/FakeTracks.tif), which is a sample file for TrackMate storing 2D time-lapse images. Object tracking in 3D time-lapse images is also available with this application (sample file will be prepared soon).
 
 ## Getting Started
 
@@ -60,7 +60,7 @@ mmtrack.py FakeTracks.tif
 
 This will open a window with an image as shown below. You can browse the image using cursor keys (`RIGHT/LEFT` keys for the time, `UP/DOWN` keys for the Z-stack).
 
-![Main Window](https://github.com/takushim/momoassist/raw/main/samples/cartoons_mainwindow.jpg)
+![Main Window](https://github.com/takushim/momotrack/raw/main/samples/cartoons_mainwindow.jpg)
 
 Tracking records will be saved in a file, `XXX_track.json`, which will be `FakeTracks_track.json` unless otherwise specified. You can load this tracking file during the start-up with an option `-f` as shown below.
 
@@ -77,7 +77,7 @@ mmtrack.py -f FakeTracks_track.json FakeTracks.tif
 
 Object tracking begins with `Ctrl + click` to place a marker followed by `a sequence of clicks` until the `ESC` key is pressed. By default, the "Move Automatically" option is ON to help your tracking by moving the time frame after each click and by going back to the frame of the first marker after each cycle.
 
-![Legends](https://github.com/takushim/momoassist/raw/main/samples/cartoons_legend.jpg)
+![Legends](https://github.com/takushim/momotrack/raw/main/samples/cartoons_legend.jpg)
 
 During the tracking a **reticle** appears to help precise marking. Press `SPACE` to add a marker at the center of the reticle. This reticle can be moved using `SHIFT + cursor keys`. You can also move to an image at a different time frame or Z-frame using cursor keys.
 
