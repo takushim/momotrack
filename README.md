@@ -2,7 +2,7 @@
 
 This is a GUI application to help object tracking in 2D/3D images written using Python and the Qt6 library. This application can load 2D/3D microscope images saved in the TIFF or OME-TIFF format, especially those acquired with the [diSPIM light-sheet microscope](http://dispim.org) using [Micro-Manager](https://micro-manager.org/). This application is used in our next paper, whose preprint will be available soon.
 
-**momotrack** was named after [Micro-Manager](https://micro-manager.org/), the famous software for controlling microscope hardware, and also after my tiny friend, **Momo**, who survived the COVID-19 pandemic with our family.
+**momotrack** was named after [Micro-Manager](https://micro-manager.org/), the famous software for controlling microscope hardware, and also after the tiny friend of our family, **Momo**, who survived the COVID-19 pandemic with our family.
 
 ![Momo (hamster)](https://github.com/takushim/momotrack/raw/main/samples/momo.jpg)
 
@@ -95,4 +95,4 @@ When a marker is selected, you can move the position of marker using `SHIFT + cu
 
 ## License
 
-This project is licensed under the MIT licence.
+This application is licensed under the MIT licence.
