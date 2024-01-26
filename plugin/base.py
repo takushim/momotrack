@@ -60,7 +60,7 @@ class PluginBase (QObject):
             return self.default_filename + self.record_suffix
 
         name = Path(image_filename).stem
-        name = re.sub('\.ome$', '', name, flags=re.IGNORECASE)
+        name = re.sub(r'\.ome$', '', name, flags=re.IGNORECASE)
         return name + self.record_suffix
 
     def is_modified (self):
