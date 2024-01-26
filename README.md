@@ -79,11 +79,11 @@ Object tracking begins with `Ctrl + click` to place a marker followed by `a sequ
 
 ![Legends](https://github.com/takushim/momotrack/raw/main/samples/cartoons_legend.jpg)
 
-During the tracking a **reticle** appears to help precise marking. Press `SPACE` to add a marker at the center of the reticle. This reticle can be moved using `SHIFT + cursor keys`. You can also move to an image at a different time frame or Z-frame using cursor keys.
+During the tracking, a **reticle** appears to help precise marking. Press `SPACE` to add a marker at the center of the reticle. This reticle can be moved using `SHIFT + cursor keys`. You can also move to an image at a different time frame or Z-frame using cursor keys.
 
 **Note:** You can add the next marker anywhere - even in the previous frame. This is a disadvantage for giving a high degree of freedom. Be careful.
 
-**Note:** Small spots named "ghosts" appears when you track objects in 3D images. This will help you to find the original spot in the 3D stack.
+**Note:** Small spots named "ghosts" appear when you track objects in 3D images. This will help you to find the original spot in the 3D stack.
 
 Markers can be deleted using a **context menu** that appears after a `right click` to the marker. You can also delete a marker by pressing `DELETE` after selecting the marker.
 
