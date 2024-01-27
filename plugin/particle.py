@@ -884,8 +884,8 @@ class SPT (PluginBase):
             <li> Drag moves the spot within the view.</li>
             <li> Shift + click moves the spot to a different view.</li>
             <li> Shift + Arrow shifts the spot within the view.</li>
-            <li> Adjacent dots indicate ancestors and discendants.</li>
-            <li> Filled dots show direct ancestors and discendants.</li>
+            <li> Adjacent dots indicate ancestors and descendants.</li>
+            <li> Filled dots show direct ancestors and descendants.</li>
             </ul>
         <li> Right click on a spot to show a context menu.</li>
         <li> A reticle is shown when a spot is selected and:</li>

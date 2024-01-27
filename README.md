@@ -79,7 +79,7 @@ Object tracking begins with `Ctrl + click` to place a marker followed by `a sequ
 
 ![Legends](https://github.com/takushim/momotrack/raw/main/samples/cartoons_legend.jpg)
 
-During the tracking, a **reticle** appears to help precise marking. Press `SPACE` to add a marker at the center of the reticle. This reticle can be moved using `SHIFT + cursor keys`. You can also move to an image at a different time frame or Z-frame using cursor keys.
+During the tracking, a **reticle** appears to help precise marking. Press `SPACE` to add a marker at the center of the reticle. This reticle can be moved using `CTRL + cursor keys`. You can also move to an image at a different time frame or Z-frame using cursor keys.
 
 **Note:** You can add the next marker anywhere - even in the previous frame. This is a disadvantage for giving a high degree of freedom. Be careful.
 
@@ -87,7 +87,7 @@ During the tracking, a **reticle** appears to help precise marking. Press `SPACE
 
 Markers can be deleted using a **context menu** that appears after a `right click` to the marker. You can also delete a marker by pressing `DELETE` after selecting the marker.
 
-When a marker is selected, you can move the position of marker using `SHIFT + cursor keys`. You can also add the "decendant" of the marker by `clicking the image` or pressing `SPACE`. By combining the **context menu** in the previous paragraph, you can remove the "decendants" of a marker and resume tracking. You can also check which marker is the "ascendant" and the "descendants" of the selected marker.
+When a marker is selected, you can move the position of marker using `SHIFT + cursor keys`. You can also add the "descendant" of the marker by `clicking the image` or pressing `SPACE`. By combining the **context menu** in the previous paragraph, you can remove the "descendants" of a marker and resume tracking. You can also check which marker is the "ascendant" and the "descendants" of the selected marker.
 
 **Note:** You can add multiple "descendants" for a marker. This can be highly confusing. Use with caution.
 
@@ -97,4 +97,4 @@ When a marker is selected, you can move the position of marker using `SHIFT + cu
 
 ## License
 
-This application is licensed under the MIT licence.
+This application is licensed under the MIT license.
