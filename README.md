@@ -6,7 +6,7 @@ This is a GUI application to help object tracking in 2D/3D images written using 
 
 ![Momo (hamster)](https://github.com/takushim/momotrack/raw/main/samples/momo.jpg)
 
-Momo (2019-2020, RIP)
+Momo (2020-2021, RIP)
 
 ## Introduction
 
