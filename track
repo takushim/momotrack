@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# find an image file if not specified
+# set the image list
 if [ $# == 0 ]; then
     echo "Specify at least one image file."
     exit 1
