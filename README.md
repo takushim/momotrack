@@ -35,7 +35,8 @@ Next, install the following packages to your Python environment using pip. You c
 
 All of these libraries can be installed using `pip` by typing:
 ```
-pip install PySide6 numpy scipy tifffile ome-types NumpyEncoder progressbar2
+pip install PySide6 numpy scipy tifffile ome-types \
+    NumpyEncoder progressbar2
 ```
 
 **Note:** You don't have to install `cupy` although codes for GPU calculation appear in some scripts. GPU calculation is not used in this application.
