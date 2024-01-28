@@ -5,6 +5,8 @@ set -euo pipefail
 if [ $# == 0 ]; then
     echo "Specify at least one image file."
     exit 1
+else
+    files=("$@")
 fi
 
 # process!
