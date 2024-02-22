@@ -18,8 +18,8 @@ Momo (2020-2021, RIP)
 
 First of all, download and install the following programs.
 
-* [`Python 3.12.1 or later`](https://www.python.org)
-* [`Qt6 (open-source version)`](https://www.qt.io/download-open-source)
+* [`Python 3.11.1 or later, see Note below`](https://www.python.org)
+* [`Qt6 (open-source version, see Note below)`](https://www.qt.io/download-open-source)
 * [`Fiji (recommended)`](https://imagej.net/software/fiji/)
 * [`Git (recommended)`](https://git-scm.com/)
 
@@ -38,6 +38,8 @@ All of these libraries can be installed using `pip` by typing:
 pip install PySide6 numpy scipy tifffile ome-types \
     NumpyEncoder progressbar2
 ```
+
+**Note:** The latest Qt library (version 6.6 as of Feb 2024) may have trouble opening the main window because it fails to create a QUiLoader instance. To avoid this issue, install `Python version 3.11`, `Qt version 6.5.3` and `Pyside6 version 6.5.3` instead of the latest versions. You can try these versions without uninstalling the latest versions if you can prepare a virtual environment for Python.
 
 **Note:** You don't have to install `cupy` although codes for GPU calculation appear in some scripts. GPU calculation is not used in this application.
 
