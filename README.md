@@ -19,7 +19,7 @@ Momo (2020-2021, RIP)
 First of all, download and install the following programs.
 
 * [`Python 3.11.1 or later, see Note below`](https://www.python.org)
-* [`Qt6 (open-source version, see Note below)`](https://www.qt.io/download-open-source)
+* [`Qt6 open-source version, see Note below`](https://www.qt.io/download-open-source)
 * [`Fiji (recommended)`](https://imagej.net/software/fiji/)
 * [`Git (recommended)`](https://git-scm.com/)
 
