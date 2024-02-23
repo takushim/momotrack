@@ -39,7 +39,7 @@ pip install PySide6 numpy scipy tifffile ome-types \
     NumpyEncoder progressbar2
 ```
 
-**Note:** The latest Qt library (version 6.6 as of Feb 2024) may have trouble opening the main window because it fails to create a QUiLoader instance. This is probably a bag ([see this thread in stackoverflow](https://stackoverflow.com/questions/75952922/python3-pyside6-load-ui-files-with-quiloader)). To avoid this issue, install `Python version 3.11`, `Qt version 6.5.3` and `Pyside6 version 6.5.3` instead of the latest versions. You can try these versions without uninstalling the latest versions if you can prepare a virtual environment for Python.
+**Note:** The latest Qt library (version 6.6 as of Feb 2024) may have trouble opening the main window because it fails to create a QUiLoader instance. This is probably a bug ([see this thread in stackoverflow](https://stackoverflow.com/questions/75952922/python3-pyside6-load-ui-files-with-quiloader)). To avoid this issue, install `Python version 3.11`, `Qt version 6.5.3` and `Pyside6 version 6.5.3` instead of the latest versions. You can try these versions without uninstalling the latest versions if you can prepare a virtual environment for Python.
 
 **Note:** You don't have to install `cupy` although codes for GPU calculation appear in some scripts. GPU calculation is not used in this application.
 
