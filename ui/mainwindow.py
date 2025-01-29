@@ -290,7 +290,7 @@ class MainWindow (QMainWindow):
                 self.plugin_class.clear_records()
                 return True
             else:
-                self.slot_save_records(self.records_filename)
+                self.slot_save_records()
                 if self.plugin_class.is_modified():
                     return False
 
