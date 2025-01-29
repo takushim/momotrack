@@ -586,7 +586,6 @@ class SPT (PluginBase):
             else:
                 self.clear_tracking()
         elif event.button() == Qt.LeftButton:
-            print(event.modifiers())
             if event.modifiers() == Qt.ControlModifier:
                 self.add_spot(pos.x(), pos.y(), *tcz_index, parent = None)
                 self.is_tracking = True

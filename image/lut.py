@@ -15,6 +15,7 @@ lut_dict["Gray"]    = [255, 255, 255]
 lut_names = list(lut_dict.keys())
 
 bit_dict = {}
+bit_dict["Auto"]    = [sys.float_info.min, sys.float_info.max]
 bit_dict["Float"]    = [sys.float_info.min, sys.float_info.max]
 bit_dict["INT-32+"]  = [0, np.iinfo(np.int32).max]
 bit_dict["UINT-16"]  = [0, np.iinfo(np.uint16).max]
@@ -51,7 +52,6 @@ class LUT:
     def load_settings (self, settings = {}):
         self.lut_name = settings.get('lut_name', 'Gray')
         self.bit_mode = settings.get('bit_mode', 'UINT-16')
-        self.bit_auto = settings.get('bit_auto', False)
         self.lut_lower = settings.get('lut_lower', 0)
         self.lut_upper = settings.get('lut_upper', 0xffff)
         self.auto_lut = settings.get('auto_lut', False)
@@ -61,7 +61,6 @@ class LUT:
     def archive_settings (self):
         settings = {'lut_name': self.lut_name,
                     'bit_mode': self.bit_mode,
-                    'bit_auto': self.bit_auto,
                     'lut_lower': self.lut_lower,
                     'lut_upper': self.lut_upper,
                     'auto_lut': self.auto_lut,
@@ -89,7 +88,7 @@ class LUT:
             self.bit_mode = "Float"
 
     def bit_range (self):
-        if self.bit_auto == False and self.bit_mode != "Float":
+        if self.bit_mode != "Auto" and self.bit_mode != "Float":
             return bit_dict[self.bit_mode]
 
         lower_limit = max(self.pixel_lower, bit_dict[self.bit_mode][0])
@@ -105,7 +104,6 @@ class LUT:
         self.lut_upper= self.pixel_upper
 
     def set_auto_cutoff(self, pixel_value, percentile):
-        self.bit_auto = True
         self.auto_lut = True
         self.auto_cutoff = percentile
         if self.bit_mode == "Float":
