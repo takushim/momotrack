@@ -15,33 +15,32 @@ class MainWindow (QMainWindow):
     signal_open_new_image = Signal(list)
 
     def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
+        super().__init__()
+        self.app_name = "MomoTrack"
+        self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
+
+        self.setWindowTitle(self.app_name)
+
+        self.image_stack = stack.Stack()
+        self.image_stack.alloc_zero_image()
+        self.image_filename = image_filename
+        self.records_filename = records_filename
+
+        self.load_ui()
+
+        self.plugin_package = 'plugin'
+        self.default_plugin = 'base'
+        self.load_plugins(plugin_name)
+
+        self.init_widgets()
+        self.connect_menubar_to_slots()
+        self.connect_signals_to_slots()
+
         try:
-            super().__init__()
-            self.app_name = "MomoTrack"
-            self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
-
-            self.setWindowTitle(self.app_name)
-
-            self.image_stack = stack.Stack()
-            self.image_stack.alloc_zero_image()
-            self.image_filename = image_filename
-            self.records_filename = records_filename
-
-            self.load_ui()
-
-            self.plugin_package = 'plugin'
-            self.default_plugin = 'base'
-            self.load_plugins(plugin_name)
-
-            self.init_widgets()
-            self.connect_menubar_to_slots()
-            self.connect_signals_to_slots()
-
             if image_filename is not None and len(image_filename) > 0:
                 self.load_image(image_filename)
             if records_filename is not None and len(records_filename) > 0:
                 self.load_records(records_filename)
-
         except Exception:
             # throw exception to the main routine
             raise

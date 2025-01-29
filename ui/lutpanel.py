@@ -26,6 +26,9 @@ class LutPanel:
 
         if stack is None:
             self.lut_list.append(lut.LUT())
+        elif stack.c_count == 1:
+            image_lut = lut.LUT(lut_name = "Gray", pixel_values = stack.image_array[:, 0])
+            self.lut_list.append(image_lut)
         else:
             for channel in range(stack.c_count):
                 lut_name = lut.lut_names[channel % len(lut.lut_names)]
@@ -35,10 +38,6 @@ class LutPanel:
     def restore_lut_settings (self, settings_list = []):
         for index in range(min(len(self.lut_list), len(settings_list))):
             self.lut_list[index].load_settings(settings_list[index])
-        #self.update_boxes()
-        #self.update_sliders()
-        #self.update_labels()
-        #self.update_current_lut()
 
     def update_boxes (self):
         self.ui.combo_channel.blockSignals(True)
