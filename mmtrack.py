@@ -107,9 +107,12 @@ for index in range(max(1, len(image_filenames))):
         window_x, window_y = next_window_position(window_x, window_y)
 
         window.show()
+        
+        # gview_image doesn't know the actual size until the main window is shown
         if records_filename is None:
-            # gview_image doesn't know the actual size until the main window is shown
             window.zoom_best()
+        else:
+            window.restore_settings()
 
     except Exception:
         logger.error(f"Failed or canceled to load: {image_filename} and {records_filename}")
