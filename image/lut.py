@@ -103,7 +103,7 @@ class LUT:
         self.lut_lower = self.pixel_lower
         self.lut_upper= self.pixel_upper
 
-    def set_auto_cutoff(self, pixel_value, percentile):
+    def set_range_by_image(self, pixel_value, percentile):
         self.auto_lut = True
         self.auto_cutoff = percentile
         if self.bit_mode == "Float":

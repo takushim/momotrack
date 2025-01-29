@@ -194,7 +194,7 @@ class SPT (PluginBase):
 
         self.update_status()
         self.update_mouse_cursor()
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
 
     def save_records (self, records_filename, settings = {}):
         try:
@@ -209,7 +209,7 @@ class SPT (PluginBase):
         super().clear_records()
         self.spot_list = []
         self.clear_tracking()
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
         self.update_status()
         self.update_mouse_cursor()
         self.records_modified = False
@@ -218,28 +218,28 @@ class SPT (PluginBase):
         if self.check_hide_tracks.isChecked():
             self.current_spot = None
             self.adding_spot = False
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
         self.update_status()
         self.update_mouse_cursor()
 
     def slot_onoff_labels (self):
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
         self.update_status()
 
     def slot_marker_radius_changed (self):
         self.update_marker_radii(self.dspin_marker_radius.value())
         self.dspin_marker_radius.clearFocus()
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
 
     def slot_marker_penwidth_changed (self):
         self.spot_penwidth = self.dspin_marker_penwidth.value()
         self.dspin_marker_penwidth.clearFocus()
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
 
     def slot_ghost_z_range_changed (self):
         self.ghost_z_range = self.spin_ghost_z_range.value()
         self.spin_ghost_z_range.clearFocus()
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
 
     def slot_shift_by_key_changed (self):
         self.shift_by_key = self.dspin_shift_by_key.value()
@@ -247,31 +247,31 @@ class SPT (PluginBase):
     def slot_z_increment (self):
         if self.current_spot is not None:
             self.current_spot['z'] = min(self.current_spot['z'] + 1, self.z_limits[1])
-            self.signal_update_scene.emit()
+            self.signal_update_image_view.emit()
 
     def slot_z_decrement (self):
         if self.current_spot is not None:
             self.current_spot['z'] = max(self.current_spot['z'] - 1, self.z_limits[0])
-            self.signal_update_scene.emit()
+            self.signal_update_image_view.emit()
 
     def slot_remove_spot (self):
         if self.current_spot is not None:
             self.remove_spot(self.current_spot['index'])
             self.clear_tracking()
-            self.signal_update_scene.emit()
+            self.signal_update_image_view.emit()
 
     def slot_remove_tree (self):
         if self.current_spot is not None:
             self.remove_tree(self.current_spot['index'])
             self.clear_tracking()
-            self.signal_update_scene.emit()
+            self.signal_update_image_view.emit()
 
     def slot_remove_track (self):
         if self.current_spot is not None:
             root_spot = self.find_root(self.current_spot['index'])
             self.remove_tree(root_spot['index'])
             self.clear_tracking()
-            self.signal_update_scene.emit()
+            self.signal_update_image_view.emit()
 
     def slot_return_focus (self):
         self.dspin_marker_penwidth.findChild(QLineEdit).deselect()
@@ -546,7 +546,7 @@ class SPT (PluginBase):
         elif event.key() == Qt.Key_Backspace:
             self.update_label()
 
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
         self.update_status()
         self.update_mouse_cursor()
 
@@ -566,7 +566,7 @@ class SPT (PluginBase):
                     self.move_time_forward(*self.last_tczindex)
                     self.last_tczindex = None
 
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
         self.update_status()
         self.update_mouse_cursor()
 
@@ -581,7 +581,7 @@ class SPT (PluginBase):
         if event.button() == Qt.RightButton:
             self.select_spot(pos.x(), pos.y(), *tcz_index)
             if self.current_spot is not None:
-                self.signal_update_scene.emit()
+                self.signal_update_image_view.emit()
                 self.context_menu.exec(event.screenPos())
             else:
                 self.clear_tracking()
@@ -607,14 +607,14 @@ class SPT (PluginBase):
                     self.last_tczindex = tcz_index
                     self.set_spot_to_add(self.current_spot)
                 
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
         self.update_status()
         self.update_mouse_cursor()
 
     def mouse_moved (self, event, stack, tcz_index):
         if event.buttons() == Qt.LeftButton:
             self.move_selected_spot(x = event.scenePos().x(), y = event.scenePos().y())
-            self.signal_update_scene.emit()
+            self.signal_update_image_view.emit()
 
     def mouse_released (self, event, stack, tcz_index):
         if event.button() == Qt.LeftButton:
@@ -624,7 +624,7 @@ class SPT (PluginBase):
                     self.move_time_forward(*self.last_tczindex)
                     self.last_tczindex = None
                 
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
         self.update_status()
         self.update_mouse_cursor()
 

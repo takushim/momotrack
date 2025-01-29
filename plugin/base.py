@@ -19,7 +19,7 @@ class PluginException(Exception):
         return "Plugin: {0}".format(self.message)
 
 class PluginBase (QObject):
-    signal_update_scene = Signal()
+    signal_update_image_view = Signal()
     signal_reset_panels = Signal()
     signal_update_mouse_cursor = Signal(QCursor)
     signal_move_by_tczindex = Signal(int, int, int)
