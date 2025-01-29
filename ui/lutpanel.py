@@ -9,11 +9,11 @@ class LutPanel:
     def __init__ (self, ui):
         self.ui = ui
         self.ui.combo_lut.addItems([item for item in lut.lut_dict])
-        self.ui.combo_bits.addItems(["Auto"] + [item for item in lut.bit_dict])
+        self.ui.combo_bits.addItems([item for item in lut.bit_dict])
 
     def init_widgets (self, stack):
         self.init_luts(stack)
-        self.update_boxes()
+        self.init_boxes()
         self.update_sliders()
         self.update_labels()
 
@@ -35,11 +35,7 @@ class LutPanel:
                 image_lut = lut.LUT(lut_name = lut_name, pixel_values = stack.image_array[:, channel])
                 self.lut_list.append(image_lut)
 
-    def restore_lut_settings (self, settings_list = []):
-        for index in range(min(len(self.lut_list), len(settings_list))):
-            self.lut_list[index].load_settings(settings_list[index])
-
-    def update_boxes (self):
+    def init_boxes (self):
         self.ui.combo_channel.blockSignals(True)
         self.ui.combo_channel.clear()
         self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(len(self.lut_list))])
@@ -49,11 +45,43 @@ class LutPanel:
         self.ui.combo_lut.setCurrentText(lut.lut_name)
         self.ui.combo_lut.setEnabled(self.ui.check_color_always.isChecked())
 
-        self.ui.combo_bits.setCurrentText("Auto" if lut.bit_auto else lut.bit_mode)
+        self.ui.combo_bits.setCurrentText(lut.bit_mode)
         self.ui.check_invert_lut.setChecked(lut.lut_invert)
         self.ui.dspin_auto_cutoff.setValue(lut.auto_cutoff)
         self.ui.check_auto_lut.setChecked(lut.auto_lut)
 
+    def restore_lut_settings (self, settings_list = []):
+        for index in range(min(len(self.lut_list), len(settings_list))):
+            self.lut_list[index].load_settings(settings_list[index])
+
+    def set_current_channel (self, channel = 0):
+        self.ui.combo_channel.blockSignals(True)
+        self.ui.combo_channel.setCurrentIndex(channel)
+        self.ui.combo_channel.blockSignals(False)
+
+        current_lut = self.lut_list[channel]
+
+        self.ui.combo_bits.blockSignals(True)
+        self.ui.combo_bits.setCurrentText(current_lut.bit_mode)
+        self.ui.combo_bits.blockSignals(False)
+
+        self.ui.combo_lut.blockSignals(True)
+        self.ui.combo_lut.setCurrentText(current_lut.lut_name)
+        self.ui.combo_lut.blockSignals(False)
+
+        self.ui.check_invert_lut.blockSignals(True)
+        self.ui.check_invert_lut.setChecked(current_lut.lut_invert)
+        self.ui.check_invert_lut.blockSignals(False)
+
+        self.ui.check_auto_lut.blockSignals(True)
+        self.ui.check_auto_lut.setChecked(current_lut.auto_lut)
+        self.ui.check_auto_lut.blockSignals(False)
+        self.ui.dspin_auto_cutoff.setValue(current_lut.auto_cutoff)
+
+        self.update_sliders()
+        self.update_labels()
+        self.update_current_bits()
+ 
     def update_sliders (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         bit_range = current_lut.bit_range()
@@ -103,34 +131,32 @@ class LutPanel:
         current_lut.lut_upper = self.ui.slider_lut_upper.value()
         current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
         current_lut.lut_name = self.ui.combo_lut.currentText()
-        current_lut.bit_auto = (self.ui.combo_bits.currentText() == "Auto")
+        current_lut.bit_mode = self.ui.combo_bits.currentText()
         self.update_labels()
 
     def reset_current_lut_mapping (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
-        current_lut.bit_auto = True
         current_lut.reset_bit_mode()
         current_lut.reset_cutoff()
         self.ui.check_auto_lut.setChecked(False)
-        self.update_channel_widgets()
+        self.update_channel_widget_status()
         self.update_sliders()
         self.update_labels()
 
-    def set_auto_cutoff (self, image):
+    def update_auto_lut_status (self, image):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         current_lut.set_auto_cutoff(image, self.ui.dspin_auto_cutoff.value())
-        current_lut.lut_invert = self.ui.check_invert_lut.isChecked()
-        current_lut.lut_name = self.ui.combo_lut.currentText()
+        current_lut.auto_lut = self.ui.check_auto_lut.isChecked()
 
-        self.ui.slider_lut_upper.blockSignals(True)
-        self.ui.slider_lut_lower.blockSignals(True)
-        self.ui.slider_lut_upper.setValue(current_lut.lut_upper)
-        self.ui.slider_lut_lower.setValue(current_lut.lut_lower)
-        self.ui.slider_lut_upper.blockSignals(False)
-        self.ui.slider_lut_lower.blockSignals(False)
+        if current_lut.auto_lut is True:
+            self.ui.slider_lut_upper.blockSignals(True)
+            self.ui.slider_lut_lower.blockSignals(True)
+            self.ui.slider_lut_upper.setValue(current_lut.lut_upper)
+            self.ui.slider_lut_lower.setValue(current_lut.lut_lower)
+            self.ui.slider_lut_upper.blockSignals(False)
+            self.ui.slider_lut_lower.blockSignals(False)
 
-        self.ui.check_auto_lut.setChecked(True)
-        self.update_labels()
+            self.update_labels()
 
     def update_current_bits (self):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
@@ -138,15 +164,13 @@ class LutPanel:
         bit_mode = self.ui.combo_bits.currentText()
         if bit_mode == "Auto":
             current_lut.reset_bit_mode()
-            current_lut.bit_auto = True
         else:
             current_lut.bit_mode = self.ui.combo_bits.currentText()
-            current_lut.bit_auto = False
         
         self.update_sliders()
         self.update_labels()
 
-    def update_channel_widgets (self):
+    def update_channel_widget_status (self):
         if self.ui.check_composite.isChecked() or self.ui.check_color_always.isChecked():
             self.ui.combo_lut.setEnabled(True)
         else:
@@ -159,13 +183,7 @@ class LutPanel:
 
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]
         self.ui.combo_lut.setCurrentText(current_lut.lut_name)
-        if current_lut.bit_auto:
-            self.ui.combo_bits.setCurrentText("Auto")
-        else:
-            self.ui.combo_bits.setCurrentText(current_lut.bit_mode)
-
-        self.update_sliders()
-        self.update_labels()
+        self.ui.combo_bits.setCurrentText(current_lut.bit_mode)
 
     def update_lut_view (self, image):
         current_lut = self.lut_list[self.ui.combo_channel.currentIndex()]

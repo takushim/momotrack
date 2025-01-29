@@ -150,8 +150,8 @@ class MainWindow (QMainWindow):
 
         # lut
         self.ui.combo_channel.currentIndexChanged.connect(self.slot_channel_changed)
-        self.ui.check_composite.stateChanged.connect(self.slot_channel_changed)
-        self.ui.check_color_always.stateChanged.connect(self.slot_channel_changed)
+        self.ui.check_composite.stateChanged.connect(self.slot_color_mode_changed)
+        self.ui.check_color_always.stateChanged.connect(self.slot_color_mode_changed)
         self.ui.check_invert_lut.stateChanged.connect(self.slot_lut_inversion_changed)
         self.ui.combo_lut.currentIndexChanged.connect(self.slot_lut_mapping_changed)
         self.ui.combo_bits.currentIndexChanged.connect(self.slot_lut_bits_changed)
@@ -202,7 +202,6 @@ class MainWindow (QMainWindow):
                     return
         except:
             self.show_message(title = "Image opening error", message = f"Failed to open image: {image_filename}")
-            print(image_filename)
             raise
 
         self.image_stack = image_stack
@@ -249,7 +248,7 @@ class MainWindow (QMainWindow):
         self.ui.slider_time.setValue(settings.get('t_index', 0))
 
         self.lut_panel.restore_lut_settings(settings.get('luts', []))
-        self.ui.combo_channel.setCurrentIndex(settings.get('channel', 0))
+        self.lut_panel.set_current_channel(settings.get('channel', 0))
         self.ui.check_composite.setChecked(settings.get('composite', False))
         self.ui.check_color_always.setChecked(settings.get('color_always', False))
 
@@ -307,7 +306,6 @@ class MainWindow (QMainWindow):
         self.plugin_panel.update_title(module.plugin_name)
         self.plugin_panel.update_widgets(self.plugin_class)
         self.plugin_class.signal_update_scene.connect(self.slot_update_scene)
-        self.plugin_class.signal_update_lut.connect(self.slot_update_lut)
         self.plugin_class.signal_reset_panels.connect(self.slot_reset_panels)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
         self.plugin_class.signal_move_by_tczindex.connect(self.slot_move_by_tczindex)
@@ -447,8 +445,9 @@ class MainWindow (QMainWindow):
         message = textwrap.dedent('''\
         <b>{0}</b><br><br>
         Object tracking system for time-lapse 2D/3D images.<br>
-        Distributed under the BSD 3-clause license.<br>
-        Copyright 2021-2022 by Takushi Miyoshi (NIH/NIDCD).
+        Distributed under the MIT license.<br>
+        Copyright 2021-2023 by Takushi Miyoshi (NIH/NIDCD).<br>
+        Copyright 2024-2025 by Takushi Miyoshi (SIUSOM).
         '''.format(self.app_name))
         self.show_message(title = "About This", message = message)
         self.plugin_class.focus_recovered()
@@ -500,14 +499,16 @@ class MainWindow (QMainWindow):
         self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_image_index_changed (self):
-        if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
+        self.lut_panel.update_auto_lut_status(self.image_panel.current_image(self.image_stack))
         self.update_image_view()
 
     def slot_channel_changed (self):
-        self.lut_panel.update_channel_widgets()
-        if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
+        self.lut_panel.update_channel_widget_status()
+        self.lut_panel.update_auto_lut_status(self.image_panel.current_image(self.image_stack))
+        self.update_image_view()
+
+    def slot_color_mode_changed (self):
+        self.lut_panel.update_channel_widget_status()
         self.update_image_view()
 
     def slot_lut_inversion_changed (self):
@@ -534,9 +535,8 @@ class MainWindow (QMainWindow):
         self.update_image_view()
     
     def slot_auto_lut_changed (self):
-        if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
-            self.update_image_view()
+        self.lut_panel.update_auto_lut_status(self.image_panel.current_image(self.image_stack))
+        self.update_image_view()
 
     def slot_reset_lut (self):
         self.lut_panel.reset_current_lut_mapping()
@@ -572,14 +572,6 @@ class MainWindow (QMainWindow):
         self.switch_plugin(action.text())
 
     def slot_update_scene (self):
-        self.update_image_view()
-
-    def slot_update_lut (self):
-        self.lut_panel.init_luts(self.image_stack)
-        if self.lut_panel.is_auto_lut():
-            self.lut_panel.set_auto_cutoff(self.image_panel.current_image(self.image_stack))
-        else:
-            self.lut_panel.update_current_lut()
         self.update_image_view()
 
     def slot_move_by_tczindex (self, time, channel, z_index):
