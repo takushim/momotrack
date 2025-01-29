@@ -71,7 +71,6 @@ class MainWindow (QMainWindow):
         self.image_panel.init_widgets(self.image_stack)
         self.zoom_panel.zoom_reset()
         self.lut_panel.init_widgets(self.image_stack)
-        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
         self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
         self.update_image_view()
         self.update_window_title()
@@ -149,18 +148,8 @@ class MainWindow (QMainWindow):
         self.ui.button_zoom_reset.clicked.connect(self.slot_zoom_reset)
 
         # lut
-        self.ui.combo_channel.currentIndexChanged.connect(self.slot_channel_changed)
-        self.ui.check_composite.stateChanged.connect(self.slot_color_mode_changed)
-        self.ui.check_color_always.stateChanged.connect(self.slot_color_mode_changed)
-        self.ui.check_invert_lut.stateChanged.connect(self.slot_lut_inversion_changed)
-        self.ui.combo_lut.currentIndexChanged.connect(self.slot_lut_mapping_changed)
-        self.ui.combo_bits.currentIndexChanged.connect(self.slot_lut_bits_changed)
-        self.ui.check_auto_lut.stateChanged.connect(self.slot_auto_lut_changed)
-        self.ui.dspin_auto_cutoff.valueChanged.connect(self.slot_auto_lut_changed)
-        self.ui.dspin_auto_cutoff.editingFinished.connect(self.slot_focus_graphics_view)
-        self.ui.slider_lut_lower.valueChanged.connect(self.slot_lut_lower_changed)
-        self.ui.slider_lut_upper.valueChanged.connect(self.slot_lut_upper_changed)
-        self.ui.button_reset_lut.clicked.connect(self.slot_reset_lut)
+        self.lut_panel.signal_update_image_view.connect(self.slot_update_image_view)
+        self.lut_panel.connect_signals_to_slots()
 
         # plugin
         self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
@@ -312,7 +301,7 @@ class MainWindow (QMainWindow):
         self.plugin_class = getattr(module, module.class_name)()
         self.plugin_panel.update_title(module.plugin_name)
         self.plugin_panel.update_widgets(self.plugin_class)
-        self.plugin_class.signal_update_scene.connect(self.slot_update_scene)
+        self.plugin_class.signal_update_image_view.connect(self.slot_update_image_view)
         self.plugin_class.signal_reset_panels.connect(self.slot_reset_panels)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
         self.plugin_class.signal_move_by_tczindex.connect(self.slot_move_by_tczindex)
@@ -328,10 +317,13 @@ class MainWindow (QMainWindow):
         self.image_panel.channel = self.lut_panel.current_channel()
         self.image_panel.composite = self.lut_panel.is_composite()
         self.image_panel.color_always = self.lut_panel.color_always()
+
+        self.lut_panel.update_lut_range_if_auto(self.image_panel.current_image(self.image_stack))
+        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
+
         self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
                                             item_list = self.plugin_class.list_scene_items(self.image_stack, self.image_panel.current_index()))
 
-        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
 
     def zoom_best (self):
         self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
@@ -506,47 +498,6 @@ class MainWindow (QMainWindow):
         self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_image_index_changed (self):
-        self.lut_panel.update_auto_lut_status(self.image_panel.current_image(self.image_stack))
-        self.update_image_view()
-
-    def slot_channel_changed (self):
-        self.lut_panel.update_channel_widget_status()
-        self.lut_panel.update_auto_lut_status(self.image_panel.current_image(self.image_stack))
-        self.update_image_view()
-
-    def slot_color_mode_changed (self):
-        self.lut_panel.update_channel_widget_status()
-        self.update_image_view()
-
-    def slot_lut_inversion_changed (self):
-        self.lut_panel.update_current_lut_mapping()
-        self.update_image_view()
-
-    def slot_lut_mapping_changed (self):
-        self.lut_panel.update_current_lut_mapping()
-        self.update_image_view()
-
-    def slot_lut_bits_changed (self):
-        self.lut_panel.update_current_bits()
-        self.lut_panel.update_current_lut_mapping()
-        self.update_image_view()
-
-    def slot_lut_lower_changed (self):
-        self.lut_panel.set_slider_upper()
-        self.lut_panel.update_current_lut_mapping()
-        self.update_image_view()
-
-    def slot_lut_upper_changed (self):
-        self.lut_panel.set_slider_lower()
-        self.lut_panel.update_current_lut_mapping()
-        self.update_image_view()
-    
-    def slot_auto_lut_changed (self):
-        self.lut_panel.update_auto_lut_status(self.image_panel.current_image(self.image_stack))
-        self.update_image_view()
-
-    def slot_reset_lut (self):
-        self.lut_panel.reset_current_lut_mapping()
         self.update_image_view()
 
     def slot_zoomed_in (self):
@@ -578,7 +529,7 @@ class MainWindow (QMainWindow):
     def slot_switch_plugin (self, action):
         self.switch_plugin(action.text())
 
-    def slot_update_scene (self):
+    def slot_update_image_view (self):
         self.update_image_view()
 
     def slot_move_by_tczindex (self, time, channel, z_index):

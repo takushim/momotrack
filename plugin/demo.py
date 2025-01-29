@@ -37,7 +37,7 @@ class Demo (PluginBase):
         text = "Button clicked."
         logger.info(text)
         self.text_message.setText(text)
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
 
     def list_scene_items (self, stack, tcz_index):
         self.update_spots(stack.width, stack.height)
@@ -56,7 +56,7 @@ class Demo (PluginBase):
         logger.info(text)
         self.text_message.setText(text)
         self.update_spots(stack.width, stack.height)
-        self.signal_update_scene.emit()
+        self.signal_update_image_view.emit()
 
     def update_spots (self, width, height):
         self.item_list = []
