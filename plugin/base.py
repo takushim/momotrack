@@ -34,13 +34,15 @@ class PluginBase (QObject):
         self.file_types = {"JSON text": ["*.json"]}
 
     def load_records (self, records_filename):
-        with open(records_filename, 'r') as f:
-            self.records_dict = json.load(f)
+        try:
+            with open(records_filename, 'r') as f:
+                self.records_dict = json.load(f)
+        except:
+            raise PluginException(f"Record File unable to load: {records_filename}")
 
         plugin_name = self.records_dict.get('summary', {}).get('plugin_name', '')
-
         if plugin_name != self.plugin_name:
-            raise PluginException("The records were created by different plugin: {0}".format(plugin_name))
+            raise PluginException(f"The records were created by different plugin: {plugin_name}")
 
     def save_records (self, records_filename, settings = {}):
         summary = {'plugin_name': self.plugin_name, \
@@ -48,9 +50,12 @@ class PluginBase (QObject):
 
         self.records_dict = {'summary': summary} | settings | self.records_dict
 
-        with open(records_filename, 'w') as f:
-            json.dump(self.records_dict, f, ensure_ascii = False, indent = 4, sort_keys = False, \
-                      separators = (',', ': '), cls = NumpyEncoder)
+        try:
+            with open(records_filename, 'w') as f:
+                json.dump(self.records_dict, f, ensure_ascii = False, indent = 4, sort_keys = False, \
+                        separators = (',', ': '), cls = NumpyEncoder)
+        except:
+            raise PluginException(f"Record File unable to save: {records_filename}")
 
     def clear_records (self):
         self.records_dict = {}

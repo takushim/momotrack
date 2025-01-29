@@ -180,28 +180,30 @@ class SPT (PluginBase):
     def load_records (self, records_filename):
         try:
             super().load_records(records_filename)
-
-            self.spot_list = self.records_dict.get('spot_list', [])
-            self.load_settings(self.records_dict.get('plugin_settings', {}))
-
-            for spot in self.spot_list:
-                self.update_old_spot(spot)
-
-            self.clear_tracking()
-            self.records_modified = False
-
-            self.update_status()
-            self.update_mouse_cursor()
-            self.signal_update_scene.emit()
-
-        except PluginException:
+        except:
             raise
 
-    def save_records (self, records_filename, settings = {}):
-        self.records_dict = {'plugin_settings': self.archive_settings(),
-                             'spot_list': self.spot_list}
-        super().save_records(records_filename, settings)
+        self.spot_list = self.records_dict.get('spot_list', [])
+        self.load_settings(self.records_dict.get('plugin_settings', {}))
+
+        for spot in self.spot_list:
+            self.update_old_spot(spot)
+
+        self.clear_tracking()
         self.records_modified = False
+
+        self.update_status()
+        self.update_mouse_cursor()
+        self.signal_update_scene.emit()
+
+    def save_records (self, records_filename, settings = {}):
+        try:
+            self.records_dict = {'plugin_settings': self.archive_settings(),
+                                'spot_list': self.spot_list}
+            super().save_records(records_filename, settings)
+            self.records_modified = False
+        except:
+            raise
 
     def clear_records (self):
         super().clear_records()

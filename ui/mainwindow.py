@@ -15,31 +15,36 @@ class MainWindow (QMainWindow):
     signal_open_new_image = Signal(list)
 
     def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
-        super().__init__()
-        self.app_name = "MomoTrack"
-        self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
+        try:
+            super().__init__()
+            self.app_name = "MomoTrack"
+            self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 
-        self.setWindowTitle(self.app_name)
+            self.setWindowTitle(self.app_name)
 
-        self.image_stack = stack.Stack()
-        self.image_stack.alloc_zero_image()
-        self.image_filename = image_filename
-        self.records_filename = records_filename
+            self.image_stack = stack.Stack()
+            self.image_stack.alloc_zero_image()
+            self.image_filename = image_filename
+            self.records_filename = records_filename
 
-        self.load_ui()
+            self.load_ui()
 
-        self.plugin_package = 'plugin'
-        self.default_plugin = 'base'
-        self.load_plugins(plugin_name)
+            self.plugin_package = 'plugin'
+            self.default_plugin = 'base'
+            self.load_plugins(plugin_name)
 
-        self.init_widgets()
-        self.connect_menubar_to_slots()
-        self.connect_signals_to_slots()
+            self.init_widgets()
+            self.connect_menubar_to_slots()
+            self.connect_signals_to_slots()
 
-        if image_filename is not None and len(image_filename) > 0:
-            self.load_image(image_filename)
-        if records_filename is not None and len(records_filename) > 0:
-            self.load_records(records_filename)
+            if image_filename is not None and len(image_filename) > 0:
+                self.load_image(image_filename)
+            if records_filename is not None and len(records_filename) > 0:
+                self.load_records(records_filename)
+
+        except Exception:
+            # throw exception to the main routine
+            raise
 
     def load_ui (self):
         file = QFile(str(Path(__file__).parent.joinpath("mainwindow.ui")))
@@ -56,6 +61,12 @@ class MainWindow (QMainWindow):
         self.plugin_panel = pluginpanel.PluginPanel(self.ui)
         self.play_timer = QTimer(self)
         self.play_timer.setInterval(100)
+
+    def resize_best (self):
+        screen_size = self.screen().availableSize()
+        width = int(screen_size.width() * 0.8)
+        height = int(screen_size.height() * 0.8)
+        self.resize(width, height)
 
     def init_widgets (self):
         self.image_panel.init_widgets(self.image_stack)
@@ -155,86 +166,79 @@ class MainWindow (QMainWindow):
         # plugin
         self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
 
-    def open_images (self, image_filename_list):
+    def open_multiple_images (self, image_filename_list):
         stack_exts = [item for values in self.image_types.values() for item in values]
 
         new_files = []
         for image_filename in image_filename_list:
             if any([Path(str(image_filename).lower()).match(ext) for ext in stack_exts]):
                 if self.image_filename is None:
-                    self.load_image(image_filename)
+                    try:
+                        self.load_image(image_filename)
+                    except:
+                        # does nothing because a message dialog is already shown
+                        pass
                 else:
                     new_files.append(image_filename)
 
         if len(new_files) > 0:
             self.signal_open_new_image.emit(new_files)
 
-    def resize_best (self):
-        screen_size = self.screen().availableSize()
-        width = int(screen_size.width() * 0.8)
-        height = int(screen_size.height() * 0.8)
-        self.resize(width, height)
-
-    def zoom_best (self):
-        self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
-                                  (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
-
     def load_image (self, image_filename):
+        # This function may throw an exception
+        file = Path(image_filename)
+        total_size = file.stat().st_size
+
+        dialog = QProgressDialog("Loading: {0}".format(file.name), "Cancel", 0, 100)
+        dialog.setWindowModality(Qt.WindowModal)
+        dialog.show()
+        QApplication.processEvents()
+
         try:
-            file = Path(image_filename)
-            total_size = file.stat().st_size
-
-            dialog = QProgressDialog("Loading: {0}".format(file.name), "Cancel", 0, 100)
-            dialog.setWindowModality(Qt.WindowModal)
-            dialog.show()
-            QApplication.processEvents()
-
             image_stack = stack.Stack()
             for read_size in image_stack.read_image_by_chunk(image_filename):
                 dialog.setValue(int(read_size / total_size * 100))
                 QApplication.processEvents()
                 if dialog.wasCanceled():
-                    raise OSError()
-
-            self.image_stack = image_stack
-            self.image_filename = image_filename
-
-            self.init_widgets()
-            self.plugin_class.update_stack_info(self.image_stack)
-            self.zoom_best()
-
-        except OSError:
-            self.image_filename = None
-            self.image_stack = stack.Stack()
-            self.image_stack.alloc_zero_image()
-            self.show_message(title = "Image opening error", message = "Failed to open image: {0}".format(image_filename))
+                    return
+        except:
+            self.show_message(title = "Image opening error", message = f"Failed to open image: {image_filename}")
+            print(image_filename)
             raise
+
+        self.image_stack = image_stack
+        self.image_filename = image_filename
+
+        self.init_widgets()
+        self.plugin_class.update_stack_info(self.image_stack)
+        self.zoom_best()
 
     def load_records (self, records_filename):
+        # This function may throw an exception
         try:
             self.plugin_class.load_records(records_filename)
-            self.records_filename = records_filename
-            self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
-            self.restore_settings(self.plugin_class.records_dict.get('viewer_settings', {}))
-            self.update_image_view()
-            self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
-        except OSError:
-            self.show_message(title = "Records loading error", message = "Failed to load records: {0}".format(records_filename))
-            raise
-        except PluginException as exception:
-            self.show_message(title = "Records loading error", message = str(exception))
+        except Exception as exception:
+            self.show_message(title = "Record loading error", message = str(exception))
             raise
 
+        self.records_filename = records_filename
+        self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
+        self.restore_settings(self.plugin_class.records_dict.get('viewer_settings', {}))
+        self.update_image_view()
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
+
     def save_records (self, records_filename):
+        # This function may throw an exception
+        settings = {'image_properties': self.archive_image_properties(), 
+                    'viewer_settings': self.archive_viewer_settings()}
         try:
-            settings = {'image_properties': self.archive_image_properties(), 
-                        'viewer_settings': self.archive_viewer_settings()}
             self.plugin_class.save_records(records_filename, settings = settings)
-            self.records_filename = records_filename
-            self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
-        except OSError:
-            self.show_message(title = "Records saving error", message = "Failed to save records: {0}".format(records_filename))
+        except Exception as exception:
+            self.show_message(title = "Record saving error", message = str(exception))
+            raise
+
+        self.records_filename = records_filename
+        self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
 
     def clear_records (self):
         self.plugin_class.clear_records()
@@ -326,6 +330,11 @@ class MainWindow (QMainWindow):
 
         self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
 
+    def zoom_best (self):
+        self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
+                                  (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
+        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
+
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
         mbox.setWindowTitle(title)
@@ -341,7 +350,7 @@ class MainWindow (QMainWindow):
         dialog.setViewMode(QFileDialog.List)
 
         if dialog.exec():
-            self.open_images(dialog.selectedFiles())
+            self.open_multiple_images(dialog.selectedFiles())
 
         self.plugin_class.focus_recovered()
         self.activateWindow()
@@ -365,7 +374,11 @@ class MainWindow (QMainWindow):
             dialog.setDirectory(str(image_file.resolve().parent))
 
         if dialog.exec():
-            self.load_records(dialog.selectedFiles()[0])
+            try:
+                self.load_records(dialog.selectedFiles()[0])
+            except:
+                # does nothing because a message dialog is already shown
+                pass
             self.update_image_view()
 
         self.plugin_class.focus_recovered()
@@ -375,7 +388,11 @@ class MainWindow (QMainWindow):
         if self.records_filename is None:
             self.slot_save_records_as()
         else:
-            self.save_records(self.records_filename)
+            try:
+                self.save_records(self.records_filename)
+            except:
+                # does nothing because a message dialog is already shown
+                pass
 
     def slot_save_records_as (self):
         dialog = QFileDialog(self)
@@ -392,7 +409,11 @@ class MainWindow (QMainWindow):
                 dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
 
         if dialog.exec():
-            self.save_records(dialog.selectedFiles()[0])
+            try:
+                self.save_records(dialog.selectedFiles()[0])
+            except:
+                # does nothing because a message dialog is already shown
+                pass
 
         self.plugin_class.focus_recovered()
         self.activateWindow()
@@ -589,7 +610,7 @@ class MainWindow (QMainWindow):
             error_files = [file for file in files if (file not in stack_files) and (file not in record_files)]
 
             if len(stack_files) > 0:
-                self.open_images([str(file) for file in stack_files])
+                self.open_multiple_images([str(file) for file in stack_files])
                 error_files.extend(record_files)
             elif len(record_files) > 0:
                 if self.image_filename is not None and len(record_files) == 1:

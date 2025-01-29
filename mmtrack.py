@@ -108,10 +108,11 @@ for index in range(max(1, len(image_filenames))):
 
         window.show()
         if records_filename is None:
+            # gview_image doesn't know the actual size until the main window is shown
             window.zoom_best()
 
     except Exception:
-        logger.error("Failed or canceled to load file(s): {0}, {1}".format(image_filename, records_filename))
+        logger.error(f"Failed or canceled to load: {image_filename} and {records_filename}")
 
 if window is not None:
     sys.exit(app.exec())
