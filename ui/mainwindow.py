@@ -243,7 +243,9 @@ class MainWindow (QMainWindow):
         self.records_filename = None
         self.plugin_panel.update_filename(None, self.plugin_class.is_modified())
 
-    def restore_settings(self, settings = {}):
+    def restore_settings(self, settings = None):
+        if settings is None:
+            settings = self.plugin_class.records_dict.get('viewer_settings', {})
         self.ui.slider_zstack.setValue(settings.get('z_index', 0))
         self.ui.slider_time.setValue(settings.get('t_index', 0))
 
@@ -253,6 +255,8 @@ class MainWindow (QMainWindow):
         self.ui.check_color_always.setChecked(settings.get('color_always', False))
 
         self.zoom_panel.set_zoom(settings.get('zoom_ratio', 100))
+        self.ui.gview_image.verticalScrollBar().setValue(settings.get('v_scroll', 0))
+        self.ui.gview_image.horizontalScrollBar().setValue(settings.get('h_scroll', 0))
 
     def archive_viewer_settings (self):
         settings = {'z_index': self.ui.slider_zstack.value(),
@@ -261,7 +265,10 @@ class MainWindow (QMainWindow):
                     'composite': self.ui.check_composite.isChecked(),
                     'color_always': self.ui.check_color_always.isChecked(),
                     'luts': [lut.archive_settings() for lut in self.lut_panel.lut_list],
-                    'zoom_ratio': self.zoom_panel.zoom_ratio}
+                    'zoom_ratio': self.zoom_panel.zoom_ratio,
+                    'v_scroll': self.ui.gview_image.verticalScrollBar().value(),
+                    'h_scroll': self.ui.gview_image.horizontalScrollBar().value(),
+                    }
         return settings
 
     def archive_image_properties (self):
