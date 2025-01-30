@@ -2,7 +2,7 @@
 
 import numpy as np
 from PySide6.QtCore import QObject, Signal
-from PySide6.QtWidgets import QGraphicsScene
+from PySide6.QtWidgets import QGraphicsScene, QLineEdit
 from PySide6.QtGui import QColor
 from image import lut
 
@@ -111,6 +111,7 @@ class LutPanel (QObject):
 
         self.ui.dspin_auto_cutoff.blockSignals(True)
         self.ui.dspin_auto_cutoff.setValue(current_lut.auto_cutoff)
+        self.ui.dspin_auto_cutoff.releaseKeyboard()
         self.ui.dspin_auto_cutoff.blockSignals(False)
 
         # set sliders

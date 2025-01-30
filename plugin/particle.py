@@ -6,7 +6,7 @@ from logging import getLogger
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QCheckBox, QLabel, QMenu
-from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox, QLineEdit
+from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox, QLineEdit, QComboBox
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
 from PySide6.QtWidgets import QGraphicsTextItem, QGraphicsPathItem
 from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
@@ -51,7 +51,7 @@ class SPT (PluginBase):
         self.spot_penwidth = settings.get('spot_penwidth', 0.2)
         self.ghost_z_range = settings.get('ghost_z_range', 5)
         self.color_first = settings.get('color_first', 'magenta')
-        self.color_cont = settings.get('color_cont', 'darkGreen')
+        self.color_cont = settings.get('color_cont', 'darkgreen')
         self.color_last = settings.get('color_last', 'blue')
         self.color_reticle = settings.get('color_reticle', 'magenta')
         self.shift_by_key = settings.get('shift_by_key', 0.5)
@@ -68,7 +68,8 @@ class SPT (PluginBase):
                     'shift_by_key': self.shift_by_key,
                     'move_auto': self.check_auto_moving.isChecked(),
                     'hide_tracks': self.check_hide_tracks.isChecked(),
-                    'show_labels': self.check_show_labels.isChecked()}
+                    'show_labels': self.check_show_labels.isChecked(),
+                    }
         return settings
 
     def init_widgets (self, vlayout):
@@ -131,6 +132,42 @@ class SPT (PluginBase):
         hlayout.addWidget(self.dspin_shift_by_key)
         self.vlayout.addLayout(hlayout)
 
+        hlayout = QHBoxLayout()
+        label = QLabel("First:")
+        hlayout.addWidget(label)
+        self.combo_color_first = QComboBox()
+        self.combo_color_first.addItems(QColor.colorNames())
+        self.combo_color_first.setCurrentText(self.color_first)
+        hlayout.addWidget(self.combo_color_first)
+        self.vlayout.addLayout(hlayout)
+
+        hlayout = QHBoxLayout()
+        label = QLabel("Cont:")
+        hlayout.addWidget(label)
+        self.combo_color_cont = QComboBox()
+        self.combo_color_cont.addItems(QColor.colorNames())
+        self.combo_color_cont.setCurrentText(self.color_cont)
+        hlayout.addWidget(self.combo_color_cont)
+        self.vlayout.addLayout(hlayout)
+
+        hlayout = QHBoxLayout()
+        label = QLabel("Last:")
+        hlayout.addWidget(label)
+        self.combo_color_last = QComboBox()
+        self.combo_color_last.addItems(QColor.colorNames())
+        self.combo_color_last.setCurrentText(self.color_last)
+        hlayout.addWidget(self.combo_color_last)
+        self.vlayout.addLayout(hlayout)
+
+        hlayout = QHBoxLayout()
+        label = QLabel("Reticle:")
+        hlayout.addWidget(label)
+        self.combo_color_reticle = QComboBox()
+        self.combo_color_reticle.addItems(QColor.colorNames())
+        self.combo_color_reticle.setCurrentText(self.color_reticle)
+        hlayout.addWidget(self.combo_color_reticle)
+        self.vlayout.addLayout(hlayout)
+
         self.text_message = QLabel()
         self.text_message.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.vlayout.addWidget(self.text_message)
@@ -151,6 +188,10 @@ class SPT (PluginBase):
         self.spin_ghost_z_range.editingFinished.connect(self.slot_return_focus)
         self.dspin_shift_by_key.valueChanged.connect(self.slot_shift_by_key_changed)
         self.dspin_shift_by_key.editingFinished.connect(self.slot_return_focus)
+        self.combo_color_first.currentIndexChanged.connect(self.slot_marker_colors_changed)
+        self.combo_color_cont.currentIndexChanged.connect(self.slot_marker_colors_changed)
+        self.combo_color_last.currentIndexChanged.connect(self.slot_marker_colors_changed)
+        self.combo_color_reticle.currentIndexChanged.connect(self.slot_marker_colors_changed)
 
     def init_context_menu (self):
         self.context_menu = QMenu()
@@ -243,6 +284,13 @@ class SPT (PluginBase):
 
     def slot_shift_by_key_changed (self):
         self.shift_by_key = self.dspin_shift_by_key.value()
+
+    def slot_marker_colors_changed (self):
+        self.color_first = self.combo_color_first.currentText()
+        self.color_cont = self.combo_color_cont.currentText()
+        self.color_last = self.combo_color_last.currentText()
+        self.color_reticle = self.combo_color_reticle.currentText()
+        self.signal_update_image_view.emit()
 
     def slot_z_increment (self):
         if self.current_spot is not None:

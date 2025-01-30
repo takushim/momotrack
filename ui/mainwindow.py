@@ -531,6 +531,7 @@ class MainWindow (QMainWindow):
 
     def slot_update_image_view (self):
         self.update_image_view()
+        self.ui.gview_image.setFocus()
 
     def slot_reset_current_lut_range (self):
         self.lut_panel.reset_current_lut_range(self.image_stack.image_array)
