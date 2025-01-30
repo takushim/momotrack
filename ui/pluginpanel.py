@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 from pathlib import Path
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QSizePolicy, QLayout
 
 class PluginPanel:
@@ -18,10 +20,8 @@ class PluginPanel:
         else:
             text = "File: {0}{1}".format(flag, Path(filename).name)
 
-        max_length = 30
-        if len(text) > max_length:
-            text = text[:(max_length - 3)] + "..."
-
+        fontmetrics = QFontMetrics(self.ui.label_records_filename.font())
+        text = fontmetrics.elidedText(text, Qt.TextElideMode.ElideRight, self.ui.label_records_filename.width())
         self.ui.label_records_filename.setText(text)
 
     def update_widgets (self, plugin_class):
