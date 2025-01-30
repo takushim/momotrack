@@ -578,6 +578,7 @@ class MainWindow (QMainWindow):
 
     def showEvent (self, event):
         self.update_image_view()
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def closeEvent (self, event):
         if self.clear_modified_flag():

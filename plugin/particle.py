@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QHBoxLayout, QDoubleSpinBox, QSpinBox, QLineEdit
 from PySide6.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
 from PySide6.QtWidgets import QGraphicsTextItem, QGraphicsPathItem
 from PySide6.QtGui import QColor, QPen, QBrush, QAction, QPainterPath, QFont, QTextDocument
-from plugin.base import PluginBase, PluginException
+from plugin.base import PluginBase
 
 logger = getLogger(__name__)
 
