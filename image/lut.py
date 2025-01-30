@@ -17,7 +17,7 @@ lut_names = list(lut_dict.keys())
 bit_dict = {}
 bit_dict["Auto"]    = [sys.float_info.min, sys.float_info.max]
 bit_dict["Float"]    = [sys.float_info.min, sys.float_info.max]
-bit_dict["INT-32+"]  = [0, np.iinfo(np.int32).max]
+bit_dict["INT-32+"]  = [0, np.iinfo(np.int32).max] # Sliders cannot handle UINT-32
 bit_dict["UINT-16"]  = [0, np.iinfo(np.uint16).max]
 bit_dict["UINT-14"]  = [0, 0x3FFF]
 bit_dict["UINT-12"]  = [0, 0xFFF]
@@ -34,20 +34,9 @@ bit_names = list(bit_dict.keys())
 class LUT:
     def __init__ (self, lut_name = None, pixel_values = None):
         self.load_settings()
-
-        if lut_name is not None:
+        if lut_name in lut_dict.keys():
             self.lut_name = lut_name
-        
-        if pixel_values is not None:
-            self.set_bit_mode(pixel_values)
-            self.pixel_lower = np.min(pixel_values)
-            self.pixel_upper = np.max(pixel_values)
-            self.lut_lower = self.pixel_lower
-            self.lut_upper = self.pixel_upper
-
-        self.init_bit_mode = str(self.bit_mode)
-        self.lut_lower = self.pixel_lower
-        self.lut_upper = self.pixel_upper
+        self.reset_lut_range(pixel_values)
 
     def load_settings (self, settings = {}):
         self.lut_name = settings.get('lut_name', 'Gray')
@@ -57,6 +46,18 @@ class LUT:
         self.auto_lut = settings.get('auto_lut', False)
         self.auto_cutoff = settings.get('auto_cutoff', 0.0)
         self.lut_invert = settings.get('lut_invert', False)
+
+        # necessary to return the lut range without the original image
+        self.lut_min = self.lut_lower
+        self.lut_max = self.lut_upper
+
+    def reset_lut_range (self, pixel_values = None):
+        self.load_settings(settings = {'lut_name': self.lut_name, 'lut_invert': self.lut_invert})
+        if pixel_values is not None:
+            self.optimize_bit_mode(pixel_values)
+            self.set_range_by_image(pixel_values)
+        self.lut_min = self.lut_lower
+        self.lut_max = self.lut_upper
 
     def archive_settings (self):
         settings = {'lut_name': self.lut_name,
@@ -68,7 +69,7 @@ class LUT:
                     'lut_invert': self.lut_invert}
         return settings
 
-    def set_bit_mode (self, pixel_values):
+    def optimize_bit_mode (self, pixel_values):
         max_value = pixel_values.max()
         min_value = pixel_values.min()
 
@@ -87,31 +88,23 @@ class LUT:
         else:
             self.bit_mode = "Float"
 
-    def bit_range (self):
-        if self.bit_mode != "Auto" and self.bit_mode != "Float":
-            return bit_dict[self.bit_mode]
+    def lut_range (self):
+        if self.bit_mode == "Auto":
+            return [int(self.lut_min), int(self.lut_max)]
+        elif self.bit_mode == "Float":
+            return [float(self.lut_min), float(self.lut_max)]
 
-        lower_limit = max(self.pixel_lower, bit_dict[self.bit_mode][0])
-        upper_limit = min(self.pixel_upper, bit_dict[self.bit_mode][1])
+        return bit_dict[self.bit_mode]
 
-        return [lower_limit, upper_limit]
-
-    def reset_bit_mode (self):
-        self.bit_mode = str(self.init_bit_mode)
-
-    def reset_cutoff (self):
-        self.lut_lower = self.pixel_lower
-        self.lut_upper= self.pixel_upper
-
-    def set_range_by_image(self, pixel_value, percentile):
+    def set_range_by_image (self, pixel_values, percentile = 0):
         self.auto_lut = True
         self.auto_cutoff = percentile
         if self.bit_mode == "Float":
-            self.lut_lower = np.percentile(pixel_value, percentile)
-            self.lut_upper = np.percentile(pixel_value, 100 - percentile)
+            self.lut_lower = np.percentile(pixel_values, percentile)
+            self.lut_upper = np.percentile(pixel_values, 100 - percentile)
         else:
-            self.lut_lower = int(np.percentile(pixel_value, percentile))
-            self.lut_upper = int(np.percentile(pixel_value, 100 - percentile))
+            self.lut_lower = int(np.percentile(pixel_values, percentile))
+            self.lut_upper = int(np.percentile(pixel_values, 100 - percentile))
 
     def apply_lut_float (self, image):
         image = image.astype(float)

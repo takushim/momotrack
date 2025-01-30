@@ -9,7 +9,6 @@ from PySide6.QtCore import QFile, QTimer, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
-from plugin.base import PluginException
 
 class MainWindow (QMainWindow):
     signal_open_new_image = Signal(list)
@@ -149,6 +148,7 @@ class MainWindow (QMainWindow):
 
         # lut
         self.lut_panel.signal_update_image_view.connect(self.slot_update_image_view)
+        self.lut_panel.signal_reset_current_lut_range.connect(self.slot_reset_current_lut_range)
         self.lut_panel.connect_signals_to_slots()
 
         # plugin
@@ -530,6 +530,10 @@ class MainWindow (QMainWindow):
         self.switch_plugin(action.text())
 
     def slot_update_image_view (self):
+        self.update_image_view()
+
+    def slot_reset_current_lut_range (self):
+        self.lut_panel.reset_current_lut_range(self.image_stack.image_array)
         self.update_image_view()
 
     def slot_move_by_tczindex (self, time, channel, z_index):
