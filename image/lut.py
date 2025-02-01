@@ -46,6 +46,7 @@ class LUT:
         self.auto_lut = settings.get('auto_lut', False)
         self.auto_cutoff = settings.get('auto_cutoff', 0.0)
         self.lut_invert = settings.get('lut_invert', False)
+        self.lut_blank = settings.get('lut_blank', False)
 
         # necessary to return the lut range without the original image
         self.lut_min = self.lut_lower
@@ -66,7 +67,8 @@ class LUT:
                     'lut_upper': self.lut_upper,
                     'auto_lut': self.auto_lut,
                     'auto_cutoff': self.auto_cutoff,
-                    'lut_invert': self.lut_invert}
+                    'lut_invert': self.lut_invert,
+                    'lut_blank': self.lut_blank}
         return settings
 
     def optimize_bit_mode (self, pixel_values):
@@ -109,7 +111,7 @@ class LUT:
     def apply_lut_float (self, image):
         image = image.astype(float)
 
-        if np.isclose(self.lut_lower, self.lut_upper):
+        if self.lut_blank or np.isclose(self.lut_lower, self.lut_upper):
             image[:] = 0.0
         else:
             image = (image - self.lut_lower) / (self.lut_upper - self.lut_lower)
