@@ -20,6 +20,8 @@ class PluginPanel:
         else:
             text = "File: {0}{1}".format(flag, Path(filename).name)
 
+        self.ui.label_records_filename.setToolTip(text)
+
         fontmetrics = QFontMetrics(self.ui.label_records_filename.font())
         text = fontmetrics.elidedText(text, Qt.TextElideMode.ElideRight, self.ui.label_records_filename.width())
         self.ui.label_records_filename.setText(text)

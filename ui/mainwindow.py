@@ -279,6 +279,7 @@ class MainWindow (QMainWindow):
         if module is None or self.clear_modified_flag() == False:
             return
 
+        self.clear_records()
         self.init_plugin(module)
         self.update_image_view()
         self.plugin_class.update_stack_info(self.image_panel.image_stack)
