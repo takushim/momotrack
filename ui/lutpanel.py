@@ -47,12 +47,9 @@ class LutPanel (QObject):
 
         lut = self.lut_list[0]
         self.ui.combo_lut.setCurrentText(lut.lut_name)
-        if self.ui.check_composite.isChecked() or not self.ui.check_lut_grayscale.isChecked():
-            self.ui.combo_lut.setEnabled(True)
-        else:
-            self.ui.combo_lut.setEnabled(False)
 
-        self.ui.check_lut_grayscale.setEnabled(not self.ui.check_composite.isChecked())
+        # enable/disable combo and check boxes
+        self.update_widget_activation_status()
 
         self.ui.combo_bits.setCurrentText(lut.bit_mode)
         self.ui.check_lut_invert.setChecked(lut.lut_invert)
@@ -88,12 +85,7 @@ class LutPanel (QObject):
         lut_range = current_lut.lut_range()
 
         # enable/disable combo and check boxes
-        if self.ui.check_composite.isChecked() or not self.ui.check_lut_grayscale.isChecked():
-            self.ui.combo_lut.setEnabled(True)
-        else:
-            self.ui.combo_lut.setEnabled(False)
-
-        self.ui.check_lut_grayscale.setEnabled(not self.ui.check_composite.isChecked())
+        self.update_widget_activation_status()
 
         self.ui.combo_lut.blockSignals(True)
         self.ui.combo_lut.setCurrentText(current_lut.lut_name)
@@ -147,6 +139,20 @@ class LutPanel (QObject):
             self.ui.label_bitrange_upper.setText(f"{lut_range[1]:.2f}")
             self.ui.label_lut_lower.setText(f"Lower limit: {current_lut.lut_lower:.2f}")
             self.ui.label_lut_upper.setText(f"Upper limit: {current_lut.lut_upper:.2f}")
+
+    def update_widget_activation_status (self):
+        # enable/disable combo and check boxes
+        if self.ui.check_composite.isChecked():
+            self.ui.combo_lut.setEnabled(True)
+        else:
+            if self.ui.check_lut_grayscale.isChecked():
+                self.ui.combo_lut.setEnabled(False)
+            elif self.ui.check_lut_blank.isChecked():
+                self.ui.combo_lut.setEnabled(False)
+            else:
+                self.ui.combo_lut.setEnabled(True)
+
+        self.ui.check_lut_grayscale.setEnabled(not self.ui.check_composite.isChecked())
 
     def update_lut_range_if_auto (self, image):
         if self.ui.check_auto_lut.isChecked():
