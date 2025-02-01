@@ -661,7 +661,8 @@ class SPT (PluginBase):
 
     def mouse_moved (self, event, stack, tcz_index):
         if event.buttons() == Qt.LeftButton:
-            self.move_selected_spot(x = event.scenePos().x(), y = event.scenePos().y())
+            pos = event.scenePos()
+            self.move_selected_spot(x = pos.x(), y = pos.y())
             self.signal_update_image_view.emit()
 
     def mouse_released (self, event, stack, tcz_index):
