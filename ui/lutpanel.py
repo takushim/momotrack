@@ -2,12 +2,12 @@
 
 import numpy as np
 from PySide6.QtCore import QObject, Signal
-from PySide6.QtWidgets import QGraphicsScene, QLineEdit
+from PySide6.QtWidgets import QGraphicsScene
 from PySide6.QtGui import QColor
 from image import lut
 
 class LutPanel (QObject):
-    signal_update_image_view = Signal()
+    signal_current_lut_changed = Signal()
     signal_reset_current_lut_range = Signal()
 
     def __init__ (self, ui, parent = None):
@@ -204,7 +204,7 @@ class LutPanel (QObject):
 
         self.update_current_lut()
         self.update_lut_panel_silently()
-        self.signal_update_image_view.emit()
+        self.signal_current_lut_changed.emit()
 
     def slot_lower_slider_changed (self):
         self.ui.check_auto_lut.blockSignals(True)
@@ -217,12 +217,12 @@ class LutPanel (QObject):
 
         self.update_current_lut()
         self.update_lut_panel_silently()
-        self.signal_update_image_view.emit()
+        self.signal_current_lut_changed.emit()
 
     def slot_lut_panel_changed (self):
         self.update_current_lut()
         self.update_lut_panel_silently()
-        self.signal_update_image_view.emit()
+        self.signal_current_lut_changed.emit()
 
     def slot_reset_current_lut_range (self):
         self.signal_reset_current_lut_range.emit()

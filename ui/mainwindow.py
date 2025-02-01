@@ -5,7 +5,7 @@ from pathlib import Path
 from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog, QApplication
 from PySide6.QtGui import QAction, QActionGroup
-from PySide6.QtCore import QFile, QTimer, Qt, Signal
+from PySide6.QtCore import QFile, Qt, Signal, QTimer
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
@@ -20,8 +20,6 @@ class MainWindow (QMainWindow):
 
         self.setWindowTitle(self.app_name)
 
-        self.image_stack = stack.Stack()
-        self.image_stack.alloc_zero_image()
         self.image_filename = image_filename
         self.records_filename = records_filename
 
@@ -57,8 +55,6 @@ class MainWindow (QMainWindow):
         self.zoom_panel = zoompanel.ZoomPanel(self.ui)
         self.image_panel = imagepanel.ImagePanel(self.ui)
         self.plugin_panel = pluginpanel.PluginPanel(self.ui)
-        self.play_timer = QTimer(self)
-        self.play_timer.setInterval(100)
 
     def resize_best (self):
         screen_size = self.screen().availableSize()
@@ -67,10 +63,9 @@ class MainWindow (QMainWindow):
         self.resize(width, height)
 
     def init_widgets (self):
-        self.image_panel.init_widgets(self.image_stack)
-        self.zoom_panel.zoom_reset()
-        self.lut_panel.init_widgets(self.image_stack)
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
+        self.image_panel.init_widgets()
+        self.zoom_panel.init_widgets()
+        self.lut_panel.init_widgets(self.image_panel.image_stack)
         self.update_image_view()
         self.update_window_title()
 
@@ -116,38 +111,31 @@ class MainWindow (QMainWindow):
         self.ui.action_save_records.triggered.connect(self.slot_save_records)
         self.ui.action_save_records_as.triggered.connect(self.slot_save_records_as)
         self.ui.action_clear_records.triggered.connect(self.slot_clear_records)
-        self.ui.action_zoom_in.triggered.connect(self.slot_zoomed_in)
-        self.ui.action_zoom_out.triggered.connect(self.slot_zoomed_out)
-        self.ui.action_zoom_reset.triggered.connect(self.slot_zoom_reset)
+        self.ui.action_zoom_in.triggered.connect(self.zoom_panel.slot_zoomed_in)
+        self.ui.action_zoom_out.triggered.connect(self.zoom_panel.slot_zoomed_out)
+        self.ui.action_zoom_reset.triggered.connect(self.zoom_panel.slot_zoom_reset)
         self.ui.action_about_this.triggered.connect(self.slot_about_this)
         self.ui.action_about_qt.triggered.connect(self.slot_about_qt)
         self.ui.action_plugin_help.triggered.connect(self.slot_plugin_help)
         self.ui.action_viewer_help.triggered.connect(self.slot_viewer_help)
 
     def connect_signals_to_slots (self):
-        # scene
-        self.image_panel.scene.mousePressEvent = self.slot_scene_mouse_pressed
-        self.image_panel.scene.mouseMoveEvent = self.slot_scene_mouse_moved
-        self.image_panel.scene.mouseReleaseEvent = self.slot_scene_mouse_released
-        self.image_panel.scene.keyPressEvent = self.slot_scene_key_pressed
-        self.image_panel.scene.keyReleaseEvent = self.slot_scene_key_released
-        self.image_panel.scene.wheelEvent = self.slot_scene_wheel_moved
-
-        # time and zstack
-        self.ui.slider_time.valueChanged.connect(self.slot_image_index_changed)
-        self.ui.slider_zstack.valueChanged.connect(self.slot_image_index_changed)
-        self.ui.button_play.clicked.connect(self.slot_slideshow_switched)
-        self.ui.spin_fps.valueChanged.connect(self.slot_slideshow_changed)
-        self.ui.spin_fps.editingFinished.connect(self.slot_focus_graphics_view)
-        self.play_timer.timeout.connect(self.slot_slideshow_timeout)
+        # image panel
+        self.image_panel.signal_image_index_changed.connect(self.slot_update_image_view)
+        self.image_panel.signal_scene_mouse_pressed.connect(self.slot_scene_mouse_pressed)
+        self.image_panel.signal_scene_mouse_moved.connect(self.slot_scene_mouse_moved)
+        self.image_panel.signal_scene_mouse_released.connect(self.slot_scene_mouse_released)
+        self.image_panel.signal_scene_key_pressed.connect(self.slot_scene_key_pressed)
+        self.image_panel.signal_scene_key_released.connect(self.slot_scene_key_released)
+        self.image_panel.signal_scene_wheel_moved.connect(self.slot_scene_wheel_moved)
+        self.image_panel.connect_signals_to_slots()
 
         # zooming
-        self.ui.button_zoom_in.clicked.connect(self.slot_zoomed_in)
-        self.ui.button_zoom_out.clicked.connect(self.slot_zoomed_out)
-        self.ui.button_zoom_reset.clicked.connect(self.slot_zoom_reset)
+        self.zoom_panel.connect_signals_to_slots()
+        self.zoom_panel.signal_zoom_ratio_changed.connect(self.image_panel.slot_zoom_ratio_changed)
 
         # lut
-        self.lut_panel.signal_update_image_view.connect(self.slot_update_image_view)
+        self.lut_panel.signal_current_lut_changed.connect(self.slot_update_image_view)
         self.lut_panel.signal_reset_current_lut_range.connect(self.slot_reset_current_lut_range)
         self.lut_panel.connect_signals_to_slots()
 
@@ -193,11 +181,11 @@ class MainWindow (QMainWindow):
             self.show_message(title = "Image opening error", message = f"Failed to open image: {image_filename}")
             raise
 
-        self.image_stack = image_stack
+        self.image_panel.image_stack = image_stack
         self.image_filename = image_filename
 
         self.init_widgets()
-        self.plugin_class.update_stack_info(self.image_stack)
+        self.plugin_class.update_stack_info(self.image_panel.image_stack)
         self.zoom_best()
 
     def load_records (self, records_filename):
@@ -212,7 +200,6 @@ class MainWindow (QMainWindow):
         self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
         self.restore_settings(self.plugin_class.records_dict.get('viewer_settings', {}))
         self.update_image_view()
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def save_records (self, records_filename):
         # This function may throw an exception
@@ -262,7 +249,7 @@ class MainWindow (QMainWindow):
 
     def archive_image_properties (self):
         settings = {'image_filename': self.image_filename}
-        settings = settings | self.image_stack.archive_properties()
+        settings = settings | self.image_panel.image_stack.archive_properties()
         return settings
 
     def clear_modified_flag (self):
@@ -294,7 +281,7 @@ class MainWindow (QMainWindow):
 
         self.init_plugin(module)
         self.update_image_view()
-        self.plugin_class.update_stack_info(self.image_stack)
+        self.plugin_class.update_stack_info(self.image_panel.image_stack)
 
     def init_plugin (self, module):
         self.plugin_module = module
@@ -318,17 +305,17 @@ class MainWindow (QMainWindow):
         self.image_panel.composite = self.lut_panel.is_composite()
         self.image_panel.color_always = self.lut_panel.color_always()
 
-        self.lut_panel.update_lut_range_if_auto(self.image_panel.current_image(self.image_stack))
-        self.lut_panel.update_lut_view(self.image_panel.current_image(self.image_stack))
+        self.lut_panel.update_lut_range_if_auto(self.image_panel.current_image())
+        self.lut_panel.update_lut_view(self.image_panel.current_image())
 
-        self.image_panel.update_image_scene(self.image_stack, lut_list = self.lut_panel.lut_list, \
-                                            item_list = self.plugin_class.list_scene_items(self.image_stack, self.image_panel.current_index()))
+        self.image_panel.update_image_scene(lut_list = self.lut_panel.lut_list, \
+                                            item_list = self.plugin_class.list_scene_items(self.image_panel.image_stack,
+                                                                                           self.image_panel.current_index()))
 
 
     def zoom_best (self):
-        self.zoom_panel.zoom_best((self.image_stack.width, self.image_stack.height), \
+        self.zoom_panel.zoom_best((self.image_panel.image_stack.width, self.image_panel.image_stack.height), \
                                   (self.ui.gview_image.size().width(), self.ui.gview_image.size().height()))
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
 
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
@@ -455,77 +442,6 @@ class MainWindow (QMainWindow):
         QApplication.aboutQt()
         self.plugin_class.focus_recovered()
 
-    def slot_scene_mouse_pressed (self, event):
-        self.plugin_class.mouse_pressed(event, self.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
-
-    def slot_scene_mouse_moved (self, event):
-        self.plugin_class.mouse_moved(event, self.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
-
-    def slot_scene_mouse_released (self, event):
-        self.plugin_class.mouse_released(event, self.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
-
-    def slot_scene_wheel_moved (self, event):
-        if event.modifiers() == Qt.SHIFT:
-            if event.delta() > 0:
-                self.slot_zoomed_in()
-            elif event.delta() < 0:
-                self.slot_zoomed_out()
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
-
-    def slot_scene_key_pressed (self, event):
-        if event.modifiers() == Qt.NoModifier:
-            if event.key() == Qt.Key_Right:
-                self.ui.slider_time.setValue(min(self.ui.slider_time.value() + 1,  self.image_stack.t_count - 1))
-            elif event.key() == Qt.Key_Left:
-                self.ui.slider_time.setValue(max(self.ui.slider_time.value() - 1, 0))
-            elif event.key() == Qt.Key_Home:
-                self.ui.slider_time.setValue(0)
-            elif event.key() == Qt.Key_End:
-                self.ui.slider_time.setValue(self.ui.slider_time.value())
-            elif event.key() == Qt.Key_Up:
-                self.ui.slider_zstack.setValue(min(self.ui.slider_zstack.value() + 1,  self.image_stack.z_count - 1))
-            elif event.key() == Qt.Key_Down:
-                self.ui.slider_zstack.setValue(max(self.ui.slider_zstack.value() - 1, 0))
-
-        self.plugin_class.key_pressed(event, self.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
-
-    def slot_scene_key_released (self, event):
-        self.plugin_class.key_released(event, self.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
-
-    def slot_image_index_changed (self):
-        self.update_image_view()
-
-    def slot_zoomed_in (self):
-        self.zoom_panel.zoom_in()
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
-
-    def slot_zoomed_out (self):
-        self.zoom_panel.zoom_out()
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
-
-    def slot_zoom_reset (self):
-        self.zoom_panel.zoom_reset()
-        self.image_panel.update_zoom(self.zoom_panel.zoom_ratio)
-
-    def slot_slideshow_switched (self):
-        if self.play_timer.isActive():
-            self.play_timer.stop()
-            self.ui.button_play.setText("Play")
-        else:
-            self.play_timer.start()
-            self.ui.button_play.setText("Stop")
-
-    def slot_slideshow_changed (self):
-        self.play_timer.setInterval(1000 / self.ui.spin_fps.value())
-
-    def slot_slideshow_timeout (self):
-        self.ui.slider_time.setValue((self.ui.slider_time.value() + 1) % self.image_stack.t_count)
-
     def slot_switch_plugin (self, action):
         self.switch_plugin(action.text())
 
@@ -534,8 +450,36 @@ class MainWindow (QMainWindow):
         self.ui.gview_image.setFocus()
 
     def slot_reset_current_lut_range (self):
-        self.lut_panel.reset_current_lut_range(self.image_stack.image_array)
+        self.lut_panel.reset_current_lut_range(self.image_panel.image_stack.image_array)
         self.update_image_view()
+
+    def slot_scene_mouse_pressed (self, event):
+        self.plugin_class.mouse_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+
+    def slot_scene_mouse_moved (self, event):
+        self.plugin_class.mouse_moved(event, self.image_panel.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+
+    def slot_scene_mouse_released (self, event):
+        self.plugin_class.mouse_released(event, self.image_panel.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+
+    def slot_scene_wheel_moved (self, event):
+        if event.modifiers() == Qt.ShiftModifier:
+            if event.delta() > 0:
+                self.zoom_panel.slot_zoomed_in()
+            elif event.delta() < 0:
+                self.zoom_panel.slot_zoomed_out()
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+
+    def slot_scene_key_pressed (self, event):
+        self.plugin_class.key_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+
+    def slot_scene_key_released (self, event):
+        self.plugin_class.key_released(event, self.image_panel.image_stack, self.image_panel.current_index())
+        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_move_by_tczindex (self, time, channel, z_index):
         if channel != self.lut_panel.current_channel():
