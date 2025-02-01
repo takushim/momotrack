@@ -21,6 +21,7 @@ class ImagePanel (QObject):
         self.scene = QGraphicsScene()
         self.scene.setBackgroundBrush(self.ui.palette().window())
         self.ui.gview_image.setScene(self.scene)
+        self.ui.gview_image.setMouseTracking(True)
         self.channel = 0
         self.composite = False
         self.color_always = False
@@ -62,9 +63,11 @@ class ImagePanel (QObject):
         self.scene.keyReleaseEvent = self.slot_scene_key_released
         self.scene.wheelEvent = self.slot_scene_wheel_moved
 
-    def update_status (self):
-        status = "T: {0}/{1}, Z: {2}/{3}".format(self.ui.slider_time.value(), self.ui.slider_time.maximum(),
-                                                 self.ui.slider_zstack.value(), self.ui.slider_zstack.maximum())
+    def update_status (self, pixelvalue = None):
+        status = "T: {0}/{1}, C, {2}, Z: {3}/{4}".format(self.ui.slider_time.value(), self.ui.slider_time.maximum(), self.channel,
+                                                         self.ui.slider_zstack.value(), self.ui.slider_zstack.maximum())
+        if pixelvalue is not None:
+            status = f"{status}, V: {pixelvalue}"
         self.ui.label_status.setText(status)
 
     def update_image_scene (self, lut_list, item_list = []):
@@ -113,6 +116,12 @@ class ImagePanel (QObject):
         self.signal_scene_mouse_pressed.emit(event)
 
     def slot_scene_mouse_moved (self, event):
+        x = int(event.scenePos().x())
+        y = int(event.scenePos().y())
+        pixelvalue = None
+        if 0 <= x and x < self.image_stack.width and 0 <= y and y < self.image_stack.height:
+            pixelvalue = self.image_stack.image_array[self.ui.slider_time.value(), self.channel, self.ui.slider_zstack.value(), y, x]
+        self.update_status(pixelvalue)
         self.signal_scene_mouse_moved.emit(event)
 
     def slot_scene_mouse_released (self, event):
