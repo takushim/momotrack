@@ -3,7 +3,7 @@
 import numpy as np
 from PySide6.QtCore import Qt, QObject, Signal, QTimer, QEvent
 from PySide6.QtWidgets import QGraphicsScene, QSlider, QGraphicsPixmapItem, QLineEdit
-from PySide6.QtGui import QImage, QPixmap
+from PySide6.QtGui import QImage, QPixmap, QCursor
 from image import stack
 
 class ImagePanel (QObject):
@@ -63,10 +63,14 @@ class ImagePanel (QObject):
         self.scene.keyReleaseEvent = self.slot_scene_key_released
         self.scene.wheelEvent = self.slot_scene_wheel_moved
 
-    def update_status (self, pixelvalue = None):
+    def update_status (self):
+        pos = self.ui.gview_image.mapToScene(self.ui.gview_image.mapFromGlobal(QCursor().pos()))
+        x = int(pos.x())
+        y = int(pos.y())
         status = "T: {0}/{1}, C, {2}, Z: {3}/{4}".format(self.ui.slider_time.value(), self.ui.slider_time.maximum(), self.channel,
                                                          self.ui.slider_zstack.value(), self.ui.slider_zstack.maximum())
-        if pixelvalue is not None:
+        if 0 <= x and x < self.image_stack.width and 0 <= y and y < self.image_stack.height:
+            pixelvalue = self.image_stack.image_array[self.ui.slider_time.value(), self.channel, self.ui.slider_zstack.value(), y, x]
             status = f"{status}, V: {pixelvalue}"
         self.ui.label_status.setText(status)
 
@@ -116,12 +120,7 @@ class ImagePanel (QObject):
         self.signal_scene_mouse_pressed.emit(event)
 
     def slot_scene_mouse_moved (self, event):
-        x = int(event.scenePos().x())
-        y = int(event.scenePos().y())
-        pixelvalue = None
-        if 0 <= x and x < self.image_stack.width and 0 <= y and y < self.image_stack.height:
-            pixelvalue = self.image_stack.image_array[self.ui.slider_time.value(), self.channel, self.ui.slider_zstack.value(), y, x]
-        self.update_status(pixelvalue)
+        self.update_status()
         self.signal_scene_mouse_moved.emit(event)
 
     def slot_scene_mouse_released (self, event):
