@@ -67,7 +67,7 @@ class ImagePanel (QObject):
         pos = self.ui.gview_image.mapToScene(self.ui.gview_image.mapFromGlobal(QCursor().pos()))
         x = int(pos.x())
         y = int(pos.y())
-        status = "T: {0}/{1}, C, {2}, Z: {3}/{4}".format(self.ui.slider_time.value(), self.ui.slider_time.maximum(), self.channel,
+        status = "T: {0}/{1}, C: {2}, Z: {3}/{4}".format(self.ui.slider_time.value(), self.ui.slider_time.maximum(), self.channel,
                                                          self.ui.slider_zstack.value(), self.ui.slider_zstack.maximum())
         if 0 <= x and x < self.image_stack.width and 0 <= y and y < self.image_stack.height:
             pixelvalue = self.image_stack.image_array[self.ui.slider_time.value(), self.channel, self.ui.slider_zstack.value(), y, x]
