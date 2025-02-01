@@ -24,7 +24,7 @@ class ImagePanel (QObject):
         self.ui.gview_image.setMouseTracking(True)
         self.channel = 0
         self.composite = False
-        self.color_always = False
+        self.lut_grayscale = False
         self.image_stack = stack.Stack()
         self.image_stack.alloc_zero_image()
 
@@ -86,14 +86,14 @@ class ImagePanel (QObject):
                 final_image = np.maximum(final_image, image)
             qimage = QImage(final_image.data, self.image_stack.width, self.image_stack.height, QImage.Format_RGB888)
         else:
-            if self.color_always:
-                image = self.image_stack.image_array[t_index, self.channel, z_index]
-                image = np.stack(lut_list[self.channel].apply_lut_rgb(image), axis = -1)
-                qimage = QImage(image.data, self.image_stack.width, self.image_stack.height, QImage.Format_RGB888)
-            else:
+            if self.lut_grayscale:
                 image = self.image_stack.image_array[t_index, self.channel, z_index]
                 image = lut_list[self.channel].apply_lut_gray(image)
                 qimage = QImage(image.data, self.image_stack.width, self.image_stack.height, QImage.Format_Grayscale8)
+            else:
+                image = self.image_stack.image_array[t_index, self.channel, z_index]
+                image = np.stack(lut_list[self.channel].apply_lut_rgb(image), axis = -1)
+                qimage = QImage(image.data, self.image_stack.width, self.image_stack.height, QImage.Format_RGB888)
 
         self.scene.clear()
         pixmap_item = QGraphicsPixmapItem()

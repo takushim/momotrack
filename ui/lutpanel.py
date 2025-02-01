@@ -47,7 +47,12 @@ class LutPanel (QObject):
 
         lut = self.lut_list[0]
         self.ui.combo_lut.setCurrentText(lut.lut_name)
-        self.ui.combo_lut.setEnabled(self.ui.check_color_always.isChecked())
+        if self.ui.check_composite.isChecked() or not self.ui.check_lut_grayscale.isChecked():
+            self.ui.combo_lut.setEnabled(True)
+        else:
+            self.ui.combo_lut.setEnabled(False)
+
+        self.ui.check_lut_grayscale.setEnabled(not self.ui.check_composite.isChecked())
 
         self.ui.combo_bits.setCurrentText(lut.bit_mode)
         self.ui.check_lut_invert.setChecked(lut.lut_invert)
@@ -57,8 +62,9 @@ class LutPanel (QObject):
     def connect_signals_to_slots (self):
         self.ui.combo_channel.currentIndexChanged.connect(self.slot_lut_panel_changed)
         self.ui.check_composite.stateChanged.connect(self.slot_lut_panel_changed)
-        self.ui.check_color_always.stateChanged.connect(self.slot_lut_panel_changed)
+        self.ui.check_lut_grayscale.stateChanged.connect(self.slot_lut_panel_changed)
         self.ui.check_lut_invert.stateChanged.connect(self.slot_lut_panel_changed)
+        self.ui.check_lut_blank.stateChanged.connect(self.slot_lut_panel_changed)
         self.ui.combo_lut.currentIndexChanged.connect(self.slot_lut_panel_changed)
         self.ui.combo_bits.currentIndexChanged.connect(self.slot_lut_panel_changed)
         self.ui.check_auto_lut.stateChanged.connect(self.slot_lut_panel_changed)
@@ -82,15 +88,12 @@ class LutPanel (QObject):
         lut_range = current_lut.lut_range()
 
         # enable/disable combo and check boxes
-        if self.ui.check_composite.isChecked() or self.ui.check_color_always.isChecked():
+        if self.ui.check_composite.isChecked() or not self.ui.check_lut_grayscale.isChecked():
             self.ui.combo_lut.setEnabled(True)
         else:
             self.ui.combo_lut.setEnabled(False)
 
-        if self.ui.check_composite.isChecked():
-            self.ui.check_color_always.setEnabled(False)
-        else:
-            self.ui.check_color_always.setEnabled(True)
+        self.ui.check_lut_grayscale.setEnabled(not self.ui.check_composite.isChecked())
 
         self.ui.combo_lut.blockSignals(True)
         self.ui.combo_lut.setCurrentText(current_lut.lut_name)
@@ -100,10 +103,14 @@ class LutPanel (QObject):
         self.ui.combo_bits.setCurrentText(current_lut.bit_mode)
         self.ui.combo_bits.blockSignals(False)
 
-        # update lut_invert and auto_lut
+        # update lut_invert, lut_blank and auto_lut
         self.ui.check_lut_invert.blockSignals(True)
         self.ui.check_lut_invert.setChecked(current_lut.lut_invert)
         self.ui.check_lut_invert.blockSignals(False)
+
+        self.ui.check_lut_blank.blockSignals(True)
+        self.ui.check_lut_blank.setChecked(current_lut.lut_blank)
+        self.ui.check_lut_blank.blockSignals(False)
 
         self.ui.check_auto_lut.blockSignals(True)
         self.ui.check_auto_lut.setChecked(current_lut.auto_lut)
@@ -189,6 +196,7 @@ class LutPanel (QObject):
         current_lut.lut_lower = self.ui.slider_lut_lower.value()
         current_lut.lut_upper = self.ui.slider_lut_upper.value()
         current_lut.lut_invert = self.ui.check_lut_invert.isChecked()
+        current_lut.lut_blank = self.ui.check_lut_blank.isChecked()
         current_lut.bit_mode = self.ui.combo_bits.currentText()
         current_lut.auto_lut = self.ui.check_auto_lut.isChecked()
         current_lut.auto_cutoff = self.ui.dspin_auto_cutoff.value()
@@ -230,8 +238,8 @@ class LutPanel (QObject):
     def current_channel (self):
         return self.ui.combo_channel.currentIndex()
 
-    def color_always (self):
-        return self.ui.check_color_always.isChecked()
+    def is_lut_grayscale (self):
+        return self.ui.check_lut_grayscale.isChecked()
 
     def is_composite (self):
         return self.ui.check_composite.isChecked()

@@ -228,7 +228,7 @@ class MainWindow (QMainWindow):
         self.lut_panel.restore_lut_settings(settings.get('luts', []))
         self.lut_panel.set_current_channel(settings.get('channel', 0))
         self.ui.check_composite.setChecked(settings.get('composite', False))
-        self.ui.check_color_always.setChecked(settings.get('color_always', False))
+        self.ui.check_lut_grayscale.setChecked(settings.get('lut_grayscale', False))
 
         self.zoom_panel.set_zoom(settings.get('zoom_ratio', 100))
         self.ui.gview_image.verticalScrollBar().setValue(settings.get('v_scroll', 0))
@@ -239,7 +239,7 @@ class MainWindow (QMainWindow):
                     't_index': self.ui.slider_time.value(),
                     'channel': self.ui.combo_channel.currentIndex(),
                     'composite': self.ui.check_composite.isChecked(),
-                    'color_always': self.ui.check_color_always.isChecked(),
+                    'lut_grayscale': self.ui.check_lut_grayscale.isChecked(),
                     'luts': [lut.archive_settings() for lut in self.lut_panel.lut_list],
                     'zoom_ratio': self.zoom_panel.zoom_ratio,
                     'v_scroll': self.ui.gview_image.verticalScrollBar().value(),
@@ -303,7 +303,7 @@ class MainWindow (QMainWindow):
     def update_image_view (self):
         self.image_panel.channel = self.lut_panel.current_channel()
         self.image_panel.composite = self.lut_panel.is_composite()
-        self.image_panel.color_always = self.lut_panel.color_always()
+        self.image_panel.lut_grayscale = self.lut_panel.is_lut_grayscale()
 
         self.lut_panel.update_lut_range_if_auto(self.image_panel.current_image())
         self.lut_panel.update_lut_view(self.image_panel.current_image())
