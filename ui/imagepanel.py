@@ -27,6 +27,7 @@ class ImagePanel (QObject):
         self.lut_grayscale = False
         self.image_stack = stack.Stack()
         self.image_stack.alloc_zero_image()
+        self.image_filename = None
 
     def init_widgets (self):
         # Time slider

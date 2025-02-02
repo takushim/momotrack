@@ -2,36 +2,44 @@
 
 import textwrap
 from pathlib import Path
+from logging import getLogger
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog, QApplication
 from PySide6.QtCore import QFile, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
 
+logger = getLogger(__name__)
+
 class MainWindow (QMainWindow):
     signal_open_new_image = Signal(list)
 
-    def __init__ (self, image_filename = None, records_filename = None, current_plugin_name = None):
+    def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
+        logger.debug("Main window created.")
         super().__init__()
         self.app_name = "MomoTrack"
         self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 
         self.setWindowTitle(self.app_name)
-
-        self.image_filename = None
-        self.records_filename = None
-
         self.load_ui()
+        logger.debug("UI loaded.")
 
         self.init_widgets()
+        logger.debug("Widgets initialized.")
+
         self.connect_menubar_to_slots()
+        logger.debug("Menubar signals connected.")
+
         self.connect_signals_to_slots()
+        logger.debug("Other signals connected.")
 
         try:
             if image_filename is not None and len(image_filename) > 0:
                 self.load_image(image_filename)
+                logger.debug(f"Image loaded: {image_filename}")
             if records_filename is not None and len(records_filename) > 0:
-                self.load_records(records_filename)
+                self.load_plugin_records(records_filename)
+                logger.debug(f"Records loaded: {records_filename}")
         except Exception:
             # throw exception to the main routine
             raise
@@ -46,9 +54,16 @@ class MainWindow (QMainWindow):
         self.setAcceptDrops(True)
 
         self.lut_panel = lutpanel.LutPanel(self.ui)
+        logger.debug("LUT panel instance created.")
+
         self.zoom_panel = zoompanel.ZoomPanel(self.ui)
+        logger.debug("Zoom panel instance created.")
+
         self.image_panel = imagepanel.ImagePanel(self.ui)
+        logger.debug("Image panel instance created.")
+
         self.plugin_panel = pluginpanel.PluginPanel(self.ui)
+        logger.debug("Plugin panel instance created.")
 
     def resize_best (self):
         screen_size = self.screen().availableSize()
@@ -58,18 +73,28 @@ class MainWindow (QMainWindow):
 
     def init_widgets (self):
         self.image_panel.init_widgets()
+        logger.debug("Image panel widgets initialized.")
+
         self.zoom_panel.init_widgets()
+        logger.debug("Zoom panel widgets initialized.")
+
         self.lut_panel.init_widgets(self.image_panel.image_stack)
+        logger.debug("LUT panel widgets initialized.")
+
+        self.plugin_panel.notify_plugins_stack_updated(self.image_panel.image_stack)
+        logger.debug("Plugin panel widgets initialized.")
+
         self.update_image_view()
         self.update_window_title()
+        logger.debug("All widgets initialized.")
 
     def connect_menubar_to_slots (self):
         self.ui.action_quit.triggered.connect(self.close)
         self.ui.action_open_image.triggered.connect(self.slot_open_image)
-        self.ui.action_load_records.triggered.connect(self.slot_load_records)
-        self.ui.action_save_records.triggered.connect(self.slot_save_records)
-        self.ui.action_save_records_as.triggered.connect(self.slot_save_records_as)
-        self.ui.action_clear_records.triggered.connect(self.slot_clear_records)
+        self.ui.action_load_records.triggered.connect(self.slot_load_plugin_records)
+        self.ui.action_save_records.triggered.connect(self.slot_save_plugin_records)
+        self.ui.action_save_records_as.triggered.connect(self.slot_save_plugin_records_as)
+        self.ui.action_clear_records.triggered.connect(self.slot_clear_plugin_records)
         self.ui.action_zoom_in.triggered.connect(self.zoom_panel.slot_zoomed_in)
         self.ui.action_zoom_out.triggered.connect(self.zoom_panel.slot_zoomed_out)
         self.ui.action_zoom_reset.triggered.connect(self.zoom_panel.slot_zoom_reset)
@@ -99,7 +124,10 @@ class MainWindow (QMainWindow):
         self.lut_panel.connect_signals_to_slots()
 
         # plugin
-        self.plugin_panel.signal_plugin_changed.connect(self.slot_update_image_view)
+        self.plugin_panel.signal_update_image_view.connect(self.slot_update_image_view)
+        self.plugin_panel.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
+        self.plugin_panel.signal_select_image_by_tczindex.connect(self.slot_select_image_by_tczindex)
+        self.plugin_panel.signal_focus_graphics_view.connect(self.slot_focus_graphics_view)
 
     def open_multiple_images (self, image_filename_list):
         stack_exts = [item for values in self.image_types.values() for item in values]
@@ -107,7 +135,7 @@ class MainWindow (QMainWindow):
         new_files = []
         for image_filename in image_filename_list:
             if any([Path(str(image_filename).lower()).match(ext) for ext in stack_exts]):
-                if self.image_filename is None:
+                if self.image_panel.image_filename is None:
                     try:
                         self.load_image(image_filename)
                     except:
@@ -138,77 +166,80 @@ class MainWindow (QMainWindow):
                     return
         except:
             self.show_message(title = "Image opening error", message = f"Failed to open image: {image_filename}")
-            raise
+            return
 
         self.image_panel.image_stack = image_stack
-        self.image_filename = image_filename
+        self.image_panel.image_filename = image_filename
 
         self.init_widgets()
-        self.plugin_panel.update_plugin_stack_info(self.image_panel.image_stack)
+        self.plugin_panel.notify_plugins_stack_updated(self.image_panel.image_stack)
         self.zoom_best()
 
-    def load_records (self, records_filename):
-        self.plugin_panel.load_records(records_filename)
-        self.restore_settings(self.plugin_panel.current_records().get('viewer_settings', {}))
+    def load_plugin_records (self, records_filename, plugin_name = None):
+        self.plugin_panel.load_records(records_filename, plugin_name)
 
-    def save_records (self, records_filename):
+        # image settings not restored when the plugin is not current
+        self.restore_settings(self.plugin_panel.plugin_records_dict().get('viewer_settings', {}))
+
+    def save_plugin_records (self, records_filename, plugin_name = None):
         settings = {'image_properties': self.archive_image_properties(), 
                     'viewer_settings': self.archive_viewer_settings()}
-        self.plugin_panel.save_records(records_filename, settings = settings)
+        self.plugin_panel.save_records(records_filename, plugin_name, settings = settings)
 
-    def ask_records_filename (self):
+    def show_plugin_records_filename_dialog (self, plugin_name = None):
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select a filename to save records.")
         dialog.setFileMode(QFileDialog.AnyFile)
-        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.plugin_class.file_types.items()])
+        dialog.setNameFilters(self.plugin_panel.records_filename_filter_list(plugin_name))
         dialog.setViewMode(QFileDialog.List)
         dialog.setAcceptMode(QFileDialog.AcceptSave)
 
-        if self.image_filename is not None:
-            image_file = Path(self.image_filename)
+        if self.plugin_panel.plugin_records_filename is not None:
+            dialog.selectFile(self.plugin_panel.plugin_records_filename)
+        elif self.image_panel.image_filename is not None:
+            image_file = Path(self.image_panel.image_filename)
             if image_file.exists():
                 dialog.setDirectory(str(image_file.resolve().parent))
-                dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
+                dialog.selectFile(self.plugin_panel.suggest_records_filename(self.image_panel.image_filename))
 
         if dialog.exec() == False:
             return None
         
         return dialog.selectedFiles()[0]
 
-    def clear_records (self):
-        self.plugin_panel.clear_records()
+    def clear_plugin_records_modified_flag (self, plugin_name = None):
+        plugin_instance = self.plugin_panel.select_plugin_instance(plugin_name)
 
-    def clear_modified_flag (self, all_plugins = False):
-        if all_plugins:
-            plugin_module_list = self.plugin_panel.plugin_module_list
-        else:
-            plugin_module_list = [self.plugin_panel.current_module]
-
-        for plugin_module in plugin_module_list:
-            if plugin_module.is_records_modified():
-                mbox = QMessageBox()
-                mbox.setWindowTitle("Save Records?")
-                mbox.setText(f"Record modified for {plugin_module.plugin_name}. Save?")
-                mbox.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
-                mbox.setDefaultButton(QMessageBox.Cancel)
-                result = mbox.exec()
-                if result == QMessageBox.Cancel:
+        if plugin_instance.is_records_modified():
+            mbox = QMessageBox()
+            mbox.setWindowTitle("Save Records?")
+            mbox.setText(f"Record modified for {plugin_instance.plugin_name}. Save?")
+            mbox.setStandardButtons(QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel)
+            mbox.setDefaultButton(QMessageBox.Cancel)
+            result = mbox.exec()
+            if result == QMessageBox.Cancel:
+                return False
+            elif result == QMessageBox.Discard:
+                plugin_instance.clear_records()
+                return True
+            else:
+                filename = self.show_plugin_records_filename_dialog()
+                self.save_plugin_records(filename)
+                if plugin_instance.is_records_modified():
                     return False
-                elif result == QMessageBox.Discard:
-                    plugin_module.clear_records()
-                    return True
-                else:
-                    filename = self.ask_records_filename()
-                    self.save_records(filename)
-                    if plugin_module.is_records_modified():
-                        return False
 
         self.plugin_panel.update_labels()
         return True
 
+    def clear_all_plugin_records_modified_flag (self):
+        for instance in self.plugin_panel.plugin_instance_dict.values():
+            if not self.clear_plugin_records_modified_flag(instance.plugin_name):
+                return False
+        return True
+
     def restore_settings(self, settings = None):
         if settings is None:
-            settings = self.plugin_class.records_dict.get('viewer_settings', {})
+            settings = self.plugin_panel.current_instance.records_dict.get('viewer_settings', {})
         self.ui.slider_zstack.setValue(settings.get('z_index', 0))
         self.ui.slider_time.setValue(settings.get('t_index', 0))
 
@@ -243,8 +274,8 @@ class MainWindow (QMainWindow):
 
     def update_window_title (self):
         title = self.app_name
-        if self.image_filename is not None:
-            title = "{0} - {1}".format(title, Path(self.image_filename).name)
+        if self.image_panel.image_filename is not None:
+            title = f"{title} - {Path(self.image_panel.image_filename).name}"
         self.setWindowTitle(title)
 
     def update_image_view (self):
@@ -255,10 +286,8 @@ class MainWindow (QMainWindow):
         self.lut_panel.update_lut_range_if_auto(self.image_panel.current_image())
         self.lut_panel.update_lut_view(self.image_panel.current_image())
 
-        self.image_panel.update_image_scene(lut_list = self.lut_panel.lut_list, \
-                                            item_list = self.plugin_class.list_scene_items(self.image_panel.image_stack,
-                                                                                           self.image_panel.current_index()))
-
+        item_list = self.plugin_panel.current_instance.list_scene_items(self.image_panel.image_stack, self.image_panel.current_index())
+        self.image_panel.update_image_scene(lut_list = self.lut_panel.lut_list, item_list = item_list)
 
     def zoom_best (self):
         self.zoom_panel.zoom_best((self.image_panel.image_stack.width, self.image_panel.image_stack.height), \
@@ -281,74 +310,49 @@ class MainWindow (QMainWindow):
         if dialog.exec():
             self.open_multiple_images(dialog.selectedFiles())
 
-        self.plugin_panel.notice_focus_recovery()
+        self.plugin_panel.notify_plugin_focus_recovery()
         self.activateWindow()
 
-    def slot_load_records (self):
-        if self.image_filename is None:
+    def slot_load_plugin_records (self):
+        if self.image_panel.image_filename is None:
             self.show_message(title = "Records loading error", message = "Open image before loading records.")
             return
 
-        if self.clear_modified_flag() == False:
+        if self.clear_plugin_all_records_modified_flag() == False:
             return
 
         dialog = QFileDialog(self)
         dialog.setWindowTitle("Select a record to load.")
         dialog.setFileMode(QFileDialog.ExistingFile)
-        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.plugin_class.file_types.items()])
+        dialog.setNameFilters(self.plugin_panel.records_filename_filter_list())
         dialog.setViewMode(QFileDialog.List)
 
-        image_file = Path(self.image_filename)
+        image_file = Path(self.image_panel.image_filename)
         if image_file.exists():
             dialog.setDirectory(str(image_file.resolve().parent))
 
         if dialog.exec():
-            try:
-                self.load_records(dialog.selectedFiles()[0])
-            except:
-                # does nothing because a message dialog is already shown
-                pass
+            self.load_plugin_records(dialog.selectedFiles()[0])
             self.update_image_view()
 
-        self.plugin_panel.notice_focus_recovery()
+        self.plugin_panel.notify_plugin_focus_recovery()
         self.activateWindow()
 
-    def slot_save_records (self):
-        if self.plugin_class.records_filename is None:
-            self.slot_save_records_as()
-        else:
-            try:
-                self.save_records(self.plugin_class.records_filename)
-            except:
-                # does nothing because a message dialog is already shown
-                pass
-
-    def slot_save_records_as (self):
-        dialog = QFileDialog(self)
-        dialog.setWindowTitle("Select a filename to save records.")
-        dialog.setFileMode(QFileDialog.AnyFile)
-        dialog.setNameFilters(["{0} ({1})".format(key, " ".join(value)) for key, value in self.plugin_class.file_types.items()])
-        dialog.setViewMode(QFileDialog.List)
-        dialog.setAcceptMode(QFileDialog.AcceptSave)
-
-        if self.image_filename is not None:
-            image_file = Path(self.image_filename)
-            if image_file.exists():
-                dialog.setDirectory(str(image_file.resolve().parent))
-                dialog.selectFile(self.plugin_class.suggest_filename(self.image_filename))
-
-        if dialog.exec():
-            try:
-                self.save_records(dialog.selectedFiles()[0])
-            except:
-                # does nothing because a message dialog is already shown
-                pass
-
-        self.plugin_panel.notice_focus_recovery()
+    def slot_save_plugin_records (self):
+        records_filename = self.plugin_panel.plugin_records_filename()
+        if records_filename is None:
+            records_filename = self.show_plugin_records_filename_dialog()
+        self.save_plugin_records(records_filename)
         self.activateWindow()
 
-    def slot_clear_records (self):
-        self.clear_records()
+    def slot_save_plugin_records_as (self):
+        records_filename = self.show_records_filename_dialog(self.plugin_panel.plugin_records_filename())
+        self.save_plugin_records(records_filename)
+        self.plugin_panel.notify_plugin_focus_recovery()
+        self.activateWindow()
+
+    def slot_clear_plugin_records (self):
+        self.clear_plugin_records()
 
     def slot_focus_graphics_view (self):
         self.ui.gview_image.setFocus()
@@ -366,7 +370,7 @@ class MainWindow (QMainWindow):
         created by the current plugin. See also the plugin help.
         ''')
         self.show_message(title = "Viewer help", message = message)
-        self.plugin_class.focus_recovered()
+        self.plugin_panel.notify_plugin_focus_recovery()
 
     def slot_about_this (self):
         message = textwrap.dedent('''\
@@ -377,11 +381,11 @@ class MainWindow (QMainWindow):
         Copyright 2024-2025 by Takushi Miyoshi (SIUSOM).
         '''.format(self.app_name))
         self.show_message(title = "About This", message = message)
-        self.plugin_class.focus_recovered()
+        self.plugin_panel.notify_plugin_focus_recovery()
 
     def slot_about_qt (self):
         QApplication.aboutQt()
-        self.plugin_class.focus_recovered()
+        self.plugin_panel.notify_plugin_focus_recovery()
 
     def slot_update_image_view (self):
         self.update_image_view()
@@ -392,16 +396,13 @@ class MainWindow (QMainWindow):
         self.update_image_view()
 
     def slot_scene_mouse_pressed (self, event):
-        self.plugin_class.mouse_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.current_instance.mouse_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
 
     def slot_scene_mouse_moved (self, event):
-        self.plugin_class.mouse_moved(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.current_instance.mouse_moved(event, self.image_panel.image_stack, self.image_panel.current_index())
 
     def slot_scene_mouse_released (self, event):
-        self.plugin_class.mouse_released(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.current_instance.mouse_released(event, self.image_panel.image_stack, self.image_panel.current_index())
 
     def slot_scene_wheel_moved (self, event):
         if event.modifiers() == Qt.ShiftModifier:
@@ -409,15 +410,12 @@ class MainWindow (QMainWindow):
                 self.zoom_panel.slot_zoomed_in()
             elif event.delta() < 0:
                 self.zoom_panel.slot_zoomed_out()
-        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_key_pressed (self, event):
-        self.plugin_class.key_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.current_instance.key_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
 
     def slot_scene_key_released (self, event):
-        self.plugin_class.key_released(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.current_instance.key_released(event, self.image_panel.image_stack, self.image_panel.current_index())
 
     def slot_select_image_by_tczindex (self, time, channel, z_index):
         if channel != self.lut_panel.current_channel():
@@ -438,7 +436,7 @@ class MainWindow (QMainWindow):
     def dropEvent(self, event):
         if event.mimeData().hasUrls():
             stack_exts = [item for values in self.image_types.values() for item in values]
-            record_exts = [item for values in self.plugin_class.file_types.values() for item in values]
+            record_exts = [item for values in self.plugin_panel.current_instance.file_types.values() for item in values]
 
             files = [Path(url.toLocalFile()) for url in event.mimeData().urls()]
             stack_files = [file for file in files if any([Path(str(file).lower()).match(ext) for ext in stack_exts])]
@@ -459,11 +457,11 @@ class MainWindow (QMainWindow):
                                   message = "Unable to open: {0}".format(', '.join([str(file) for file in error_files])))
 
     def showEvent (self, event):
-        self.update_image_view()
-        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
+        # adjust plugin label space
+        self.plugin_panel.update_labels()
 
     def closeEvent (self, event):
-        if self.clear_modified_flag():
+        if self.clear_all_plugin_records_modified_flag():
             event.accept()
         else:
             event.ignore()

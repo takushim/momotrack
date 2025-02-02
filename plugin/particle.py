@@ -870,7 +870,8 @@ class SPT (PluginBase):
         t_index = min(t_index + 1, self.t_limits[1])
         self.signal_select_image_by_tczindex.emit(t_index, channel, z_index)
 
-    def update_stack_info (self, stack):
+    def update_stack_reference (self, stack):
+        super().update_stack_reference(stack)
         self.z_limits = [0, stack.z_count - 1]
         self.c_limits = [0, stack.c_count - 1]
         self.t_limits = [0, stack.t_count - 1]
