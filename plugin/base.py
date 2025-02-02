@@ -6,6 +6,7 @@ from pathlib import Path
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QCursor
+from image import stack
 
 priority = -1
 plugin_name = 'Base class'
@@ -23,7 +24,8 @@ class PluginBase (QObject):
     signal_update_mouse_cursor = Signal(QCursor)
     signal_select_image_by_tczindex = Signal(int, int, int)
     signal_focus_graphics_view = Signal()
-    signal_records_updated = Signal()
+    signal_records_modified = Signal()
+    signal_image_stack_created = Signal(stack)
 
     def __init__ (self):
         super().__init__()
