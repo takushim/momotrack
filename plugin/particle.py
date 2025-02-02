@@ -549,7 +549,7 @@ class SPT (PluginBase):
             self.adding_spot = True
         elif event.key() == Qt.Key_Escape:
             if self.is_tracking and self.check_auto_moving.isChecked():
-                self.signal_move_by_tczindex.emit(*self.track_start)
+                self.signal_select_image_by_tczindex.emit(*self.track_start)
             self.clear_tracking()
         elif event.key() == Qt.Key_Space:
             if self.spot_to_add is not None:
@@ -868,7 +868,7 @@ class SPT (PluginBase):
 
     def move_time_forward(self, t_index, channel, z_index):
         t_index = min(t_index + 1, self.t_limits[1])
-        self.signal_move_by_tczindex.emit(t_index, channel, z_index)
+        self.signal_select_image_by_tczindex.emit(t_index, channel, z_index)
 
     def update_stack_info (self, stack):
         self.z_limits = [0, stack.z_count - 1]

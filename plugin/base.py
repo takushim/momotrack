@@ -20,28 +20,32 @@ class PluginException(Exception):
 
 class PluginBase (QObject):
     signal_update_image_view = Signal()
-    signal_reset_panels = Signal()
     signal_update_mouse_cursor = Signal(QCursor)
-    signal_move_by_tczindex = Signal(int, int, int)
+    signal_select_image_by_tczindex = Signal(int, int, int)
     signal_focus_graphics_view = Signal()
+    signal_records_updated = Signal()
 
     def __init__ (self):
         super().__init__()
         self.records_modified = False
-        self.record_suffix = '_record.json'
-        self.default_stem = 'default'
+        self.records_suffix = '_records.json'
+        self.records_filename = None
+        self.default_filename_stem = 'default'
         self.file_types = {"JSON text": ["*.json"]}
 
     def load_records (self, records_filename):
         try:
             with open(records_filename, 'r') as f:
-                self.records_dict = json.load(f)
+                records_dict = json.load(f)
         except:
             raise PluginException(f"Record File unable to load: {records_filename}")
 
         plugin_name = self.records_dict.get('summary', {}).get('plugin_name', '')
         if plugin_name != self.plugin_name:
             raise PluginException(f"The records were created by different plugin: {plugin_name}")
+        
+        self.records_dict = records_dict
+        self.records_filename = records_filename
 
     def save_records (self, records_filename, settings = {}):
         summary = {'plugin_name': self.plugin_name, \
@@ -55,13 +59,16 @@ class PluginBase (QObject):
                         separators = (',', ': '), cls = NumpyEncoder)
         except:
             raise PluginException(f"Record File unable to save: {records_filename}")
+        
+        self.records_filename = records_filename
 
     def clear_records (self):
         self.records_dict = {}
+        self.records_filename = None
 
     def suggest_filename (self, image_filename):
         if image_filename is None:
-            return self.default_filename + self.record_suffix
+            return self.default_filename_stem + self.records_suffix
 
         name = Path(image_filename).stem
         name = re.sub(r'\.ome$', '', name, flags=re.IGNORECASE)

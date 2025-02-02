@@ -5,7 +5,7 @@ from pathlib import Path
 from importlib import import_module
 from PySide6.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QProgressDialog, QApplication
 from PySide6.QtGui import QAction, QActionGroup
-from PySide6.QtCore import QFile, Qt, Signal, QTimer
+from PySide6.QtCore import QFile, Qt, Signal
 from PySide6.QtUiTools import QUiLoader
 from ui import imagepanel, zoompanel, lutpanel, pluginpanel
 from image import stack
@@ -13,21 +13,22 @@ from image import stack
 class MainWindow (QMainWindow):
     signal_open_new_image = Signal(list)
 
-    def __init__ (self, image_filename = None, records_filename = None, plugin_name = None):
+    def __init__ (self, image_filename = None, records_filename = None, current_plugin_name = None):
         super().__init__()
         self.app_name = "MomoTrack"
         self.image_types = {"TIFF Image": ["*.tif", "*.tiff", "*.stk"]}
 
         self.setWindowTitle(self.app_name)
 
-        self.image_filename = image_filename
-        self.records_filename = records_filename
+        self.image_filename = None
+        self.records_filename = None
 
         self.load_ui()
 
+        self.plugin_list = []
         self.plugin_package = 'plugin'
         self.default_plugin = 'base'
-        self.load_plugins(plugin_name)
+        self.load_plugins(current_plugin_name)
 
         self.init_widgets()
         self.connect_menubar_to_slots()
@@ -69,9 +70,8 @@ class MainWindow (QMainWindow):
         self.update_image_view()
         self.update_window_title()
 
-    def load_plugins (self, plugin_name):
+    def load_plugins (self, current_plugin_name):
         plugin_folder = str(Path(__file__).parent.parent.joinpath(self.plugin_package))
-        self.plugin_list = []
         load_failed = []
 
         self.actgroup_plugin = QActionGroup(self.ui.menu_plugin)
@@ -95,7 +95,7 @@ class MainWindow (QMainWindow):
             self.actgroup_plugin.addAction(action)
         self.actgroup_plugin.setExclusive(True)
 
-        module = next((x for x in self.plugin_list if x.plugin_name == plugin_name), None)
+        module = next((x for x in self.plugin_list if x.plugin_name == current_plugin_name), None)
         if module is None:
             self.init_plugin(self.plugin_list[0])
         else:
@@ -196,8 +196,8 @@ class MainWindow (QMainWindow):
             self.show_message(title = "Record loading error", message = str(exception))
             raise
 
-        self.records_filename = records_filename
-        self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
+        self.plugin_class.records_filename = records_filename
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
         self.restore_settings(self.plugin_class.records_dict.get('viewer_settings', {}))
         self.update_image_view()
 
@@ -211,12 +211,12 @@ class MainWindow (QMainWindow):
             self.show_message(title = "Record saving error", message = str(exception))
             raise
 
-        self.records_filename = records_filename
+        self.plugin_class.records_filename = records_filename
         self.plugin_panel.update_filename(records_filename, self.plugin_class.is_modified())
 
     def clear_records (self):
         self.plugin_class.clear_records()
-        self.records_filename = None
+        self.plugin_class.records_filename = None
         self.plugin_panel.update_filename(None, self.plugin_class.is_modified())
 
     def restore_settings(self, settings = None):
@@ -270,7 +270,7 @@ class MainWindow (QMainWindow):
                 if self.plugin_class.is_modified():
                     return False
 
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
         return True
 
     def switch_plugin (self, name):
@@ -290,9 +290,8 @@ class MainWindow (QMainWindow):
         self.plugin_panel.update_title(module.plugin_name)
         self.plugin_panel.update_widgets(self.plugin_class)
         self.plugin_class.signal_update_image_view.connect(self.slot_update_image_view)
-        self.plugin_class.signal_reset_panels.connect(self.slot_reset_panels)
         self.plugin_class.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
-        self.plugin_class.signal_move_by_tczindex.connect(self.slot_move_by_tczindex)
+        self.plugin_class.signal_select_image_by_tczindex.connect(self.slot_select_image_by_tczindex)
         self.plugin_class.signal_focus_graphics_view.connect(self.slot_focus_graphics_view)
 
     def update_window_title (self):
@@ -368,11 +367,11 @@ class MainWindow (QMainWindow):
         self.activateWindow()
 
     def slot_save_records (self):
-        if self.records_filename is None:
+        if self.plugin_class.records_filename is None:
             self.slot_save_records_as()
         else:
             try:
-                self.save_records(self.records_filename)
+                self.save_records(self.plugin_class.records_filename)
             except:
                 # does nothing because a message dialog is already shown
                 pass
@@ -456,15 +455,15 @@ class MainWindow (QMainWindow):
 
     def slot_scene_mouse_pressed (self, event):
         self.plugin_class.mouse_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_mouse_moved (self, event):
         self.plugin_class.mouse_moved(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_mouse_released (self, event):
         self.plugin_class.mouse_released(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_wheel_moved (self, event):
         if event.modifiers() == Qt.ShiftModifier:
@@ -472,25 +471,21 @@ class MainWindow (QMainWindow):
                 self.zoom_panel.slot_zoomed_in()
             elif event.delta() < 0:
                 self.zoom_panel.slot_zoomed_out()
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_key_pressed (self, event):
         self.plugin_class.key_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
     def slot_scene_key_released (self, event):
         self.plugin_class.key_released(event, self.image_panel.image_stack, self.image_panel.current_index())
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
-    def slot_move_by_tczindex (self, time, channel, z_index):
+    def slot_select_image_by_tczindex (self, time, channel, z_index):
         if channel != self.lut_panel.current_channel():
             self.ui.combo_channel.setCurrentIndex(channel)
         self.ui.slider_time.setValue(time)
         self.ui.slider_zstack.setValue(z_index)
-
-    def slot_reset_panels (self):
-        self.init_widgets()
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
 
     def slot_update_mouse_cursor (self, cursor):
         self.ui.setCursor(cursor)
@@ -524,7 +519,7 @@ class MainWindow (QMainWindow):
 
     def showEvent (self, event):
         self.update_image_view()
-        self.plugin_panel.update_filename(self.records_filename, self.plugin_class.is_modified())
+        self.plugin_panel.update_filename(self.plugin_class.records_filename, self.plugin_class.is_modified())
 
     def closeEvent (self, event):
         if self.clear_modified_flag():
