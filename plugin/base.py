@@ -24,7 +24,7 @@ class PluginBase (QObject):
     signal_update_mouse_cursor = Signal(QCursor)
     signal_select_image_by_tczindex = Signal(int, int, int)
     signal_focus_graphics_view = Signal()
-    signal_records_modified = Signal()
+    signal_records_updated = Signal()
     signal_image_stack_created = Signal(stack)
 
     def __init__ (self):
@@ -34,6 +34,7 @@ class PluginBase (QObject):
         self.records_filename = None
         self.default_filename_stem = 'default'
         self.file_types = {"JSON text": ["*.json"]}
+        self.stack_reference = None
 
     def load_records (self, records_filename):
         try:
@@ -91,8 +92,8 @@ class PluginBase (QObject):
     def init_widgets (self, vlayout):
         pass
 
-    def update_stack_info (self, stack):
-        pass
+    def update_stack_reference (self, stack):
+        self.stack_reference = stack
 
     def connect_signals_to_slots (self):
         pass
