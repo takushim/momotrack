@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 from pathlib import Path
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QObject, Signal
 from PySide6.QtGui import QFontMetrics
 from PySide6.QtWidgets import QSizePolicy, QLayout
 
-class PluginPanel:
+class PluginPanel (QObject):
+    signal_plugin_changed = Signal()
+
     def __init__ (self, ui):
         self.ui = ui
         self.update_filename(filename = None, modified = False)
