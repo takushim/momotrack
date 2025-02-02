@@ -30,7 +30,7 @@ class Demo (PluginBase):
         self.vlayout.addWidget(self.button_demo)
         self.vlayout.addWidget(self.text_message)
 
-    def connect_signals (self):
+    def connect_signals_to_slots (self):
         self.button_demo.clicked.connect(self.slot_demo_button)
 
     def slot_demo_button (self):

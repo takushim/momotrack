@@ -177,7 +177,7 @@ class SPT (PluginBase):
         self.update_mouse_cursor()
         self.init_context_menu()
 
-    def connect_signals (self):
+    def connect_signals_to_slots (self):
         self.check_hide_tracks.stateChanged.connect(self.slot_onoff_tracks)
         self.check_show_labels.stateChanged.connect(self.slot_onoff_labels)
         self.dspin_marker_radius.valueChanged.connect(self.slot_marker_radius_changed)
@@ -677,7 +677,7 @@ class SPT (PluginBase):
         self.update_status()
         self.update_mouse_cursor()
 
-    def focus_recovered (self):
+    def notice_focus_recovery (self):
         if QApplication.queryKeyboardModifiers() == Qt.ControlModifier:
             self.adding_spot = True
         else:
