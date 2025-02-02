@@ -20,7 +20,9 @@ class PluginPanel (QObject):
         super().__init__(parent)
         self.ui = ui
 
-        self.plugin_module_list = []
+        self.plugin_module_dict = {}
+        self.plugin_class_dict = {}
+
         self.plugin_package = 'plugin'
         self.default_plugin = 'base'
         self.current_module = None
@@ -41,7 +43,9 @@ class PluginPanel (QObject):
                 continue
             try:
                 module = import_module(name = '{0}.{1}'.format(self.plugin_package, str(module_file.stem)))
-                self.plugin_module_list.append(module)
+                instance = getattr(module, module.class_name)()
+                self.plugin_module_list[module.plugin_name] = module
+                self.plugin_class_list[module.plugin_name] = instance
             except ImportError:
                 load_failed.append(str(module_file.stem))
 
