@@ -47,11 +47,11 @@ class PluginBase (QObject):
         self.records_dict = records_dict
         self.records_filename = records_filename
 
-    def save_records (self, records_filename, settings = {}):
+    def save_records (self, records_filename, viewer_settings = {}):
         summary = {'plugin_name': self.plugin_name, \
                    'last_update': datetime.now().astimezone().isoformat()}
 
-        self.records_dict = {'summary': summary} | settings | self.records_dict
+        self.records_dict = {'summary': summary} | viewer_settings | self.records_dict
 
         try:
             with open(records_filename, 'w') as f:
@@ -65,6 +65,7 @@ class PluginBase (QObject):
     def clear_records (self):
         self.records_dict = {}
         self.records_filename = None
+        self.viewer_settings = {}
 
     def suggest_filename (self, image_filename):
         if image_filename is None:
@@ -74,7 +75,7 @@ class PluginBase (QObject):
         name = re.sub(r'\.ome$', '', name, flags=re.IGNORECASE)
         return name + self.record_suffix
 
-    def is_modified (self):
+    def is_records_modified (self):
         return self.records_modified
 
     def help_message (self):
@@ -91,7 +92,7 @@ class PluginBase (QObject):
     def update_stack_info (self, stack):
         pass
 
-    def connect_signals (self):
+    def connect_signals_to_slots (self):
         pass
 
     def list_scene_items (self, stack, tcz_index):
@@ -112,5 +113,5 @@ class PluginBase (QObject):
     def mouse_released (self, event, stack, tcz_index):
         pass
 
-    def focus_recovered (self):
+    def notice_focus_recovery (self):
         pass
