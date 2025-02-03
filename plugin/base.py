@@ -3,10 +3,13 @@
 import re, json, textwrap
 from datetime import datetime
 from pathlib import Path
+from logging import getLogger
 from numpyencoder import NumpyEncoder
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QCursor
 from image import stack
+
+logger = getLogger(__name__)
 
 priority = -1
 plugin_name = 'Base class'
@@ -41,11 +44,12 @@ class PluginBase (QObject):
             with open(records_filename, 'r') as f:
                 records_dict = json.load(f)
         except:
-            raise PluginException(f"Record File unable to load: {records_filename}")
+            raise PluginException(f"Records unable to load: {records_filename}")
 
-        plugin_name = self.records_dict.get('summary', {}).get('plugin_name', '')
+        plugin_name = records_dict.get('summary', {}).get('plugin_name', None)
         if plugin_name != self.plugin_name:
-            raise PluginException(f"The records were created by different plugin: {plugin_name}")
+            logger.error(f"Records created by a plugin {plugin_name}. Summary: {self.records_dict.get('summary', None)}")
+            raise PluginException(f"Records created by different plugin: {plugin_name}.")
         
         self.records_dict = records_dict
         self.records_filename = records_filename

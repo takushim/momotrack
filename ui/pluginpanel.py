@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import json
 from pathlib import Path
 from importlib import import_module
 from logging import getLogger
@@ -12,6 +13,7 @@ logger = getLogger(__name__)
 class PluginPanel (QObject):
     # signal from this panel or relayed from plugins
     signal_update_image_view = Signal()
+    signal_restore_image_settings = Signal()
 
     # signals relayed from plugins to the main window
     signal_update_mouse_cursor = Signal(QCursor)
@@ -96,9 +98,15 @@ class PluginPanel (QObject):
     def connect_signals_to_slots(self):
         self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
 
-    def switch_plugin (self, plugin_name):
-        # disconnect the old class
+    def switch_plugin (self, plugin_name = None):
+        plugin_name = self.select_plugin_instance(plugin_name).plugin_name
+        logger.debug(f"Switching plugin from {self.current_instance} to {plugin_name}.")
+
         if self.current_instance is not None:
+            if plugin_name == self.current_instance.plugin_name:
+                return
+
+            # disconnect the old class
             self.current_instance.clear_records()
             self.current_instance.signal_update_image_view.disconnect()
             self.current_instance.signal_update_mouse_cursor.disconnect()
@@ -109,7 +117,7 @@ class PluginPanel (QObject):
 
         # connect a new class
         self.current_instance = self.plugin_instance_dict.get(plugin_name, self.default_instance)
-        logger.debug(f"New current instance {self.current_instance}.")
+        logger.debug(f"New current instance {self.current_instance} set to the variable.")
 
         self.update_labels()
         logger.debug("Labels updated.")
@@ -182,7 +190,29 @@ class PluginPanel (QObject):
         return plugin_instance
 
     def load_records (self, records_filename, plugin_name = None):
+        try:
+            with open(records_filename, 'r') as f:
+                records_dict = json.load(f)
+        except:
+            logger.error(f"Records file cannot be opened for the initial check: {records_filename}.")
+            self.show_message()
+
+        records_plugin_name = records_dict.get("summary", {}).get('plugin_name', None)
+        logger.debug(f"Records being loaded are created by {records_plugin_name}")
+
         plugin_instance = self.select_plugin_instance(plugin_name)
+        if records_plugin_name != plugin_instance.plugin_name:
+            mbox = QMessageBox()
+            mbox.setWindowTitle("Continue loading records?")
+            mbox.setText(f"Records created by {records_plugin_name}, not by {plugin_instance.plugin_name}. Continue?")
+            mbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            mbox.setDefaultButton(QMessageBox.No)
+            result = mbox.exec()
+            if result == QMessageBox.No:
+                return
+            else:
+                self.switch_plugin(records_plugin_name)
+                plugin_instance = self.select_plugin_instance(plugin_name)
 
         try:
             plugin_instance.load_records(records_filename)
@@ -191,6 +221,7 @@ class PluginPanel (QObject):
 
         # labels not updated if the target plugin is not current
         self.update_labels()
+        self.signal_restore_image_settings.emit()
         self.signal_update_image_view.emit()
 
     def save_records (self, records_filename, plugin_name = None, additional_settings = {}):
