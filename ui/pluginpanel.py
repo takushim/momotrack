@@ -107,7 +107,6 @@ class PluginPanel (QObject):
                 return
 
             # disconnect the old class
-            self.current_instance.clear_records()
             self.current_instance.signal_update_image_view.disconnect()
             self.current_instance.signal_update_mouse_cursor.disconnect()
             self.current_instance.signal_select_image_by_tczindex.disconnect()
