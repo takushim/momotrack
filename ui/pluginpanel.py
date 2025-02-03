@@ -132,13 +132,12 @@ class PluginPanel (QObject):
         logger.debug(f"Signals of the new instance {self.current_instance} connected.")
 
         # update menu
-        #plugin_action_list = [x for x in self.actgroup_plugin.actions() if x.text() == self.current_instance.plugin_name]
-        #print(plugin_action_list)
-        #if len(plugin_action_list) > 0:
-        #    self.ui.menu_plugin.blockSignals(True)
-        #    self.ui.menu_plugin.setActiveAction(self.actgroup_plugin.setActiveAction.actionAt(plugin_action_list[0]))
-        #    self.ui.menu_plugin.blockSignals(False)
-        #    logger.debug(f"Plugin menu selected {plugin_action_list[0]}.")
+        menu_action_candidates = [x for x in self.ui.menu_plugin.actions() if x.text() == self.current_instance.plugin_name]
+        if len(menu_action_candidates) > 0:
+            self.ui.menu_plugin.blockSignals(True)
+            menu_action_candidates[0].setChecked(True)
+            self.ui.menu_plugin.blockSignals(False)
+            logger.debug(f"Plugin menu selected {menu_action_candidates[0]}.")
 
         self.signal_update_image_view.emit()
 
