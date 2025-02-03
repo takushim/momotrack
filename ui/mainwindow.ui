@@ -733,6 +733,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QLabel" name="label_plugin">
+          <property name="text">
+           <string>Plugin:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QComboBox" name="combo_plugin_name"/>
         </item>
         <item>
