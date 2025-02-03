@@ -90,13 +90,21 @@ class PluginPanel (QObject):
             self.actgroup_plugin.addAction(action)
         self.actgroup_plugin.setExclusive(True)
 
+        # combobox
+        self.ui.combo_plugin_name.blockSignals(True)
+        self.ui.combo_plugin_name.clear()
+        self.ui.combo_plugin_name.addItems([x.plugin_name for x in instance_list])
+        self.ui.combo_plugin_name.blockSignals(False)
+
+        # store plugin instances to a list
         self.plugin_instance_dict = {x.plugin_name: x for x in instance_list}
 
         if len(load_failed) > 0:
             self.show_message(f"Plugin error", "Failed to load: {', '.join(load_failed)}")
 
     def connect_signals_to_slots(self):
-        self.actgroup_plugin.triggered.connect(self.slot_switch_plugin)
+        self.actgroup_plugin.triggered.connect(self.slot_switch_plugin_by_action)
+        self.ui.combo_plugin_name.currentTextChanged.connect(self.slot_switch_plugin_by_name)
 
     def switch_plugin (self, plugin_name = None):
         plugin_name = self.select_plugin_instance(plugin_name).plugin_name
@@ -137,9 +145,16 @@ class PluginPanel (QObject):
             self.ui.menu_plugin.blockSignals(True)
             menu_action_candidates[0].setChecked(True)
             self.ui.menu_plugin.blockSignals(False)
-            logger.debug(f"Plugin menu selected {menu_action_candidates[0]}.")
+            logger.debug(f"Plugin menu checked for {menu_action_candidates[0]}.")
+
+        # update the combo box
+        self.ui.combo_plugin_name.blockSignals(True)
+        self.ui.combo_plugin_name.setCurrentText(self.current_instance.plugin_name)
+        self.ui.combo_plugin_name.blockSignals(False)
+        logger.debug(f"Plugin combo box checked for {self.current_instance.plugin_name}.")
 
         self.signal_update_image_view.emit()
+        logger.debug(f"Plugin switched to {self.current_instance.plugin_name}.")
 
     def update_plugin_widgets (self):
         self.recurse_for_widgets(self.ui.vlayout_plugin, lambda x: x.deleteLater(), lambda x: x.deleteLater())
@@ -160,13 +175,6 @@ class PluginPanel (QObject):
                 func_widget(object.itemAt(index).widget())
 
     def update_labels (self):
-        fontmetrics = QFontMetrics(self.ui.label_plugin.font())
-        text = f"Plugin: {self.current_instance.plugin_name}"
-        elidedtext = fontmetrics.elidedText(text, Qt.TextElideMode.ElideRight, self.ui.label_plugin.width())
-        self.ui.label_plugin.setText(elidedtext)
-        if text != elidedtext:
-            self.ui.label_plugin.setToolTip(text)
-
         flag = '*' if self.current_instance.is_records_modified() else ''
         if self.current_instance.records_filename is None:
             text = f"File: {flag}(None)"
@@ -274,8 +282,11 @@ class PluginPanel (QObject):
         mbox.setStandardButtons(QMessageBox.Ok)
         mbox.exec()
 
-    def slot_switch_plugin (self, action):
+    def slot_switch_plugin_by_action (self, action):
         self.switch_plugin(action.text())
+
+    def slot_switch_plugin_by_name (self, plugin_name):
+        self.switch_plugin(plugin_name)
 
     def slot_plugin_help (self):
         self.show_message(title = "Quick help", message = self.current_instance.help_message())

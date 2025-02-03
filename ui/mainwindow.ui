@@ -733,17 +733,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QLabel" name="label_plugin">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Plugin status:</string>
-          </property>
-         </widget>
+         <widget class="QComboBox" name="combo_plugin_name"/>
         </item>
         <item>
          <widget class="QLabel" name="label_records_filename">
@@ -796,7 +786,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>17</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -810,8 +800,8 @@
      <rect>
       <x>507</x>
       <y>107</y>
-      <width>103</width>
-      <height>162</height>
+      <width>145</width>
+      <height>191</height>
      </rect>
     </property>
     <property name="sizePolicy">
