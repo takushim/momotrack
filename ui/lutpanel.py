@@ -42,7 +42,7 @@ class LutPanel (QObject):
     def init_boxes (self):
         self.ui.combo_channel.blockSignals(True)
         self.ui.combo_channel.clear()
-        self.ui.combo_channel.addItems(["Channel {0}".format(i) for i in range(len(self.lut_list))])
+        self.ui.combo_channel.addItems([f"Channel {i}" for i in range(len(self.lut_list))])
         self.ui.combo_channel.blockSignals(False)
 
         lut = self.lut_list[0]
