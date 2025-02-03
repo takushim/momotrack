@@ -124,6 +124,7 @@ class MainWindow (QMainWindow):
         self.lut_panel.connect_signals_to_slots()
 
         # plugin
+        self.plugin_panel.signal_restore_image_settings.connect(self.slot_restore_image_settings)
         self.plugin_panel.signal_update_image_view.connect(self.slot_update_image_view)
         self.plugin_panel.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
         self.plugin_panel.signal_select_image_by_tczindex.connect(self.slot_select_image_by_tczindex)
@@ -177,9 +178,6 @@ class MainWindow (QMainWindow):
 
     def load_plugin_records (self, records_filename, plugin_name = None):
         self.plugin_panel.load_records(records_filename, plugin_name)
-
-        # image settings not restored when the plugin is not current
-        self.restore_settings(self.plugin_panel.plugin_records_dict().get('viewer_settings', {}))
 
     def save_plugin_records (self, records_filename, plugin_name = None):
         settings = {'image_properties': self.archive_image_properties(), 
@@ -394,6 +392,9 @@ class MainWindow (QMainWindow):
     def slot_reset_current_lut_range (self):
         self.lut_panel.reset_current_lut_range(self.image_panel.image_stack.image_array)
         self.update_image_view()
+
+    def slot_restore_image_settings (self):
+        self.restore_settings(self.plugin_panel.plugin_records_dict().get('viewer_settings', {}))
 
     def slot_scene_mouse_pressed (self, event):
         self.plugin_panel.current_instance.mouse_pressed(event, self.image_panel.image_stack, self.image_panel.current_index())
