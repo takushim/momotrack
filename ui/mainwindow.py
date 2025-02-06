@@ -182,7 +182,7 @@ class MainWindow (QMainWindow):
     def save_plugin_records (self, records_filename, plugin_name = None):
         settings = {'image_properties': self.archive_image_properties(), 
                     'viewer_settings': self.archive_viewer_settings()}
-        self.plugin_panel.save_records(records_filename, plugin_name, settings = settings)
+        self.plugin_panel.save_records(records_filename, plugin_name, additional_settings = settings)
 
     def show_plugin_records_filename_dialog (self, plugin_name = None):
         dialog = QFileDialog(self)
@@ -192,13 +192,15 @@ class MainWindow (QMainWindow):
         dialog.setViewMode(QFileDialog.List)
         dialog.setAcceptMode(QFileDialog.AcceptSave)
 
-        if self.plugin_panel.plugin_records_filename is not None:
-            dialog.selectFile(self.plugin_panel.plugin_records_filename)
+        if self.plugin_panel.plugin_records_filename(plugin_name) is not None:
+            dialog.selectFile(self.plugin_panel.plugin_records_filename(plugin_name))
         elif self.image_panel.image_filename is not None:
             image_file = Path(self.image_panel.image_filename)
+            logger.debug(f"Saving for an image file {str(image_file)}")
             if image_file.exists():
+                logger.debug(f"Suggested records filename {self.plugin_panel.suggest_records_filename(str(image_file), plugin_name)}")
                 dialog.setDirectory(str(image_file.resolve().parent))
-                dialog.selectFile(self.plugin_panel.suggest_records_filename(self.image_panel.image_filename))
+                dialog.selectFile(self.plugin_panel.suggest_records_filename(str(image_file), plugin_name))
 
         if dialog.exec() == False:
             return None
@@ -266,7 +268,7 @@ class MainWindow (QMainWindow):
         return settings
 
     def archive_image_properties (self):
-        settings = {'image_filename': self.image_filename}
+        settings = {'image_filename': self.image_panel.image_filename}
         settings = settings | self.image_panel.image_stack.archive_properties()
         return settings
 
@@ -448,7 +450,7 @@ class MainWindow (QMainWindow):
                 self.open_multiple_images([str(file) for file in stack_files])
                 error_files.extend(record_files)
             elif len(record_files) > 0:
-                if self.image_filename is not None and len(record_files) == 1:
+                if self.image_panel.image_filename is not None and len(record_files) == 1:
                     self.load_records(record_files[0])
                 else:
                     error_files.extend(record_files)
