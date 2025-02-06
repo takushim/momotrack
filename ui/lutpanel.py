@@ -142,16 +142,7 @@ class LutPanel (QObject):
 
     def update_widget_activation_status (self):
         # enable/disable combo and check boxes
-        if self.ui.check_composite.isChecked():
-            self.ui.combo_lut.setEnabled(True)
-        else:
-            if self.ui.check_lut_grayscale.isChecked():
-                self.ui.combo_lut.setEnabled(False)
-            elif self.ui.check_lut_blank.isChecked():
-                self.ui.combo_lut.setEnabled(False)
-            else:
-                self.ui.combo_lut.setEnabled(True)
-
+        self.ui.combo_lut.setEnabled(self.ui.check_composite.isChecked())
         self.ui.check_lut_grayscale.setEnabled(not self.ui.check_composite.isChecked())
 
     def update_lut_range_if_auto (self, image):
