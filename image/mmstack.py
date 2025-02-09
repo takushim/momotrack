@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import io, tifffile, json
+import io, tifffile, json, base64
 import numpy as np
 from pathlib import Path
 from logging import getLogger
@@ -12,18 +12,17 @@ from . import gpuimage
 
 logger = getLogger(__name__)
 
-default_pixel_um = 0.1625
-default_z_step_um = 0.5
-default_finterval_sec = 1
-default_voxel = [default_z_step_um, default_pixel_um, default_pixel_um]
-default_shape = (1, 1, 1, 256, 256)
-default_dtype = np.uint16
-
 def with_suffix (filename, suffix):
     filename = Path(filename).with_suffix('')
     if filename.suffix.lower() == '.ome':
         filename = filename.with_suffix('')
     return str(filename) + suffix
+
+default_pixel_um = 0.1625
+default_z_step_um = 0.5
+default_finterval_sec = 1
+default_image_shape = (1, 1, 256, 256)
+default_axis = 'TZYX'
 
 ome_size_limit = int(0.9 * (2 ** 31))
 
@@ -39,6 +38,8 @@ dtype_to_ometype = {
     np.dtype(np.complex64): PixelType.COMPLEXFLOAT,
     np.dtype(np.complex128): PixelType.COMPLEXDOUBLE,
 }
+
+ome_size_limit = int(0.9 * (2 ** 31))
 
 ome_ratio_to_um = {
     UnitsLength.METER: 1.0e-6,
@@ -66,7 +67,7 @@ ome_rgb_colors = [
     Color(0xFF000000), # Red
     Color(0x00FF0000), # Green
     Color(0x0000FF00), # Blue
-    ] #
+] #
 
 ome_multi_colors = [
     Color(0xFF000000), # Red
@@ -76,7 +77,7 @@ ome_multi_colors = [
     Color(0xFF00FF00), # Magenta
     Color(0xFFFF0000), # Yellow
     Color(0xFFFFFF00), # Gray
-    ]
+]
 
 imagej_ratio_to_um = {
     'm': 1.0e6,
@@ -93,29 +94,24 @@ resunit_ratio_to_um = {
     3: 1.0e4,   # cm
 }
 
-class Stack:
-    def __init__ (self, fileio = None, series = 0, keep_s_axis = False):
+class MMStack:
+    def __init__ (self, fileio = None, concat_series = False):
+        # raise exception when failed to read an image file
         if fileio is None:
-            self.reset_stack()
+            self.init_stack()
         else:
             try:
-                self.read_image(fileio, series = series, keep_s_axis = keep_s_axis)
-            except OSError:
-                self.reset_stack()
+                self.read_image(fileio, concat_series)
+            except:
                 raise
 
-    def reset_stack (self):
-        self.voxel_um = None
-        self.finterval_sec = None
-        self.z_count = None
-        self.t_count = None
-        self.c_count = None
-        self.s_count = None
-        self.height = None
-        self.width = None
-        self.axes = None
-        self.has_s_axis = False
-        self.image_array = None
+    def init_stack (self):
+        self.channel_list = []
+        self.x_resolution = default_pixel_um
+        self.y_resolution = default_pixel_um
+        self.z_resolution = default_z_step_um
+        self.finterval_sec = default_finterval_sec
+        self.axes = default_axis
 
     def alloc_zero_image (self, shape = default_shape, dtype = default_dtype, \
                           voxel_um = default_voxel, finterval_sec = default_finterval_sec):
@@ -138,6 +134,7 @@ class Stack:
         return settings
 
     def read_image (self, fileio, series = 0, keep_s_axis = False):
+        # raise exception when failed to read an image file
         try:
             self.reset_stack()
 
