@@ -4,10 +4,9 @@ import re, json, textwrap
 from datetime import datetime
 from pathlib import Path
 from logging import getLogger
-from numpyencoder import NumpyEncoder
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QCursor
-from image import stack
+from image import stack, npencode
 
 logger = getLogger(__name__)
 
@@ -63,7 +62,7 @@ class PluginBase (QObject):
         try:
             with open(records_filename, 'w') as f:
                 json.dump(self.records_dict, f, ensure_ascii = False, indent = 4, sort_keys = False, \
-                        separators = (',', ': '), cls = NumpyEncoder)
+                        separators = (',', ': '), cls = npencode.NumpyEncoder)
         except:
             raise PluginException(f"Record File unable to save: {records_filename}")
         
