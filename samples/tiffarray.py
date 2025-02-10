@@ -2,13 +2,12 @@
 
 import numpy as np
 import argparse, tifffile
-from pprint import pprint
 from pathlib import Path
 
 # default values
 input_filename = None
 output_filename = None
-output_suffix = "_array.txt"
+output_suffix = ".json"
 
 # parse arguments
 parser = argparse.ArgumentParser(description='Convert a TIFF image to an array', \
@@ -30,4 +29,7 @@ else:
 input_image = tifffile.imread(input_filename)
 
 with open(output_filename, mode = 'w') as f:
-    pprint(input_image, f)
+    f.write("[\n")
+    for item in input_image.tolist():
+        f.write(f"{item},\n")
+    f.write("]\n")
