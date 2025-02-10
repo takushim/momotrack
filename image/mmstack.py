@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import io, tifffile, json, base64
+import io, tifffile, json
 import numpy as np
 from pathlib import Path
 from logging import getLogger
@@ -23,6 +23,7 @@ default_z_step_um = 0.5
 default_finterval_sec = 1
 default_image_shape = (1, 1, 256, 256)
 default_axis = 'TZYX'
+default_dtype = np.uint16
 
 ome_size_limit = int(0.9 * (2 ** 31))
 
@@ -94,31 +95,27 @@ resunit_ratio_to_um = {
     3: 1.0e4,   # cm
 }
 
-class MMStack:
-    def __init__ (self, fileio = None, concat_series = False):
-        # raise exception when failed to read an image file
-        if fileio is None:
-            self.init_stack()
-        else:
-            try:
-                self.read_image(fileio, concat_series)
-            except:
-                raise
+class MMChannelImage:
+    def __init__ (self):
+        self.init_stack()
 
     def init_stack (self):
         self.channel_list = []
-        self.x_resolution = default_pixel_um
-        self.y_resolution = default_pixel_um
-        self.z_resolution = default_z_step_um
-        self.finterval_sec = default_finterval_sec
+        self.resolution = [default_z_step_um, default_pixel_um, default_pixel_um]
+        self.interval_sec = default_finterval_sec
         self.axes = default_axis
 
-    def alloc_zero_image (self, shape = default_shape, dtype = default_dtype, \
-                          voxel_um = default_voxel, finterval_sec = default_finterval_sec):
-        self.image_array = np.zeros(shape, dtype = dtype)
-        self.voxel_um = voxel_um
-        self.finterval_sec = finterval_sec
-        self.update_dimensions()
+class MMStack:
+    def __init__ (self):
+        self.init_stack()
+
+    def init_stack (self):
+        self.channel_list = []
+
+    def alloc_zero_image (self, shape = default_image_shape, dtype = default_dtype):
+        self.init_stack()
+        channel_
+        self.channel_list = [MMChannel()]
 
     def archive_properties (self):
         settings = {'voxel_um': self.voxel_um,
@@ -249,9 +246,7 @@ class MMStack:
         ome_pixels.time_increment_unit = UnitsTime.SECOND
 
         ome_pixels.tiff_data_blocks = [TiffData(plane_count = self.t_count * c_count * self.z_count, ifd = 0)]
-        ome_pixels.channels = [Channel(samples_per_pixel = samples_per_pixel, \
-                                       id = ChannelID("Channel:0:{0}".format(index))) \
-                               for index in range(c_count)]
+        ome_pixels.channels = [Channel(samples_per_pixel = samples_per_pixel, id = ChannelID("Channel:0:{0}".format(index))) for index in range(c_count)]
 
         if c_count > 1:
             if self.has_s_axis:
