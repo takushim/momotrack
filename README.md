@@ -1,6 +1,6 @@
 # momotrack
 
-This is a GUI application to help object tracking in 2D/3D images written using Python and the Qt6 library. This application can load 2D/3D microscope images saved in the TIFF or OME-TIFF format, especially those acquired with the [diSPIM light-sheet microscope](http://dispim.org) using [Micro-Manager](https://micro-manager.org/). This application is used in our next paper, whose preprint will be available soon.
+This is a graphical user interface (GUI) application to help object tracking in 2D/3D images written using Python and the Qt6 library. This application can load 2D/3D microscope images saved in the TIFF or OME-TIFF format, especially those acquired with the [diSPIM light-sheet microscope](http://dispim.org) using [Micro-Manager](https://micro-manager.org/). This application is used in our next paper, whose preprint will be available soon.
 
 **momotrack** was named after [Micro-Manager](https://micro-manager.org/), the famous software for controlling microscope hardware, and also after the tiny friend of our family, **Momo**, who survived the COVID-19 pandemic with our family.
 
@@ -13,45 +13,42 @@ Momo (2020-2021, RIP)
 **momotrack** is a GUI application available on major operating systems including Windows, MacOSX and Linux. X Window System is necessaary to run on Linux. In this document, the basic usage is described using [FakeTracks.tif](https://samples.fiji.sc/FakeTracks.tif), which is a sample file for TrackMate storing 2D time-lapse images. Object tracking in 3D time-lapse images is also available with this application (sample file will be prepared soon).
 
 ## Getting Started
+### Installation and usage
+This program provides a GUI based on Qt6 and PySide6. Thus, please install the following components beforehand:
+* [`Qt6 open-source version`](https://www.qt.io/download-open-source) -- Qt6 can be **tricky**. See **Notes #2 and #3** below.
+* [`Python`](https://www.python.org) -- Version **3.12.x** is recommended, as PySide6 may not fully support **3.13.x** 
 
-### Requirements
+After installing these components, please refer to the following guides, using the **momotrack** as the repository name.
+* [Installation of the Python toolkits](https://github.com/takushim/momodoc/blob/main/installation.md)
+* [Basic usage of Python scripts](https://github.com/takushim/momodoc/blob/main/usage.md)
 
-First of all, download and install the following programs.
-
-* [`Python 3.11.1 or later, see Note below`](https://www.python.org)
-* [`Qt6 open-source version, see Note below`](https://www.qt.io/download-open-source)
-* [`Fiji (recommended)`](https://imagej.net/software/fiji/)
-* [`Git (recommended)`](https://git-scm.com/)
-
-Next, install the following packages to your Python environment using pip. You can install these packages directly to the Python system, but it is highly recommended to prepare [a virtual environment](https://docs.python.org/3/library/venv.html) and install packages on it. In this case, make sure to activate the virtual environment before running the program.
-
-* `PySide6`
+The required Python packages are:
+* `PySide6` -- see the **Notes #2 and #3** below.
 * `numpy`
 * `scipy`
 * `tifffile`
 * `ome-types`
 * `NumpyEncoder`
-* `progressbar2` -- make sure to install "progressbar2", not progressbar
+* `progressbar2` -- make sure to install **progressbar2**, not progressbar
 
-All of these libraries can be installed using `pip` by typing:
+You can install these packages using the following command:
 ```
 pip install PySide6 numpy scipy tifffile ome-types NumpyEncoder progressbar2
 ```
 
-**Note:** The latest Qt library (version 6.6 as of Feb 2024) may have trouble opening the main window because it fails to create a QUiLoader instance. This is probably a bug ([see this thread in stackoverflow](https://stackoverflow.com/questions/77736041/pyside6-quiloader-doesnt-show-window)). To avoid this issue, install `Python version 3.11`, `Qt version 6.5.3` and `Pyside6 version 6.5.3` instead of the latest versions. You can try these versions without uninstalling the latest versions if you can prepare a virtual environment for Python.
-
-**Note:** You don't have to install `cupy` although codes for GPU calculation appear in some scripts. GPU calculation is not used in this application.
-
-### Installation
-
-Download the zip file from my [GitHub repository](https://github.com/takushim/momotrack) and place all the files in an appropriate folder, for example, `C:\Users\[username]\momotrack` or `C:\Users\[username]\bin\momotrack`. Add the installed folder to the `PATH` environment variable.
-
-**Note:** If you are using PowerShell, add `.PY` to the PATHEXT environment variable. Otherwise, Python will start in a separate window and finishes soon.
-
-If [git](https://git-scm.com/) is installed, my git repository can be cloned using the following commend:
+To clone this repository, run:
 ```
 git clone https://github.com/takushim/momotrack.git
 ```
+
+**Note #1:** You do not need to install `cupy`, even though some scripts contain codes for GPU computation. GPU acceleration is not used in this application.
+
+**Note #2:** The version of `PySide6` must match the version of Qt6. You can install a specific version of PySide6 using the `pip` command as shown below. `pip` will automatically uninstall the currently installed version and replace it with the specified one. If you are using an older version of Qt6, consider using Python 3.11.x to ensure compatibility.
+```
+pip install PySide6==6.5.3
+```
+
+**Note #3:** Certain versions of the Qt framework (notably 6.6, 6.7, and 6.8) fail to create a `QUiLoader` instance, causing the application to **remain running without displaying the main window**. This is likely a bug, as described in [this Stack Overflow thread](https://stackoverflow.com/questions/77736041/pyside6-quiloader-doesnt-show-window). To avoid this issue, install **the latest 6.9.x version** of Qt6, along with the matching version of PySide6. You can experiment with different versions by creating separate Python virtual environments.
 
 ## Open an image
 
