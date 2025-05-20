@@ -15,7 +15,7 @@ Momo (2020-2021, RIP)
 ## Getting Started
 ### Installation and usage
 This program provides a GUI based on Qt6 and PySide6. Thus, please install the following components beforehand:
-* [`Qt6 open-source version`](https://www.qt.io/download-open-source) -- Qt6 can be **tricky**. See **Notes #2 and #3** below.
+* [`Qt6 open-source version`](https://www.qt.io/download-open-source) -- Installation of Qt6 can be **tricky**. See **Notes #2 and #3** below.
 * [`Python`](https://www.python.org) -- Version **3.12.x** is recommended, as PySide6 may not fully support **3.13.x** 
 
 After installing these components, please refer to the following guides, using the **momotrack** as the repository name.
