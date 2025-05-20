@@ -23,7 +23,7 @@ After installing these components, please refer to the following guides, using t
 * [Basic usage of Python scripts](https://github.com/takushim/momodoc/blob/main/usage.md)
 
 The required Python packages are:
-* `PySide6` -- see the **Notes #2 and #3** below.
+* `PySide6` -- see **Notes #2 and #3** below.
 * `numpy`
 * `scipy`
 * `tifffile`
