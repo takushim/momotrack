@@ -43,7 +43,7 @@ git clone https://github.com/takushim/momotrack.git
 
 **Note #1:** You do not need to install `cupy`, even though some scripts contain codes for GPU computation. GPU acceleration is not used in this application.
 
-**Note #2:** The version of `PySide6` must match the version of Qt6. You can install a specific version of PySide6 using the `pip` command as shown below. `pip` will automatically uninstall the currently installed version and replace it with the specified one. If you are using an older version of Qt6 and PySide6 (such as 6.5.x in the following command line), consider using Python 3.11.x to ensure compatibility.
+**Note #2:** The version of `PySide6` must match the version of Qt6. You can install a specific version of PySide6 using the `pip` command as shown below. `pip` will automatically uninstall the currently installed version and replace it with the specified one. If you are using an older version of Qt6 and PySide6, consider using Python 3.11.x to ensure compatibility (for example, Python 3.11 x for Qt6/Pyside6 version 6.5.x).
 ```
 pip install PySide6==6.5.3
 ```
