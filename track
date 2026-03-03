@@ -24,9 +24,9 @@ do
 	records="${stem}_track.json"
 
     if [[ -f $records ]]; then
-        mmtrack.py -f $records $file
+        momotrack.py -f $records $file
     else
-        mmtrack.py $file
+        momotrack.py $file
     fi
 
 done
