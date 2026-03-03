@@ -18,13 +18,13 @@ $record = "{0}_track.json" -f $stem
 if (Test-Path $record) {
       $parameters = @{
             FilePath = (Get-command "python.exe")
-            ArgumentList = @($script, "-L", $loglevel, "-f", $record, $file)
+            ArgumentList = @("`"$script`"", "-L", "$loglevel", "-f", "`"$record`"", "`"$file`"")
       }
 }
 else {
       $parameters = @{
             FilePath = (Get-command "python.exe")
-            ArgumentList = @($script, "-L", $loglevel, $file)
+            ArgumentList = @("`"$script`"", "-L", "$loglevel", "`"$file`"")
       }
 }
 
