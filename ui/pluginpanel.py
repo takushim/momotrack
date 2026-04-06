@@ -19,6 +19,7 @@ class PluginPanel (QObject):
     signal_update_mouse_cursor = Signal(QCursor)
     signal_select_image_by_tczindex = Signal(int, int, int)
     signal_focus_graphics_view = Signal()
+    signal_update_plugin_tczindex = Signal()
 
     def __init__ (self, ui, parent = None):
         logger.debug("Plugin panel being intialized.")
@@ -120,6 +121,7 @@ class PluginPanel (QObject):
             self.current_instance.signal_select_image_by_tczindex.disconnect()
             self.current_instance.signal_focus_graphics_view.disconnect()
             self.current_instance.signal_records_updated.disconnect()
+            self.current_instance.signal_update_tczindex.disconnect()
             logger.debug(f"Signals of the current instance {self.current_instance} disconnected.")
 
         # connect a new class
@@ -137,6 +139,7 @@ class PluginPanel (QObject):
         self.current_instance.signal_select_image_by_tczindex.connect(self.slot_select_image_by_tczindex)
         self.current_instance.signal_focus_graphics_view.connect(self.slot_focus_graphics_view)
         self.current_instance.signal_records_updated.connect(self.slot_records_updated)
+        self.current_instance.signal_update_tczindex.connect(self.slot_update_plugin_tczindex)
         logger.debug(f"Signals of the new instance {self.current_instance} connected.")
 
         # update menu
@@ -208,17 +211,9 @@ class PluginPanel (QObject):
 
         plugin_instance = self.select_plugin_instance(plugin_name)
         if records_plugin_name != plugin_instance.plugin_name:
-            mbox = QMessageBox()
-            mbox.setWindowTitle("Continue loading records?")
-            mbox.setText(f"Records created by {records_plugin_name}, not by {plugin_instance.plugin_name}. Continue?")
-            mbox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            mbox.setDefaultButton(QMessageBox.No)
-            result = mbox.exec()
-            if result == QMessageBox.No:
-                return
-            else:
-                self.switch_plugin(records_plugin_name)
-                plugin_instance = self.select_plugin_instance(plugin_name)
+            logger.info(f"Records created by a non-default plugin: {records_plugin_name}.")
+            self.switch_plugin(records_plugin_name)
+            plugin_instance = self.select_plugin_instance(plugin_name)
 
         try:
             plugin_instance.load_records(records_filename)
@@ -275,6 +270,11 @@ class PluginPanel (QObject):
         plugin_instance = self.select_plugin_instance(plugin_name)
         return plugin_instance.records_filename
 
+    def update_tczindex (self, tcz_index):
+        logger.debug(f"Updating tcz_index to {tcz_index} to {self.current_instance}.")
+        if self.current_instance is not None:
+            self.current_instance.tcz_index = tcz_index
+
     def show_message (self, title = "No title", message = "Default message."):
         mbox = QMessageBox()
         mbox.setWindowTitle(title)
@@ -308,4 +308,6 @@ class PluginPanel (QObject):
         self.update_labels()
         self.signal_update_image_view.emit()
 
-
+    def slot_update_plugin_tczindex (self):
+        self.signal_update_plugin_tczindex.emit()
+    

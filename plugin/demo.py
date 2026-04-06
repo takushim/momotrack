@@ -3,7 +3,7 @@
 import textwrap
 import numpy as np
 from logging import getLogger
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QPushButton, QLabel, QGraphicsEllipseItem
 from PySide6.QtGui import QPen
 from plugin.base import PluginBase
@@ -15,6 +15,8 @@ class_name = 'Demo'
 priority = 100
 
 class Demo (PluginBase):
+    signal_request_current_tczindex = Signal()
+
     def __init__ (self):
         super().__init__()
         self.diameter = 4

@@ -29,6 +29,7 @@ class PluginBase (QObject):
     signal_focus_graphics_view = Signal()
     signal_records_updated = Signal()
     signal_image_stack_created = Signal(stack)
+    signal_update_tczindex = Signal()
 
     def __init__ (self):
         super().__init__()
@@ -38,6 +39,7 @@ class PluginBase (QObject):
         self.default_filename_stem = 'default'
         self.file_types = {"JSON text": ["*.json"]}
         self.stack_reference = None
+        self.tczindex = (0, 0, 0)
 
     def load_records (self, records_filename):
         try:

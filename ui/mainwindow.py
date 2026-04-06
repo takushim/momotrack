@@ -129,6 +129,7 @@ class MainWindow (QMainWindow):
         self.plugin_panel.signal_update_mouse_cursor.connect(self.slot_update_mouse_cursor)
         self.plugin_panel.signal_select_image_by_tczindex.connect(self.slot_select_image_by_tczindex)
         self.plugin_panel.signal_focus_graphics_view.connect(self.slot_focus_graphics_view)
+        self.plugin_panel.signal_update_plugin_tczindex.connect(self.slot_update_plugin_tczindex)
 
     def open_multiple_images (self, image_filename_list):
         stack_exts = [item for values in self.image_types.values() for item in values]
@@ -357,6 +358,11 @@ class MainWindow (QMainWindow):
     def slot_focus_graphics_view (self):
         self.ui.gview_image.setFocus()
         self.activateWindow()
+
+    def slot_update_plugin_tczindex (self):
+        self.plugin_panel.update_tczindex((self.ui.slider_time.value(), 
+                                           self.ui.combo_channel.currentIndex(), 
+                                           self.ui.slider_zstack.value()))
 
     def slot_viewer_help (self):
         message = textwrap.dedent('''\
