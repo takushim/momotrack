@@ -39,7 +39,7 @@ class PluginBase (QObject):
         self.default_filename_stem = 'default'
         self.file_types = {"JSON text": ["*.json"]}
         self.stack_reference = None
-        self.tczindex = (0, 0, 0)
+        self.tcz_index = (0, 0, 0)
 
     def load_records (self, records_filename):
         try:
