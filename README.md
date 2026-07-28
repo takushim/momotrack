@@ -54,7 +54,7 @@ pip install PySide6==6.5.3
 
 Run the following command in the folder where [FakeTracks.tif](https://samples.fiji.sc/FakeTracks.tif) is saved.
 ```
-mmtrack.py FakeTracks.tif
+momotrack.py FakeTracks.tif
 ```
 
 This will open a window with an image as shown below. You can browse the image using cursor keys (`RIGHT/LEFT` keys for the time, `UP/DOWN` keys for the Z-stack).
@@ -64,7 +64,7 @@ This will open a window with an image as shown below. You can browse the image u
 Tracking records will be saved in a file, `XXX_track.json`, which will be `FakeTracks_track.json` unless otherwise specified. You can load this tracking file during the start-up with an option `-f` as shown below.
 
 ```
-mmtrack.py -f FakeTracks_track.json FakeTracks.tif
+momotrack.py -f FakeTracks_track.json FakeTracks.tif
 ```
 
  **Note:** Scripts to help this process are prepared in the top folder (`track` for bash and `track.ps1` for PowerShell).
