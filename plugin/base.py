@@ -53,6 +53,7 @@ class PluginBase (QObject):
             logger.error(f"Records created by a plugin {plugin_name}. Summary: {self.records_dict.get('summary', None)}")
             raise PluginException(f"Records created by different plugin: {plugin_name}.")
         
+        logger.info(f"Records loaded: {records_filename}")
         self.records_dict = records_dict
         self.records_filename = records_filename
 
@@ -68,13 +69,15 @@ class PluginBase (QObject):
                         separators = (',', ': '), cls = NumpyEncoder)
         except:
             raise PluginException(f"Record File unable to save: {records_filename}")
-        
+
+        logger.info(f"Records saved: {records_filename}")
         self.records_filename = records_filename
 
     def clear_records (self):
         self.records_dict = {}
         self.records_filename = None
         self.viewer_settings = {}
+        logger.info(f"Records cleared.")
 
     def suggest_filename (self, image_filename):
         if image_filename is None:
